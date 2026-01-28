@@ -413,3 +413,168 @@ router.beforeEach((to, from, next) => {
 ---
 
 **審查完成** | **建議下次審查時機**: Phase 1 完成後
+
+---
+
+## 9. Gemini Code Review - Phase 2 完成後審查
+
+**審查日期**: 2026-01-28
+**審查者**: Gemini 3 Pro
+**審查範圍**: Phase 0, 1, 2 已完成的程式碼
+
+### 總體評價
+
+**專案基礎建設相當紮實**，程式碼結構清晰且高度模組化。安全性方面實作了多層防護（JWT、Fernet 加密、敏感資料遮蔽）。
+
+特別值得肯定的項目：
+- ✅ **設定管理 (Pydantic-settings)** - 型別安全、支援 .env
+- ✅ **錯誤處理 (Error Handling)** - 例外捕捉層次分明
+- ✅ **日誌系統 (Loguru)** - 敏感資料遮蔽實作優秀
+
+### 已修正的問題（2026-01-28）
+
+#### 9.1 資料庫同步/非同步矛盾 ✅ 已修正
+
+**問題描述**：
+`database.py` 的 `get_db` 原定義為 `async def`，但內部使用同步 `SyncSessionLocal`。
+在 `async def` 路由中使用會阻塞整個 Event Loop，導致高併發效能極差。
+
+**修正方案**：
+- 將 `get_db` 改為同步 `def`（Generator）
+- 所有使用 `get_db` 的路由應宣告為 `def`（非 `async def`）
+- FastAPI 會自動將同步路由放入 ThreadPool 執行
+
+**修正檔案**: `backend/src/config/database.py`
+
+---
+
+#### 9.2 開發環境加密金鑰隨機生成 ✅ 已修正
+
+**問題描述**：
+`TokenEncryption` 在開發環境若未設定 Key 會自動生成。
+這會導致每次重啟伺服器後，之前加密的資料無法解密。
+
+**修正方案**：
+- 開發環境也必須設定固定的 `ENCRYPTION_KEY`
+- 未設定時拋出錯誤並提供明確的解決指引
+
+**修正檔案**: `backend/src/utils/encryption.py`
+
+---
+
+#### 9.3 前端 API 檔案重複 ✅ 已修正
+
+**問題描述**：
+`frontend/src/services/api.js` 與 `frontend/src/utils/api.js` 功能重複。
+
+**修正方案**：
+- 保留 `utils/api.js`（功能較完整，包含健康檢查等）
+- `services/api.js` 改為重新導出，保持向後相容
+
+**修正檔案**: `frontend/src/services/api.js`
+
+---
+
+### 長期優化項目（Technical Debt）
+
+以下為 Gemini 建議的長期優化項目，應在 Phase 3-4 期間處理：
+
+#### 10.1 強化前端 Token 儲存 🟡 Phase 3-4
+
+**優先級**: 中
+**風險等級**: 🟡 中
+**問題描述**：
+前端將 JWT 存放在 localStorage，易受 XSS 攻擊。
+
+**建議方案**：
+1. 實作 Silent Refresh（Access Token 過期前自動刷新）
+2. 考慮將 Token 存放於記憶體 + 定期 Refresh
+3. 或改用 HttpOnly Cookie（需後端配合）
+
+**實作建議**：
+- 在 `frontend/src/utils/api.js` 加入 Token 自動刷新邏輯
+- 當 Access Token 即將過期（例如剩餘 5 分鐘）時，自動呼叫 `/api/auth/refresh`
+
+**預計實作時機**: Phase 3（權限控制 US3 實作時）
+
+---
+
+#### 10.2 升級 JWT 套件 🔵 Phase 4+
+
+**優先級**: 低
+**風險等級**: 🔵 低
+**問題描述**：
+`python-jose` 維護活躍度較低。
+
+**建議方案**：
+- 遷移至 `PyJWT`（更活躍的社群維護）
+- API 相容性高，遷移成本低
+
+**實作建議**：
+1. 修改 `backend/src/utils/jwt.py`
+2. 將 `from jose import jwt` 改為 `import jwt`
+3. 調整部分 API 呼叫（差異不大）
+
+**預計實作時機**: Phase 4 或 Phase 10 (Polish)
+
+---
+
+#### 10.3 實作 Content Security Policy (CSP) 🟡 Phase 3-4
+
+**優先級**: 中
+**風險等級**: 🟡 中
+**問題描述**：
+目前缺少 CSP Header，增加 XSS 攻擊風險。
+
+**建議方案**：
+在 `frontend/index.html` 加入 CSP meta tag：
+```html
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+```
+
+或透過 GitHub Pages 自訂 Header（需使用 Jekyll 或其他方式）。
+
+**預計實作時機**: Phase 3（權限控制完成後）
+
+---
+
+#### 10.4 資料庫備份策略 🟡 Phase 4
+
+**優先級**: 中
+**風險等級**: 🟡 中
+**問題描述**：
+TiDB Serverless 免費版不提供自動備份。
+
+**建議方案**：
+1. 實作定期資料匯出功能（每週自動匯出 SQL）
+2. 儲存至 Google Drive 或本機
+3. 監控 TiDB 儲存用量，設定警告閾值
+
+**預計實作時機**: Phase 4 或 Phase 10 (Polish)
+
+---
+
+### 風險總覽
+
+| 風險等級 | 類別 | 描述 | 狀態 |
+|:---:|:---|:---|:---:|
+| 🔴 高 | 效能 | 同步 DB + async 路由阻塞 Event Loop | ✅ 已修正 |
+| 🟡 中 | 安全 | JWT 存放於 localStorage | ⏳ Phase 3-4 |
+| 🟡 中 | 穩定性 | 開發環境隨機加密金鑰 | ✅ 已修正 |
+| 🔵 低 | 相依性 | python-jose 維護狀態不明 | ⏳ Phase 4+ |
+
+---
+
+### 結論
+
+**Phase 0-2 完成度極高，程式碼品質優良。**
+
+高優先級問題已於 2026-01-28 修正完畢。
+長期優化項目已記錄於本文件，將於 Phase 3-4 期間處理。
+
+專案已準備好進入 Phase 3（核心功能開發）。
+
+---
+
+**審查完成** | **下次審查時機**: Phase 3 完成後（US1-US3 實作完成）

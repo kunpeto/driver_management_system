@@ -34,20 +34,28 @@ class TokenEncryption:
         return cls._instance
 
     def _initialize(self) -> None:
-        """初始化加密器"""
+        """
+        初始化加密器
+
+        重要（Gemini Review 2026-01-28）：
+        開發環境也必須設定固定的 ENCRYPTION_KEY，否則會拋出錯誤。
+        這是為了避免重啟後已加密的資料（如 DB 中的 Token）無法解密。
+        """
         settings = get_settings()
         encryption_key = settings.encryption_key
 
         if not encryption_key:
-            # 開發環境：自動生成金鑰（警告）
-            if not settings.is_production:
-                print("[WARNING] ENCRYPTION_KEY 未設定，使用自動生成的金鑰（僅限開發環境）")
-                encryption_key = Fernet.generate_key().decode()
-            else:
-                raise ValueError(
-                    "生產環境必須設定 ENCRYPTION_KEY 環境變數。"
-                    "使用 TokenEncryption.generate_key() 生成新金鑰。"
-                )
+            # 無論開發或生產環境，都必須設定 ENCRYPTION_KEY
+            error_msg = (
+                "ENCRYPTION_KEY 環境變數未設定。\n\n"
+                "解決方法：\n"
+                "1. 執行以下命令生成新金鑰：\n"
+                "   python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"\n\n"
+                "2. 將生成的金鑰加入 .env 檔案：\n"
+                "   ENCRYPTION_KEY=your-generated-key-here\n\n"
+                "注意：開發環境也必須使用固定金鑰，否則重啟後已加密的資料將無法解密。"
+            )
+            raise ValueError(error_msg)
 
         # 確保金鑰格式正確（32 bytes base64 encoded）
         try:
