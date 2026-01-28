@@ -28,23 +28,25 @@
 
 ---
 
-## Phase 1: Setup (Shared Infrastructure)
+## Phase 1: Setup (Shared Infrastructure) ✅ 完成
 
 **目的**: 專案初始化與基礎結構建立
 
-- [ ] T001 建立專案根目錄結構（frontend/, backend/, desktop_app/, docs/, scripts/）
-- [ ] T002 [P] 初始化前端 Vue.js 3 專案在 frontend/ 目錄
-- [ ] T003 [P] 初始化雲端後端 FastAPI 專案在 backend/ 目錄
-- [ ] T004 [P] 初始化本機後端 FastAPI 專案在 desktop_app/ 目錄
-- [ ] T005 [P] 建立 requirements.txt 在 backend/ 目錄（FastAPI, SQLAlchemy, pymysql, python-jose, bcrypt, APScheduler）
-- [ ] T006 [P] 建立 requirements.txt 在 desktop_app/ 目錄（FastAPI, python-docx, PyPDF2, python-barcode, google-api-python-client）
-- [ ] T007 [P] 建立 package.json 在 frontend/ 目錄（Vue 3, Vue Router 4, Pinia, Axios, Element Plus）
-- [ ] T008 建立 .gitignore 檔案（已更新，包含憑證排除規則）
-- [ ] T009 建立 .env.example 檔案（環境變數範本，已包含完整註解）
-- [ ] T010 [P] 設定前端 ESLint 與 Prettier 在 frontend/.eslintrc.js 與 .prettierrc
-- [ ] T011 [P] 設定後端 Black 與 Flake8 在 backend/pyproject.toml 與 .flake8
+**完成日期**: 2026-01-28
 
-**Checkpoint**: 專案結構完成，可開始安裝依賴套件
+- [x] T001 建立專案根目錄結構（frontend/, backend/, desktop_app/, docs/, scripts/）
+- [x] T002 [P] 初始化前端 Vue.js 3 專案在 frontend/ 目錄
+- [x] T003 [P] 初始化雲端後端 FastAPI 專案在 backend/ 目錄
+- [x] T004 [P] 初始化本機後端 FastAPI 專案在 desktop_app/ 目錄
+- [x] T005 [P] 建立 requirements.txt 在 backend/ 目錄（FastAPI, SQLAlchemy, pymysql, python-jose, bcrypt, APScheduler）
+- [x] T006 [P] 建立 requirements.txt 在 desktop_app/ 目錄（FastAPI, python-docx, PyPDF2, python-barcode, google-api-python-client）
+- [x] T007 [P] 建立 package.json 在 frontend/ 目錄（Vue 3, Vue Router 4, Pinia, Axios, Element Plus）
+- [x] T008 建立 .gitignore 檔案（已更新，包含憑證排除規則）
+- [x] T009 建立 .env.example 檔案（環境變數範本，已包含完整註解）
+- [x] T010 [P] 設定前端 ESLint 與 Prettier 在 frontend/.eslintrc.js 與 .prettierrc
+- [x] T011 [P] 設定後端 Black 與 Flake8 在 backend/pyproject.toml 與 .flake8
+
+**Checkpoint**: ✅ 專案結構完成，可開始安裝依賴套件
 
 ---
 
@@ -56,9 +58,9 @@
 
 ### 資料庫與連線
 
-- [ ] T012 建立 TiDB 連線配置工具在 backend/src/config/database.py（SQLAlchemy 引擎、連線池設定）
-- [ ] T013 建立環境變數載入工具在 backend/src/config/settings.py（使用 python-dotenv）
-- [ ] T014 建立資料庫 Base 模型在 backend/src/models/base.py（SQLAlchemy declarative_base）
+- [x] T012 建立 TiDB 連線配置工具在 backend/src/config/database.py（SQLAlchemy 引擎、連線池設定）✅ 2026-01-28
+- [x] T013 建立環境變數載入工具在 backend/src/config/settings.py（使用 pydantic-settings）✅ 2026-01-28
+- [x] T014 建立資料庫 Base 模型在 backend/src/models/base.py（SQLAlchemy declarative_base）✅ 2026-01-28
 - [ ] T015 建立資料庫初始化腳本在 scripts/init_database.py（建立表、索引、預設資料）
 
 ### 憑證管理系統 ⭐
@@ -81,10 +83,10 @@
 
 ### API 基礎設施
 
-- [ ] T023 建立 FastAPI 主程式在 backend/src/main.py（應用初始化、CORS 設定、路由註冊）
+- [x] T023 建立 FastAPI 主程式在 backend/src/main.py（應用初始化、CORS 設定、路由註冊）✅ 2026-01-28
 - [ ] T024 建立錯誤處理中間件在 backend/src/middleware/error_handler.py（統一錯誤回應格式）
 - [ ] T025 建立日誌配置在 backend/src/utils/logger.py（結構化日誌、不記錄敏感資訊）
-- [ ] T026 [P] 建立健康檢查端點在 backend/src/api/health.py（GET /health, GET /health/database）
+- [x] T026 [P] 建立健康檢查端點在 backend/src/main.py（GET /health, GET /health/database）✅ 2026-01-28（暫整合於 main.py）
 
 ### 前端基礎設施
 
@@ -474,12 +476,20 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 ## Summary
 
 - **總任務數**: 131 個任務（新增勤務標準時間管理、憑證驗證、OAuth 回調測試任務）
+- **已完成任務**: 16 個（Phase 1: 11 個 + Phase 2 部分: 5 個）
+- **進度**: 12.2%
 - **用戶故事數**: 7 個（US1-US7，對應 spec.md 的 P0-P3 優先級）
 - **可並行任務**: 約 40% 的任務標記為 [P]，可並行執行
 - **建議 MVP 範圍**: Phase 1-5（Setup + Foundational + US1 + US2 + US3）
 - **駕駛競賽模組**: PC-001 已釐清，Phase 9 任務可立即執行
 - **測試覆蓋**: 新增憑證驗證測試（G1: T037a, T037b）與 OAuth 回調測試（U1: T098a）
 - **完整功能交付**: 全部 10 個階段（包含所有用戶故事與優化）
+
+### 進度更新記錄
+
+| 日期 | 完成任務 | 累計完成 | 進度 |
+|------|----------|----------|------|
+| 2026-01-28 | T001-T014, T023, T026 | 16 | 12.2% |
 
 ---
 
