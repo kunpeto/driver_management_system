@@ -1,0 +1,51 @@
+# 資料庫連線
+pymysql==1.1.2
+SQLAlchemy==2.0.31
+cryptography==42.0.5  # pymysql SSL 支援
+
+# FastAPI 後端
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic==2.7.4
+pydantic-settings==2.3.3
+python-dotenv==1.0.1
+
+# 認證與安全
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.9
+
+# 定時任務
+APScheduler==3.10.4
+
+# Google API
+google-auth==2.29.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.131.0
+
+# PDF 處理
+PyPDF2==3.0.1
+pyzbar==0.1.9  # 條碼識別
+Pillow==10.3.0  # 影像處理
+
+# PyQt6 桌面應用
+PyQt6==6.7.0
+PyQt6-WebEngine==6.7.0
+
+# Excel 處理
+openpyxl==3.1.2
+pandas==2.2.2
+
+# HTTP 請求
+requests==2.32.3
+httpx==0.27.0
+
+# 日誌與監控
+loguru==0.7.2
+
+# 開發工具
+pytest==8.2.2
+pytest-asyncio==0.23.7
+black==24.4.2
+ruff==0.4.8

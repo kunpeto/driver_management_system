@@ -1,0 +1,53 @@
+# Render Blueprint 配置
+# 文件說明：https://render.com/docs/blueprint-spec
+
+services:
+  # 雲端後端 API
+  - type: web
+    name: driver-management-api
+    runtime: python
+    region: singapore  # 新加坡區域，較接近台灣
+    plan: free
+
+    # 根目錄設定為 backend（重要！）
+    rootDir: backend
+
+    # 建置命令
+    buildCommand: pip install -r requirements.txt
+
+    # 啟動命令
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+
+    # 健康檢查
+    healthCheckPath: /health
+
+    # 環境變數（從 Render Dashboard 設定）
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.5"
+      - key: API_ENVIRONMENT
+        value: production
+      # 以下從 Render Dashboard 設定（敏感資訊）
+      - key: TIDB_HOST
+        sync: false
+      - key: TIDB_PORT
+        sync: false
+      - key: TIDB_USER
+        sync: false
+      - key: TIDB_PASSWORD
+        sync: false
+      - key: TIDB_DATABASE
+        sync: false
+      - key: API_SECRET_KEY
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: TANHAE_GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: ANPING_GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+
+# 注意：
+# 1. 使用 Render Dashboard 設定敏感環境變數
+# 2. 首次部署後設定 UptimeRobot 監控 /health 端點
+# 3. 前端（frontend）使用 GitHub Pages 部署，不在此配置

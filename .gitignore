@@ -129,12 +129,58 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
+.env.*.local
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# ============================================================
+# 司機員管理系統 - 敏感憑證檔案（禁止提交）
+# ============================================================
+
+# 本機敏感資料資料夾
+不需git的資料/
+
+# Google API 服務帳戶憑證（JSON 格式）
+*-service-account.json
+*_service_account.json
+*-credentials.json
+*_credentials.json
+credentials/
+.credentials/
+
+# Google OAuth 憑證（桌面應用）
+token.json
+token.pickle
+.token.json
+
+# 本機加密令牌檔案
+.driver_management_system/
+tokens.encrypted
+.key
+
+# 資料庫備份檔案
+*.sql
+*.sql.gz
+*.sql.zip
+backup/
+backups/
+
+# 舊資料庫檔案
+*.db
+*.sqlite
+*.sqlite3
+
+# 臨時憑證檔案
+*-encoded.txt
+*.pem
+*.p12
+
+# ============================================================
 
 # Spyder project settings
 .spyderproject

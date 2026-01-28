@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create vue:*)",
+      "Bash(npm init vue@latest . -- --yes)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(test -f:*)",
+      "Bash(./venv/Scripts/pip:*)",
+      "Bash(./venv/Scripts/python:*)",
+      "Bash(../venv/Scripts/python:*)"
+    ]
+  }
+}
