@@ -61,14 +61,14 @@
 - [x] T012 建立 TiDB 連線配置工具在 backend/src/config/database.py（SQLAlchemy 引擎、連線池設定）✅ 2026-01-28
 - [x] T013 建立環境變數載入工具在 backend/src/config/settings.py（使用 pydantic-settings）✅ 2026-01-28
 - [x] T014 建立資料庫 Base 模型在 backend/src/models/base.py（SQLAlchemy declarative_base）✅ 2026-01-28
-- [ ] T015 建立資料庫初始化腳本在 scripts/init_database.py（建立表、索引、預設資料）
+- [x] T015 建立資料庫初始化腳本在 scripts/init_database.py（建立表、索引、預設資料）✅ 2026-01-29
 
 ### 憑證管理系統 ⭐
 
-- [ ] T016 實作 TokenEncryption 類別在 backend/src/utils/encryption.py（Fernet 加密/解密工具）
-- [ ] T017 實作服務帳戶憑證載入工具在 backend/src/utils/google_credentials.py（Base64 解碼、環境變數讀取）
-- [ ] T018 實作本機憑證管理器在 desktop_app/src/utils/credential_manager.py（OAuth 令牌加密檔案存儲）
-- [ ] T037a 實作憑證驗證服務在 backend/src/services/credential_validator.py（驗證 Service Account 格式、測試 Sheets 存取權限、驗證 OAuth 2.0 格式）⭐ **(新增：G1)**
+- [x] T016 實作 TokenEncryption 類別在 backend/src/utils/encryption.py（Fernet 加密/解密工具）✅ 2026-01-29
+- [x] T017 實作服務帳戶憑證載入工具在 backend/src/utils/google_credentials.py（Base64 解碼、環境變數讀取）✅ 2026-01-29
+- [x] T018 實作本機憑證管理器在 desktop_app/src/utils/credential_manager.py（OAuth 令牌加密檔案存儲）✅ 2026-01-29
+- [x] T037a 實作憑證驗證服務在 backend/src/services/credential_validator.py（驗證 Service Account 格式、測試 Sheets 存取權限、驗證 OAuth 2.0 格式）⭐ **(新增：G1)** ✅ 2026-01-29
 
 ### 憑證驗證測試 ⭐ **(新增：G1)**
 
@@ -76,30 +76,30 @@
 
 ### 認證與授權
 
-- [ ] T019 建立 JWT 工具類別在 backend/src/utils/jwt.py（生成、驗證、解析 Token）
-- [ ] T020 實作密碼雜湊工具在 backend/src/utils/password.py（bcrypt 加密、驗證）
-- [ ] T021 實作認證中間件在 backend/src/middleware/auth.py（JWT Token 驗證）
-- [ ] T022 實作權限檢查中間件在 backend/src/middleware/permission.py（角色與部門權限控制）
+- [x] T019 建立 JWT 工具類別在 backend/src/utils/jwt.py（生成、驗證、解析 Token）✅ 2026-01-29
+- [x] T020 實作密碼雜湊工具在 backend/src/utils/password.py（bcrypt 加密、驗證）✅ 2026-01-29
+- [x] T021 實作認證中間件在 backend/src/middleware/auth.py（JWT Token 驗證）✅ 2026-01-29
+- [x] T022 實作權限檢查中間件在 backend/src/middleware/permission.py（角色與部門權限控制）✅ 2026-01-29
 
 ### API 基礎設施
 
 - [x] T023 建立 FastAPI 主程式在 backend/src/main.py（應用初始化、CORS 設定、路由註冊）✅ 2026-01-28
-- [ ] T024 建立錯誤處理中間件在 backend/src/middleware/error_handler.py（統一錯誤回應格式）
-- [ ] T025 建立日誌配置在 backend/src/utils/logger.py（結構化日誌、不記錄敏感資訊）
+- [x] T024 建立錯誤處理中間件在 backend/src/middleware/error_handler.py（統一錯誤回應格式）✅ 2026-01-29
+- [x] T025 建立日誌配置在 backend/src/utils/logger.py（結構化日誌、不記錄敏感資訊）✅ 2026-01-29
 - [x] T026 [P] 建立健康檢查端點在 backend/src/main.py（GET /health, GET /health/database）✅ 2026-01-28（暫整合於 main.py）
 
 ### 前端基礎設施
 
-- [ ] T027 設定 Vue Router 在 frontend/src/router/index.js（路由表、導航守衛）
-- [ ] T028 設定 Pinia Store 在 frontend/src/stores/index.js（狀態管理初始化）
-- [ ] T029 設定 Axios 實例在 frontend/src/utils/api.js（攔截器、錯誤處理、Token 附加）
-- [ ] T030 建立全域錯誤處理器在 frontend/src/utils/errorHandler.js
-- [ ] T031 [P] 建立 UI 元件庫封裝在 frontend/src/components/common/（Button, Input, Modal 等）
+- [x] T027 設定 Vue Router 在 frontend/src/router/index.js（路由表、導航守衛）✅ 2026-01-29
+- [x] T028 設定 Pinia Store 在 frontend/src/stores/index.js（狀態管理初始化）✅ 2026-01-29
+- [x] T029 設定 Axios 實例在 frontend/src/utils/api.js（攔截器、錯誤處理、Token 附加）✅ 2026-01-29
+- [x] T030 建立全域錯誤處理器在 frontend/src/utils/errorHandler.js ✅ 2026-01-29
+- [x] T031 [P] 建立 UI 元件庫封裝在 frontend/src/components/common/（Button, Input, Modal 等）✅ 2026-01-29
 
 ### 本機 API 基礎設施
 
-- [ ] T032 建立本機 FastAPI 主程式在 desktop_app/src/main.py（CORS 設定、健康檢查）
-- [ ] T033 建立系統托盤程式在 desktop_app/src/tray_app.py（啟動/停止 API、狀態顯示）
+- [x] T032 建立本機 FastAPI 主程式在 desktop_app/src/main.py（CORS 設定、健康檢查）✅ 2026-01-29
+- [x] T033 建立系統托盤程式在 desktop_app/src/tray_app.py（啟動/停止 API、狀態顯示）✅ 2026-01-29
 
 **Checkpoint**: 基礎設施完成 - 用戶故事實作可以開始
 
@@ -476,8 +476,8 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 ## Summary
 
 - **總任務數**: 131 個任務（新增勤務標準時間管理、憑證驗證、OAuth 回調測試任務）
-- **已完成任務**: 16 個（Phase 1: 11 個 + Phase 2 部分: 5 個）
-- **進度**: 12.2%
+- **已完成任務**: 34 個（Phase 1: 11 個 + Phase 2: 23 個）
+- **進度**: 26.0%
 - **用戶故事數**: 7 個（US1-US7，對應 spec.md 的 P0-P3 優先級）
 - **可並行任務**: 約 40% 的任務標記為 [P]，可並行執行
 - **建議 MVP 範圍**: Phase 1-5（Setup + Foundational + US1 + US2 + US3）
@@ -490,6 +490,7 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 | 日期 | 完成任務 | 累計完成 | 進度 |
 |------|----------|----------|------|
 | 2026-01-28 | T001-T014, T023, T026 | 16 | 12.2% |
+| 2026-01-29 | T015-T033 (除 T037b) | 34 | 26.0% |
 
 ---
 
