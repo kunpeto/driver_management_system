@@ -72,7 +72,7 @@
 
 ### 憑證驗證測試 ⭐ **(新增：G1)**
 
-- [ ] T037b [P] 實作憑證驗證整合測試在 backend/tests/integration/test_credential_validation.py（測試有效/無效憑證、權限檢查、模擬無權限情境）
+- [x] T037b [P] 實作憑證驗證整合測試在 backend/tests/integration/test_credential_validation.py（測試有效/無效憑證、權限檢查、模擬無權限情境）✅ 2026-01-28
 
 ### 認證與授權
 
@@ -476,8 +476,8 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 ## Summary
 
 - **總任務數**: 131 個任務（新增勤務標準時間管理、憑證驗證、OAuth 回調測試任務）
-- **已完成任務**: 34 個（Phase 1: 11 個 + Phase 2: 23 個）
-- **進度**: 26.0%
+- **已完成任務**: 35 個（Phase 1: 11 個 + Phase 2: 24 個）
+- **進度**: 26.7%
 - **用戶故事數**: 7 個（US1-US7，對應 spec.md 的 P0-P3 優先級）
 - **可並行任務**: 約 40% 的任務標記為 [P]，可並行執行
 - **建議 MVP 範圍**: Phase 1-5（Setup + Foundational + US1 + US2 + US3）
@@ -490,7 +490,8 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 | 日期 | 完成任務 | 累計完成 | 進度 |
 |------|----------|----------|------|
 | 2026-01-28 | T001-T014, T023, T026 | 16 | 12.2% |
-| 2026-01-29 | T015-T033 (除 T037b) | 34 | 26.0% |
+| 2026-01-29 | T015-T033, T037a | 34 | 26.0% |
+| 2026-01-28 | T037b (憑證驗證整合測試) | 35 | 26.7% |
 
 ---
 
