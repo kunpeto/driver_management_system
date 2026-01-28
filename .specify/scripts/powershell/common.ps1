@@ -2,17 +2,24 @@
 # Common PowerShell functions analogous to common.sh
 
 function Get-RepoRoot {
+    # Use script location method first to avoid encoding issues with git output
+    $scriptRoot = (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+
+    # Verify this is a git repo
     try {
-        $result = git rev-parse --show-toplevel 2>$null
+        Push-Location $scriptRoot
+        git rev-parse --show-toplevel 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) {
-            return $result
+            Pop-Location
+            return $scriptRoot
         }
+        Pop-Location
     } catch {
         # Git command failed
     }
-    
-    # Fall back to script location for non-git repos
-    return (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+
+    # Return script location even for non-git repos
+    return $scriptRoot
 }
 
 function Get-CurrentBranch {
