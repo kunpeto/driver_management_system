@@ -145,6 +145,10 @@ from src.api import (
     schedules_router,
     sync_tasks_router,
     google_oauth_router,
+    # Phase 9: 駕駛時數與競賽
+    route_standard_time_router,
+    driving_stats_router,
+    driving_competition_router,
 )
 
 # 系統設定 API
@@ -216,6 +220,27 @@ app.include_router(
 app.include_router(
     google_oauth_router,
     tags=["Google OAuth"]
+)
+
+# 勤務標準時間 API (Phase 9)
+app.include_router(
+    route_standard_time_router,
+    prefix="/api",
+    tags=["Route Standard Times"]
+)
+
+# 駕駛時數統計 API (Phase 9)
+app.include_router(
+    driving_stats_router,
+    prefix="/api",
+    tags=["Driving Stats"]
+)
+
+# 駕駛競賽排名 API (Phase 9)
+app.include_router(
+    driving_competition_router,
+    prefix="/api",
+    tags=["Driving Competition"]
 )
 
 
