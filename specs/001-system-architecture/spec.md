@@ -228,16 +228,16 @@
 
 ### 🔴 HIGH PRIORITY - 需立即釐清
 
-#### ~~PC-001: 駕駛競賽計算公式~~ ✅ **(已釐清 2026-01-28)**
+#### ~~PC-001: 駕駛競賽計算公式~~ ✅ **(已釐清 2026-01-28)** ⭐ **(季度制更新 2026-01-29)**
 
-**決策結果**：駕駛競賽計算公式已確認
+**決策結果**：駕駛競賽計算公式已確認，並更新為季度制規則
 
-**完整計算公式**（每月結算）：
+**完整計算公式**（每季結算）：
 ```
-最終積分 = Σ(每日勤務時數 × R班係數) × 責任事件懲罰係數
+最終積分 = (Σ 每日實際駕駛時數 × R班係數) / (1 + 責任事件次數)
 
 其中：
-- 每日勤務時數 = Σ(當日各項勤務的標準分鐘數)
+- 每日實際駕駛時數 = Σ(當日各項勤務的標準分鐘數)
   ├─ 勤務標準時間由後台設定（route_standard_times 資料表）
   └─ 從 Google Sheets 勤務表讀取當日勤務項目
 
@@ -245,34 +245,46 @@
   ├─ 當日為 R班出勤（休息日出勤）：× 2
   └─ 一般出勤：× 1
 
-- 責任事件懲罰係數：× 1/(1+N)
-  ├─ N = 0（當月無責任事件）：× 1
-  ├─ N = 1（當月 1 件責任事件）：× 1/2
-  ├─ N = 2（當月 2 件責任事件）：× 1/3
-  └─ N ≥ 3：× 1/(1+N) 依此類推
+- 責任事件懲罰：/ (1 + N)
+  ├─ N = 0（當季無責任事件）：/ 1
+  ├─ N = 1（當季 1 件責任事件）：/ 2
+  ├─ N = 2（當季 2 件責任事件）：/ 3
+  └─ N ≥ 3：/ (1 + N) 依此類推
+  ├─ 責任事件定義：S類別（行車運轉）+ R類別（故障排除）扣分項目
+  └─ 資料來源：profiles 表（待 US8 整合）
+
+- 資格門檻（新增）：
+  ├─ 季度累計時數 ≥ 300小時（平均每月100小時）
+  └─ 季度最後一日仍在職（is_resigned = false）
 ```
 
-**排名規則** ⭐ **(已補充 2026-01-28)**：
+**排名規則** ⭐ **(季度制更新 2026-01-29)**：
+- **評比週期**：每季結算（Q1: 1-3月、Q2: 4-6月、Q3: 7-9月、Q4: 10-12月）
+- **計算時機**：每季首日（1/1, 4/1, 7/1, 10/1）凌晨 3:00
 - **主要排序**：積分由高到低（積分最高者為第一名）
 - **積分相同處理**：並列排名（如兩人並列第 2 名）
   - 下一名的排名跳號（並列第 2 名後，下一名為第 4 名）
   - 報表顯示格式：僅顯示排名數字（如「2」），不額外標註並列
   - 次要排序（積分相同時）：按員工編號升序（資料呈現穩定性）
+- **排名名額與獎金**：
+  - 淡海分部：前5名（3600/3000/2400/1800/1200 元）
+  - 安坑分部：前3名（3600/3000/2400 元）
+  - 排名超出名額或不符合資格者：bonus_amount = 0
 - **排名範例**：
-  | 排名 | 姓名 | 積分 |
-  |------|------|------|
-  | 1    | 張三 | 1250 |
-  | 2    | 李四 | 1100 |
-  | 2    | 王五 | 1100 |
-  | 4    | 趙六 | 980  |
-- **其他規則**：
-  - 無最低出勤天數門檻
-  - 每人每月皆有排名（含積分為 0 者）
-  - 離職或不在職人員不納入排名計算
+  | 排名 | 姓名 | 積分 | 時數 | 資格 | 獎金 |
+  |------|------|------|------|------|------|
+  | 1    | 張三 | 1250 | 320h | ✓    | 3600 |
+  | 2    | 李四 | 1100 | 310h | ✓    | 3000 |
+  | 3    | 王五 | 980  | 290h | ✗    | 0    |
+  | 4    | 趙六 | 950  | 305h | ✓    | 1800 |
+- **資格檢查**：
+  - 季度累計時數 ≥ 300小時
+  - 季度最後一日仍在職
+  - 不符合資格者仍有排名但無獎金
 
 **責任事件判定**：
-- **暫時保留此功能**，後續與考核模組整合（Phase 2+）
-- 初版計算僅考慮駕駛時數與 R班加倍
+- 統計 S類別（行車運轉）+ R類別（故障排除）扣分項目
+- 與 User Story 8（履歷系統）整合
 
 **參考文件**：`C:\Users\kunpe\claude專案\115年度駕駛時數簽文製作\115年度當責駕駛時數激勵方案_最終版.docx`
 
@@ -412,21 +424,26 @@
 
 ### User Story 5 - 駕駛時數統計與競賽排名 (Priority: P3)
 
-系統每日同步勤務表資料，每月自動計算駕駛競賽排名。
+系統每日同步勤務表資料，每季自動計算駕駛競賽排名。
 
 **Why this priority**: 駕駛競賽是新增功能，優先級低於核心履歷與考核功能。
 
-**Independent Test**: 系統每月 1 日計算上月駕駛競賽排名，按部門和全公司分別排名。
+**Independent Test**: 系統每季首日（1/1, 4/1, 7/1, 10/1）凌晨 3:00 計算前一季度駕駛競賽排名，按部門分別排名（淡海前5名、安坑前3名）。
 
 **Acceptance Scenarios**:
 
 1. **Given** 管理員登入系統，**When** 進入「勤務標準時間管理」頁面，**Then** 可新增、編輯、刪除勤務標準時間（如「淡安-全」= 480 分鐘）
 2. **Given** 管理員上傳勤務標準時間 Excel 檔案，**When** 系統驗證資料格式，**Then** 批次匯入成功並顯示匯入筆數
 3. **Given** 系統在凌晨 2:30 執行勤務表同步，**When** 讀取淡海勤務表並查詢 `route_standard_times` 表，**Then** 計算每位員工的每日駕駛分鐘數並寫入 `driving_daily_stats`
-4. **Given** 班表標示某員工當日為 R班出勤，**When** 計算駕駛時數，**Then** 該日時數 × 2
-5. **Given** 每月 1 日凌晨 3:00，**When** 觸發競賽排名計算任務，**Then** 彙總上月所有員工的駕駛時數並套用公式計算最終積分
-6. **Given** 計算最終積分（= Σ(每日勤務時數 × R班係數) × 責任事件懲罰係數），**When** 計算完成，**Then** 按積分由高到低排名並寫入 `driving_competition`
-7. **Given** 排名計算完成，**When** 主管查詢駕駛競賽報表，**Then** 顯示所有員工排名、積分、部門內排名與全公司排名
+4. **Given** 班表標示某員工當日為 R班出勤，**When** 計算駕駛時數，**Then** 該日時數 × 2 計入 R班加成
+5. **Given** 每季首日（1/1, 4/1, 7/1, 10/1）凌晨 3:00，**When** 觸發競賽排名計算任務，**Then** 彙總前一季度所有員工的駕駛時數並套用公式計算最終積分
+6. **Given** 計算最終積分（= (Σ 每日實際駕駛時數 × R班係數) / (1 + 責任事件次數)），**When** 計算完成，**Then** 按積分由高到低排名並寫入 `driving_competition`
+7. **Given** 員工季度累計時數 < 300小時 或 季末已離職，**When** 資格檢查，**Then** 標記為不符合資格（bonus_amount = 0）
+8. **Given** 淡海分部排名計算完成，**When** 分配獎金，**Then** 僅前5名符合資格者獲得獎金（3600/3000/2400/1800/1200元）
+9. **Given** 安坑分部排名計算完成，**When** 分配獎金，**Then** 僅前3名符合資格者獲得獎金（3600/3000/2400元）
+10. **Given** 排名計算完成，**When** 主管查詢駕駛競賽報表，**Then** 顯示所有員工排名、積分、部門排名、資格狀態、獎金金額
+11. **Given** 查詢 2026 Q1 競賽結果，**When** 指定季度參數（year=2026, quarter=1），**Then** 返回該季度（2026/1-3月）的排名資料
+12. **Given** 責任事件從履歷系統統計 S/R 類別事件，**When** 計算懲罰係數，**Then** 實際積分 = 原始時數 / (1 + 事件次數)
 
 ---
 
@@ -467,6 +484,172 @@
 3. **Given** 檔案準備上傳，**When** 上傳到 Google Drive，**Then** 使用淡海的 Drive 憑證和資料夾 ID
 4. **Given** PDF 中包含「AK-67890」條碼，**When** 處理該頁面，**Then** 判定部門為「安坑」並上傳到安坑 Drive
 5. **Given** 上傳完成，**When** 更新履歷狀態，**Then** 記錄 Google Drive 連結並標記為已結案
+
+---
+
+### User Story 8 - 司機員事件履歷管理系統 (Priority: P1) ⭐ **(新增)**
+
+值班台人員需要能夠記錄和管理司機員的各類事件履歷，包括事件調查、人員訪談、考核加扣分、矯正措施等，並自動產生對應的 Office 文件。
+
+**Why this priority**: 事件履歷是司機員考核管理的核心，所有事件記錄都需要完整的文件化流程。
+
+**Independent Test**: 值班台人員建立一筆基本履歷後，將其轉換為「人員訪談」類型，系統自動從 Google Sheets 班表取得該員工事件當天前後的班別資訊，填充資料後產生 Word 文件並嵌入條碼，儲存到本機並記錄 Google Drive 連結。
+
+**Acceptance Scenarios**:
+
+1. **Given** 值班台人員登入系統，**When** 點擊「新增履歷」並填寫事件日期、員工姓名、事件地點、列車車號、事件描述，**Then** 系統建立基本履歷並儲存到資料庫
+2. **Given** 基本履歷已建立，**When** 點擊「轉換類型」並選擇「事件調查」，**Then** 系統彈出事件調查表單，包含事故時間、地點、目擊者、原因、經過、改善建議等欄位
+3. **Given** 填寫事件調查表單，**When** 點擊「儲存並產生文件」，**Then** 系統將表單資料儲存到資料庫，透過本機 API 產生 Word 文件，在文件底部嵌入 Code128 條碼（編碼格式：`{profile_id}|EI|{year}|{month}`）
+4. **Given** Word 文件產生完成，**When** 系統開啟文件供確認，**Then** 文件已填入所有資料庫欄位，檔案命名為「事件調查-YYYYMMDD_車號_地點_姓名.docx」，儲存到「淡海/事件調查/YYYY/MM/」資料夾
+5. **Given** 履歷已轉換為「人員訪談」，**When** 系統載入表單，**Then** 自動從 Google Sheets 班表取得該員工事件當天、前一天、前兩天的班別資訊並顯示在表單中
+6. **Given** 履歷已產生文件，**When** 使用者上傳掃描後的 PDF 到 Google Drive，**Then** 系統記錄 Google Drive 連結，更新履歷狀態為「已完成」，從未結案列表中移除
+7. **Given** 值班台人員查詢履歷，**When** 使用日期區間、員工姓名、列車車號、地點、關鍵字等條件篩選，**Then** 顯示符合條件的所有履歷記錄
+8. **Given** 履歷包含考核項目，**When** 建立考核記錄，**Then** 系統自動統計該員工該類別的年度累計次數並計算加重分數（適用 2026 年起）
+
+**履歷類型**:
+- **基本履歷（Basic）**: 所有履歷的初始狀態
+- **事件調查（Event Investigation）**: 事故調查記錄，包含調查人員、原因分析、改善建議
+- **人員訪談（Personnel Interview）**: 訪談記錄，自動帶入員工到職日期、事件前後班別
+- **考核加扣分通知單（Assessment Notice）**: 考核通知，包含加分/扣分類型、理由、核發日期
+- **矯正措施（Corrective Measures）**: 矯正措施記錄，包含事件概述、矯正行動
+
+**Office 文件命名規則**:
+- 事件調查/人員訪談/矯正措施：`類型-YYYYMMDD_車號_地點_姓名.docx`
+- 考核加扣分：`類型_YYYYMMDD_姓名.xlsx`
+
+**條碼編碼格式**: `{profile_id}|{type_code}|{year}|{month}`
+- type_code: EI（事件調查）、PI（人員訪談）、CM（矯正措施）、AA（考核加分）、AD（考核扣分）
+
+---
+
+### User Story 9 - 考核系統 V2 升級（累計加重機制） (Priority: P2) ⭐ **(新增)**
+
+系統需要支援 2026 年度起的新考核規則，包含累計加重機制、考核標準表管理、雙版本並存（V1/V2）。
+
+**Why this priority**: 2026 年起考核制度升級，需要累計加重機制以強化違規成本，鼓勵司機員改善行為。
+
+**Independent Test**: 員工「張三」在 2026 年 1 月發生第 1 次遲到扣 1 分，2 月發生第 2 次遲到扣 1.5 分（累計加重 1.5 倍），3 月發生第 3 次遲到扣 2 分（累計加重 2.0 倍）。系統自動計算累計次數並套用加重公式。
+
+**Acceptance Scenarios**:
+
+1. **Given** 管理員登入系統，**When** 進入「考核標準管理」頁面，**Then** 顯示所有考核項目（5 類扣分：D/W/O/S/R，5 類加分：+M/+A/+B/+C/+R）
+2. **Given** 管理員編輯考核項目「D01 遲到/早退」，**When** 設定項目代碼「D01」、基本分數「-1」、計分單位「每次」、是否適用累計加重「是」，**Then** 資料儲存到 `assessment_standards` 資料表
+3. **Given** 值班台人員為履歷選擇考核項目「D01」，**When** 事件日期為 2026-02-15，**Then** 系統自動查詢該員工 2026 年度 D 類扣分的累計次數
+4. **Given** 查詢到該員工 2026 年已有 1 次 D 類扣分（第 1 次），**When** 計算第 2 次扣分，**Then** 套用累計加重公式：實際扣分 = -1 × [1 + 0.5 × (2-1)] = -1.5 分
+5. **Given** 考核記錄儲存，**When** 寫入 `assessment_records` 資料表，**Then** 記錄包含 base_score=-1, accumulation_multiplier=1.5, weighted_score=-1.5, occurrence_count=2
+6. **Given** 管理員查詢員工年度考核摘要，**When** 選擇員工「張三」和年度「2026」，**Then** 顯示所有考核記錄，包含每筆的基本分數、累計倍率、實際分數
+7. **Given** 值班台人員刪除或修改考核記錄，**When** 操作完成，**Then** 系統自動重算該員工該年度的所有累計次數和加重分數
+8. **Given** 考核項目為「D05 曠職」（不適用累計加重），**When** 建立考核記錄，**Then** 不論累計次數為何，實際扣分 = 基本分數（累計倍率固定為 1.0）
+
+**累計加重公式**:
+```
+實際扣分 = 基本分 × [1 + 係數 × (第N次 - 1)]
+係數 = 0.5（可在系統設定調整）
+```
+
+**範例（D 類違規，係數 = 0.5）**:
+- 第 1 次：-1 × 1.0 = -1 分
+- 第 2 次：-1 × 1.5 = -1.5 分
+- 第 3 次：-1 × 2.0 = -2 分
+
+**雙版本並存**:
+- 2025 年（含）以前：使用 V1 規則（無累計加重）
+- 2026 年起：使用 V2 規則（含累計加重）
+- 系統根據履歷事件日期自動選擇版本
+
+**考核標準表管理**:
+- 支援上傳 Excel 考核標準表批次匯入
+- 支援手寫備註欄位（custom_notes），可自訂搜尋關鍵字
+- 支援關鍵字搜尋考核項目（項目名稱 + 手寫備註）
+
+---
+
+### User Story 10 - 差勤加分自動處理 (Priority: P2) ⭐ **(新增)**
+
+系統需要能夠自動從 Google Sheets 班表讀取資料，逐員工判斷全勤、R班出勤、延長工時三種差勤加分情況，並批次建立對應的履歷記錄。
+
+**Why this priority**: 差勤加分是每月例行作業，自動化可大幅減少手動建立履歷的工作量，避免遺漏或錯誤。
+
+**Independent Test**: 管理員選擇「2026 年 1 月」並點擊「執行差勤加分處理」，系統讀取淡海班表，發現員工「張三」當月全勤、員工「李四」有 2 次 R班出勤、員工「王五」有 1 次延長工時 2 小時，系統自動建立對應的履歷記錄並顯示處理統計。
+
+**Acceptance Scenarios**:
+
+1. **Given** 管理員登入系統，**When** 進入「差勤加分處理」頁面並選擇「2026 年 1 月」、「淡海」，**Then** 系統連接 Google Sheets 班表（分頁：11501班表）
+2. **Given** 班表資料讀取成功，**When** 系統掃描員工「張三」的整月班表，**Then** 發現所有儲存格都不包含「(假)」字樣，判定符合全勤條件
+3. **Given** 員工符合全勤，**When** 系統建立履歷，**Then** 事件描述為「張三-202601-全勤」，考核項目為「+M01 月度全勤」（+3 分），類型為「考核加分通知單」
+4. **Given** 系統掃描員工「李四」的班表，**When** 發現 1/5 顯示「R/0905G」、1/12 顯示「R(國)/1425G」，**Then** 判定有 2 次 R班出勤
+5. **Given** 員工有 R班出勤，**When** 系統建立履歷，**Then** 分別建立 2 筆履歷，事件描述為「李四-20260105-R班出勤」和「李四-20260112-R班出勤」，考核項目為「+A01 R班出勤」（+3 分/次）
+6. **Given** 系統掃描員工「王五」的班表，**When** 發現 1/8 顯示「1425G(+2)」，**Then** 判定有 1 次延長工時 2 小時
+7. **Given** 員工有延長工時，**When** 系統建立履歷，**Then** 事件描述為「王五-20260108-延長工時2小時」，考核項目為「+A04 延長工時 2 小時」（+1.0 分）
+8. **Given** 處理完成，**When** 顯示結果統計，**Then** 顯示「全勤新增 X 筆、R班出勤新增 Y 筆、延長工時新增 Z 筆、跳過 N 筆（已存在）」
+9. **Given** 系統執行前檢查資料庫，**When** 發現已存在相同事件描述的履歷，**Then** 跳過該筆，避免重複建立
+
+**判定規則**:
+
+**1. 月度全勤（+M01）**:
+- **條件**: 當月班表所有儲存格都不包含「(假)」字樣
+- **分數**: +3 分
+- **履歷描述**: `{姓名}-{YYYYMM}-全勤`
+
+**2. R班出勤（+A01）**:
+- **判斷邏輯**: 班表有 `R/...` 或 `R(國)/...`
+- **範例**: `R/0905G`, `R(國)/1425G`
+- **分數**: +3 分/次
+- **履歷描述**: `{姓名}-{YYYYMMDD}-R班出勤`
+
+**3. 延長工時（+A03~+A06）**:
+- **判斷邏輯**: 班表有 `(+1)`, `(+2)`, `(+3)`, `(+4)`
+- **範例**: `1425G(+2)` = 該班次加班 2 小時
+- **分數**:
+  - (+1) → +A03 → +0.5 分
+  - (+2) → +A04 → +1.0 分
+  - (+3) → +A05 → +1.5 分
+  - (+4) → +A06 → +2.0 分
+- **履歷描述**: `{姓名}-{YYYYMMDD}-延長工時{N}小時`
+
+**複合情況處理**:
+- 範例：`R/0905G(+2)` → 同時建立「R班出勤」和「延長工時 2 小時」兩筆履歷
+
+---
+
+### User Story 11 - 未結案管理系統 (Priority: P3) ⭐ **(新增)**
+
+系統需要提供專門的未結案管理功能，列出所有已產生文件但尚未上傳 PDF 到 Google Drive 的履歷，追蹤文件處理進度。
+
+**Why this priority**: 未結案管理可幫助值班台人員追蹤待辦事項，確保所有履歷都完成文件上傳流程，避免遺漏。
+
+**Independent Test**: 值班台人員進入「未結案專區」，看到 5 筆待上傳的事件調查履歷和 3 筆待上傳的人員訪談履歷，選擇其中一筆上傳掃描後的 PDF，系統自動上傳到 Google Drive 並從未結案列表中移除。
+
+**Acceptance Scenarios**:
+
+1. **Given** 履歷已轉換為特定類型（事件調查/人員訪談/矯正措施/考核加扣分）且已產生文件，**When** 系統儲存履歷記錄，**Then** 將 `conversion_status` 設定為「converted」（已轉換但未上傳 PDF）
+2. **Given** 值班台人員登入系統，**When** 進入「未結案專區」，**Then** 系統查詢 `Profile` 表中 `conversion_status = 'converted'` 且 `gdrive_link IS NULL` 的記錄，按類型分類顯示（事件調查、人員訪談、矯正措施、考核加扣分）
+3. **Given** 未結案列表顯示，**When** 查看列表內容，**Then** 每筆記錄顯示：事件日期、員工姓名、履歷類型、建立日期、檔案路徑
+4. **Given** 值班台人員選擇一筆未結案履歷，**When** 點擊「上傳 PDF」並選擇檔案，**Then** 系統透過本機 API 上傳 PDF 到 Google Drive 對應的資料夾（根據類型和日期）
+5. **Given** PDF 上傳成功，**When** 系統記錄 Google Drive 連結，**Then** 更新履歷的 `gdrive_link` 欄位並將 `conversion_status` 更新為「completed」（已完成），履歷自動從未結案列表中消失
+6. **Given** 上傳過程中發生錯誤（如網路問題），**When** 上傳失敗，**Then** 顯示錯誤訊息「上傳失敗：{錯誤原因}」，`conversion_status` 保持「converted」，記錄保留在未結案列表中，允許重新上傳
+7. **Given** 值班台人員需要確認處理進度，**When** 查看未結案統計資訊，**Then** 系統統計 `conversion_status = 'converted'` 的記錄，顯示：各類型待處理案件數量、最舊未結案日期、本月完成率
+
+**未結案狀態流程**:
+```
+履歷建立（Profile.conversion_status = 'pending'）
+  ↓
+類型轉換（產生 Word/Excel 文件）
+  ↓
+【進入未結案列表】← conversion_status = 'converted', gdrive_link = NULL
+  ↓
+上傳 PDF 到 Google Drive
+  ↓
+【從未結案列表移除】← conversion_status = 'completed', gdrive_link 已填入
+```
+
+**統計資訊**:
+- 事件調查待處理：X 筆
+- 人員訪談待處理：Y 筆
+- 矯正措施待處理：Z 筆
+- 考核加扣分待處理：W 筆
+- 最舊未結案日期：YYYY-MM-DD
+- 本月完成率：N%
 
 ---
 
@@ -541,12 +724,14 @@
 
 #### 駕駛時數與競賽
 
-- **FR-025**: 系統必須記錄每位員工每日的駕駛時數（分鐘）
-- **FR-026**: 系統必須記錄每位員工每日的責任事件次數
-- **FR-027**: 系統必須每月 1 日凌晨 3:00 自動計算上月駕駛競賽排名
-- **FR-028**: 系統必須分別計算部門內排名與全公司排名
-- **FR-029**: 系統必須根據駕駛競賽方案計算最終積分（= Σ(每日勤務時數 × R班係數) × 責任事件懲罰係數）
-- **FR-030**: 系統必須提供駕駛競賽排名報表（主管可查詢）
+- **FR-025**: 系統必須記錄每位員工每日的駕駛時數（分鐘）與 R班出勤狀態
+- **FR-026**: 系統必須記錄每位員工每季的責任事件次數（S/R 類別）
+- **FR-027**: 系統必須每季首日（1/1, 4/1, 7/1, 10/1）凌晨 3:00 自動計算前一季度駕駛競賽排名 ⭐ **(季度制更新 2026-01-29)**
+- **FR-027a**: 系統必須檢查員工季度資格（累計≥300小時 且 季末在職）⭐ **(新增 2026-01-29)**
+- **FR-028**: 系統必須分別計算部門內排名（淡海前5名、安坑前3名）⭐ **(更新 2026-01-29)**
+- **FR-029**: 系統必須根據駕駛競賽方案計算最終積分（= (Σ 每日實際駕駛時數 × R班係數) / (1 + 責任事件次數)）⭐ **(更新 2026-01-29)**
+- **FR-029a**: 系統必須根據部門和排名分配獎金（淡海5階/安坑3階）⭐ **(新增 2026-01-29)**
+- **FR-030**: 系統必須提供駕駛競賽排名報表（主管可查詢季度資料）
 - **FR-031**: 系統必須提供勤務標準時間管理功能（僅管理員可編輯）⭐ **(新增)**
   - 支援新增、編輯、刪除勤務標準時間
   - 包含欄位：部門、勤務代碼、勤務名稱、標準分鐘數、啟用狀態
@@ -637,6 +822,97 @@
 - **FR-056**: 資料遷移必須支援選擇性匯入（指定年度範圍、特定資料類型）
 - **FR-057**: 資料遷移必須包含資料驗證與格式轉換功能
 - **FR-058**: 資料遷移完成後必須產生詳細報告（成功、失敗、跳過筆數）
+
+#### 履歷管理系統（User Story 8）⭐ **(新增)**
+
+- **FR-075**: 系統必須支援建立基本履歷，包含事件日期、員工姓名、事件地點、列車車號、事件描述
+- **FR-076**: 系統必須支援履歷類型轉換（基本 → 事件調查/人員訪談/考核加扣分/矯正措施）
+- **FR-077**: 系統必須為每種履歷類型提供對應的擴展資料表（1:1 關係）
+- **FR-078**: 系統必須實作樂觀鎖機制（版本號），防止並發編輯衝突
+- **FR-079**: 系統必須支援履歷多條件查詢（日期區間、員工姓名、列車車號、地點、關鍵字）
+- **FR-080**: 系統必須透過本機 API 產生 Office 文件（Word/Excel）。**資料流向**：前端從雲端 API 獲取完整資料（履歷資料、員工資料、班表資料等），打包成 JSON Payload 傳送給本機 API。本機 API **嚴禁連接資料庫**，僅負責接收資料、生成文件、嵌入條碼並返回檔案路徑
+- **FR-081**: 系統必須在 Word 文件底部嵌入 Code128 條碼（編碼格式：`{profile_id}|{type_code}|{year}|{month}`）
+- **FR-082**: 系統必須依照命名規則儲存 Office 檔案：
+  - 事件調查/人員訪談/矯正措施：`類型-YYYYMMDD_車號_地點_姓名.docx`
+  - 考核加扣分：`類型_YYYYMMDD_姓名.xlsx`
+- **FR-083**: 系統必須依照部門和日期建立資料夾結構：`{部門}/{類型}/{年份}/{月份}/`
+- **FR-084**: 系統必須在人員訪談表單自動從 Google Sheets 班表取得員工班次資訊（事件當天、前1天、前2天）
+- **FR-085**: 系統必須在人員訪談表單自動從員工編號解析到職日期（格式：YYMM → YYYY/MM）
+- **FR-086**: 系統必須支援將 PDF 上傳到 Google Drive 並記錄連結。**安全性**：上傳時自動設定檔案權限為「僅網域內可檢視」(domain-wide sharing)，防止連結外洩
+- **FR-087**: 系統必須在 PDF 上傳成功後更新履歷狀態為「已完成」
+- **FR-088**: 系統必須支援履歷軟刪除（標記 deleted_at，不實際刪除記錄）
+- **FR-089**: 系統必須記錄履歷建立者與最後修改者
+- **FR-090**: 系統必須支援履歷匯出（Excel 完整版、技安簡化版）
+
+**本機 API Payload 結構範例** (FR-080 補充說明):
+```json
+{
+  "document_type": "personnel_interview",
+  "profile_id": 12345,
+  "barcode_data": "12345|PI|2026|01",
+  "data": {
+    "event_date": "2026-01-15",
+    "employee_name": "張三",
+    "employee_id": "1011M0095",
+    "hire_date": "2021/11",
+    "event_location": "淡水站",
+    "train_number": "1101",
+    "shift1": "0905G",
+    "shift2": "R/1425G",
+    "shift3": "休",
+    "interview_content": "...",
+    "interviewer": "李四"
+  }
+}
+```
+
+#### 考核系統 V2 升級（User Story 9）⭐ **(新增)**
+
+- **FR-091**: 系統必須支援考核標準表 CRUD 操作（新增、編輯、查詢、軟刪除）
+- **FR-092**: 系統必須支援考核標準表版本管理（V1: 2025年前，V2: 2026年起）
+- **FR-093**: 系統必須根據履歷事件日期自動選擇考核版本（V1/V2）
+- **FR-094**: 系統必須實作累計加重機制（公式：`實際扣分 = 基本分 × [1 + 係數 × (第N次 - 1)]`）
+- **FR-095**: 系統必須自動統計員工該類別的年度累計次數（按類別代碼分類）
+- **FR-096**: 系統必須在每年 1/1 自動重置所有員工的累計次數
+- **FR-097**: 系統必須排除不適用累計加重的項目（D05, W04/W05/W07, S12/S13/S16）
+- **FR-098**: 系統必須在刪除或修改考核記錄後，自動重算該員工該年度的所有累計次數。**交易機制**：重算邏輯必須包裹在資料庫 Transaction 中，流程為：(1) BEGIN TRANSACTION, (2) 鎖定該員工該年度所有記錄（FOR UPDATE）, (3) 依 event_date 排序, (4) 重新計算累計次數與加重分數, (5) 批次更新所有記錄, (6) COMMIT。確保並發安全性，避免 Race Condition
+- **FR-099**: 系統必須支援考核標準表 Excel 批次匯入功能
+- **FR-100**: 系統必須支援手寫備註欄位（custom_notes），可自訂搜尋關鍵字（上限 500 字元）
+- **FR-101**: 系統必須支援關鍵字搜尋考核項目（搜尋範圍：項目名稱 + 手寫備註）
+- **FR-102**: 系統必須支援查詢員工年度考核摘要（包含每筆的基本分數、累計倍率、實際分數）
+- **FR-103**: 系統必須支援匯出考核月報表（排名 + 簽章欄位 + 考核明細）
+- **FR-104**: 系統必須支援並列排名（跳號）功能（總分相同時排名並列）
+
+#### 差勤加分自動處理（User Story 10）⭐ **(新增)**
+
+- **FR-105**: 系統必須提供差勤加分處理功能，可選擇年月和部門
+- **FR-106**: 系統必須從 Google Sheets 班表讀取指定月份資料
+- **FR-107**: 系統必須自動判斷三種差勤加分：全勤（+M01）、R班出勤（+A01）、延長工時（+A03~+A06）。**容錯處理**：解析前先正規化字串（移除多餘空白、全形符號轉半形），使用正則表達式 `\(假\)` 精確匹配全勤判定，避免誤判備註欄內容
+- **FR-108**: 系統必須在資料庫層級防止重複建立。**建議實作**：在 `Profile` 表建立複合唯一約束 `UNIQUE(employee_id, event_date, assessment_item)`，比事件描述字串比對更可靠。若違反約束則跳過該筆記錄並在統計中計入「跳過」
+- **FR-109**: 系統必須在處理完成後顯示統計結果（全勤新增 X 筆、R班出勤新增 Y 筆、延長工時新增 Z 筆、跳過 N 筆）
+- **FR-110**: 系統必須支援複合情況處理（如 `R/0905G(+2)` 同時建立兩筆履歷）
+- **FR-111**: 系統必須將自動建立的履歷標記資料來源為「系統自動」
+
+#### 未結案管理系統（User Story 11）⭐ **(新增)**
+
+- **FR-112**: 系統必須在履歷轉換為特定類型且產生文件後，將 `Profile.conversion_status` 設定為「converted」
+- **FR-113**: 系統必須提供未結案列表，查詢條件為 `conversion_status = 'converted' AND gdrive_link IS NULL`，按類型分類顯示，使用複合索引 `(conversion_status, department)` 提升查詢效能
+- **FR-114**: 系統必須顯示每筆未結案記錄的：事件日期、員工姓名、履歷類型、建立日期、檔案路徑
+- **FR-115**: 系統必須支援從未結案列表直接上傳 PDF 到 Google Drive
+- **FR-116**: 系統必須在 PDF 上傳成功後，更新 `Profile.gdrive_link` 並將 `conversion_status` 更新為「completed」，履歷自動從未結案列表消失
+- **FR-117**: 系統必須顯示未結案統計資訊（各類型待處理數量、最舊未結案日期、本月完成率），透過 `Profile` 表統計 `conversion_status = 'converted'` 的記錄
+- **FR-118**: 系統必須在上傳失敗時保持 `conversion_status = 'converted'`，記錄保留在未結案列表中並允許重新上傳
+
+#### 駕駛時數統計強化（User Story 5 擴充）⭐ **(新增)**
+
+- **FR-119**: 系統必須支援即時計算指定日期的駕駛時數統計（不儲存）
+- **FR-120**: 系統必須支援處理單一日期並儲存到 `driving_daily_stats`
+- **FR-121**: 系統必須支援批次處理日期範圍（限制 31 天）
+- **FR-122**: 系統必須支援自動補齊缺失日期（從最後處理日期到昨天）
+- **FR-123**: 系統必須支援查詢最後處理日期
+- **FR-124**: 系統必須支援月度彙總統計（按總駕駛分鐘數排序）
+- **FR-125**: 系統必須支援定時任務管理 API（查看排程、手動觸發）
+- **FR-126**: 系統必須在 `driving_daily_stats` 記錄當日責任事件次數（R+S 類扣分）
 
 ### Database Configuration ⭐ **(新增)**
 
@@ -1527,6 +1803,162 @@ sequenceDiagram
 - created_at: DateTime
 - updated_at: DateTime
 - UniqueConstraint(employee_id, competition_year, competition_month)
+```
+
+#### Profile (履歷主表) ⭐ **(User Story 8 新增)**
+```python
+- id: Integer (PK)
+- version: Integer  # 樂觀鎖版本號，防止並發編輯衝突
+- profile_type: Enum('basic', 'event_investigation', 'personnel_interview', 'assessment_notice', 'corrective_measures')
+- event_date: Date (必填)
+- event_time: String(5)  # HH:MM 格式
+- event_title: String(200) (必填)
+- employee_id: String(20) (必填)
+- employee_name: String(50) (必填, 索引)
+- department: Enum('淡海', '安坑')
+- event_location: String(100) (索引)
+- train_number: String(20) (索引)
+- event_description: Text (必填)
+- data_source: String(100)  # 資料來源（如「系統自動」、「手動建立」）
+- assessment_item: String(200)  # 考核項目代碼（如「[D01] 遲到/早退」）
+- assessment_score: Decimal(5,2)
+- conversion_status: Enum('pending', 'converted', 'completed')  # 轉換狀態
+- file_path: String(500)  # 本機 Office 檔案路徑
+- gdrive_link: String(500)  # Google Drive 連結
+- created_by: Integer (FK → User.id)
+- created_at: DateTime
+- updated_at: DateTime
+- Index(event_date)
+- Index(employee_name)
+- Index(event_location)
+- Index(train_number)
+- Index(conversion_status, department)  # 複合索引，用於未結案查詢
+- UniqueConstraint(employee_id, event_date, assessment_item, name='uq_profile_dedup')  # 防止差勤加分重複建立（FR-108）
+```
+
+#### EventInvestigation (事件調查) ⭐ **(User Story 8 新增)**
+```python
+- id: Integer (PK)
+- profile_id: Integer (FK → Profile.id, Unique)
+- incident_time: DateTime
+- incident_location: String(200)
+- witness_name: String(100)
+- incident_cause: Text  # 事故原因
+- incident_process: Text  # 事故經過
+- improvement_suggestion: Text  # 改善建議
+- investigator: String(50)
+- investigation_date: Date
+- created_at: DateTime
+- updated_at: DateTime
+```
+
+#### PersonnelInterview (人員訪談) ⭐ **(User Story 8 新增)**
+```python
+- id: Integer (PK)
+- profile_id: Integer (FK → Profile.id, Unique)
+- interview_date: Date
+- interviewer: String(50)
+- incident_cause: Text  # 事故經過（與 EventInvestigation 共用欄位名稱）
+- interview_content: Text  # 訪談記錄
+- interview_result: Text  # 訪談結果（多選，逗號分隔）
+- interview_result_other: String(200)  # 訪談結果-其他
+- follow_up_actions: Text  # 追蹤辦理事項（多選，逗號分隔）
+- follow_up_actions_other: String(200)  # 追蹤辦理事項-其他
+- conclusion: Text  # 值班人員建議
+# 自動帶入欄位（從員工編號與 Google Sheets 班表取得）
+- hire_date: String(10)  # 到職日期（如 2021/11）
+- shift1: String(50)  # 事件當天班別
+- shift2: String(50)  # 事件前一天班別
+- shift3: String(50)  # 事件前兩天班別
+- created_at: DateTime
+- updated_at: DateTime
+```
+
+#### CorrectiveMeasures (矯正措施) ⭐ **(User Story 8 新增)**
+```python
+- id: Integer (PK)
+- profile_id: Integer (FK → Profile.id, Unique)
+- incident_cause: Text  # 事件概述
+- corrective_action: Text  # 矯正措施
+- created_at: DateTime
+- updated_at: DateTime
+```
+
+#### AssessmentNotice (考核加扣分通知單) ⭐ **(User Story 8 新增)**
+```python
+- id: Integer (PK)
+- profile_id: Integer (FK → Profile.id, Unique)
+- notice_type: Enum('addition', 'deduction')  # 加分/扣分
+- reason: Text
+- issuer: String(50)
+- issue_date: Date
+- created_at: DateTime
+- updated_at: DateTime
+```
+
+#### AssessmentStandard (考核標準表) ⭐ **(User Story 9 新增)**
+```python
+- id: Integer (PK)
+- item_name: String(200) (必填)  # 考核項目名稱
+- category: Enum('addition', 'deduction')  # 加分/扣分
+- base_score: Decimal(5,2) (必填)  # 基本分數
+- description: Text
+- version: String(20) (必填)  # 版本號（v1, v2）
+- effective_date: Date (必填)  # 生效日期
+# V2 新增欄位（2026年起）
+- code: String(10)  # 項目代碼（如 D01, +M01）
+- category_code: String(5)  # 類別代碼（如 D, W, O, S, R, +M, +A, +B, +C, +R）
+- unit: String(10)  # 計分單位（每次、每月、每趟）
+- is_accumulation_applicable: Boolean  # 是否適用累計加重（預設 True）
+- custom_notes: Text  # 手寫備註（支援關鍵字搜尋，上限 500 字元）
+- created_at: DateTime
+- updated_at: DateTime
+- Index(item_name)
+- Index(category)
+- Index(code)
+- Index(category_code)
+```
+
+**說明**：
+- V1 版本（2025 年含以前）：使用 item_name, category, base_score, description, version, effective_date
+- V2 版本（2026 年起）：額外使用 code, category_code, unit, is_accumulation_applicable, custom_notes
+- 不適用累計加重的項目：D05（曠職）、W04/W05/W07、S12/S13/S16（重大違規）
+
+#### AssessmentRecord (考核記錄) ⭐ **(User Story 9 新增)**
+```python
+- id: Integer (PK)
+- profile_id: Integer (FK → Profile.id)
+- employee_id: String(20) (必填)
+- employee_name: String(50) (必填)
+- item_id: Integer (FK → AssessmentStandard.id)
+- base_score: Decimal(5,2) (必填)  # 基本分數
+- weighted_score: Decimal(5,2) (必填)  # 實際分數（含加重）
+- occurrence_count: Integer (必填)  # 累計次數（年度內）
+- fiscal_year: Integer (必填)
+# V2 新增欄位（2026年起）
+- accumulation_multiplier: Decimal(4,2)  # 累計加重倍率（如 1.0, 1.5, 2.0）
+- condition_flags: Text  # 條件加重標記（JSON 格式）
+- remarks: Text  # 備註說明
+- occurred_at: DateTime  # 發生日期時間
+- created_by: String(50)
+- deleted_at: DateTime  # 軟刪除時間
+- created_at: DateTime
+- updated_at: DateTime
+- Index(employee_id)
+- Index(fiscal_year)
+- Index(employee_id, fiscal_year)  # 複合索引
+- Index(occurred_at)
+```
+
+**累計加重公式**：
+```
+實際扣分 = 基本分 × [1 + 係數 × (第N次 - 1)]
+係數 = 0.5（可在系統設定調整）
+
+範例（D 類違規）：
+- 第 1 次：-1 × 1.0 = -1 分
+- 第 2 次：-1 × 1.5 = -1.5 分
+- 第 3 次：-1 × 2.0 = -2 分
 ```
 
 ## Success Criteria *(mandatory)*

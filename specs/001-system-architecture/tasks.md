@@ -321,41 +321,70 @@
 
 ---
 
-## Phase 9: User Story 5 - 駕駛時數統計與競賽排名 (Priority: P3)
+## Phase 9: User Story 5 - 駕駛時數統計與競賽排名 (Priority: P3) ⭐ **(季度制更新 2026-01-29)**
 
-**Goal**: 系統每日同步勤務表資料，每月自動計算駕駛競賽排名
+**Goal**: 系統每日同步勤務表資料，每季自動計算駕駛競賽排名
 
-**Independent Test**: 系統每月 1 日計算上月駕駛競賽排名，按部門和全公司分別排名。
+**Independent Test**: 系統每季首日（1/1, 4/1, 7/1, 10/1）凌晨 3:00 計算前一季度駕駛競賽排名，按部門分別排名（淡海前5名、安坑前3名）。
 
 ### 資料模型
 
 - [ ] T102 [P] [US5] 建立 RouteStandardTime 模型在 backend/src/models/route_standard_time.py（department, route_code, route_name, standard_minutes, is_active）
-- [ ] T103 [P] [US5] 建立 DrivingDailyStats 模型在 backend/src/models/driving_daily_stats.py（employee_id, department, record_date, total_minutes, incident_count）
-- [ ] T104 [P] [US5] 建立 DrivingCompetition 模型在 backend/src/models/driving_competition.py（employee_id, competition_year, competition_month, total_driving_minutes, safety_score, rank_in_department, rank_overall）
+- [ ] T103 [P] [US5] 建立 DrivingDailyStats 模型在 backend/src/models/driving_daily_stats.py（employee_id, department, record_date, total_minutes, is_holiday_work, incident_count）
+  - **新增欄位**：is_holiday_work: BOOLEAN（是否為 R班出勤，用於 × 2 計算）
+- [ ] T104 [P] [US5] 建立 DrivingCompetition 模型在 backend/src/models/driving_competition.py（employee_id, competition_year, competition_quarter, department, total_driving_minutes, holiday_work_bonus_minutes, incident_count, final_score, rank_in_department, is_qualified, bonus_amount, is_employed_on_last_day）
+  - **關鍵欄位**：
+    - competition_quarter: INTEGER（1-4，季度識別）
+    - is_qualified: BOOLEAN（是否符合資格：時數≥300小時 且 季末在職）
+    - bonus_amount: INTEGER（獎金金額，依排名：淡海5階/安坑3階）
+    - is_employed_on_last_day: BOOLEAN（季度最後一日是否在職）
+    - 移除：rank_overall（不再需要全公司排名）
 
 ### 後端服務
 
 - [ ] T105 [US5] 實作勤務標準時間管理服務在 backend/src/services/route_standard_time_service.py（CRUD 操作、Excel 匯入驗證）
 - [ ] T106 [US5] 實作勤務表同步服務在 backend/src/services/duty_sync_service.py（讀取 Google Sheets 勤務表、查詢 route_standard_times、計算駕駛時數）
-- [ ] T107 [US5] 實作駕駛時數計算服務在 backend/src/services/driving_stats_calculator.py（彙總每日時數、R班係數 × 2、責任事件懲罰係數 × 1/(1+N)）
-- [ ] T108 [US5] 實作駕駛競賽排名服務在 backend/src/services/driving_competition_ranker.py（計算最終積分、部門排名、全公司排名、排除離職員工）
-- [ ] T109 [US5] 新增定時任務在 backend/src/tasks/scheduler.py（勤務表同步 2:30、競賽排名計算每月 1 日 3:00）
+- [ ] T107 [US5] 實作駕駛時數計算服務在 backend/src/services/driving_stats_calculator.py（每日時數彙總、R班判定、責任事件統計、季度累計）
+  - **功能更新**：
+    - R班判定：從 schedules 表查詢 shift_type 含「R」則標記
+    - 責任事件統計：從 profiles 表統計 S/R 類別事件（待 US8 整合）
+    - 季度累計：提供季度時數查詢方法
+- [ ] T108 [US5] 實作駕駛競賽排名服務在 backend/src/services/driving_competition_ranker.py（季度積分計算、資格檢查、部門排名、排名限額、獎金分配、在職驗證）
+  - **核心邏輯**：
+    1. 資格檢查：季度累計時數 ≥ 300小時 且 季度最後一日 is_resigned = false
+    2. 積分計算：final_score = (total_minutes + holiday_work_bonus_minutes) / (1 + incident_count)
+    3. 部門排名：依 final_score 降序排列，積分相同時依 employee_id 升序
+    4. 排名限額與獎金：
+       - 淡海：rank ≤ 5 才獲獎金，金額 = [3600, 3000, 2400, 1800, 1200][rank-1]
+       - 安坑：rank ≤ 3 才獲獎金，金額 = [3600, 3000, 2400][rank-1]
+- [ ] T109 [US5] 更新定時任務在 backend/src/tasks/scheduler.py（勤務表同步維持每日2:30、競賽排名改為季度首日 3:00）
+  - **任務調整**：
+    - 勤務表同步：維持每日 02:30（無變更）
+    - 競賽排名計算：改為每季首日 1/1, 4/1, 7/1, 10/1 凌晨 03:00
+    - Cron 表達式：trigger=CronTrigger(month='1,4,7,10', day=1, hour=3, minute=0)
 
 ### 後端 API 端點
 
 - [ ] T110 [US5] 實作勤務標準時間 CRUD API 在 backend/src/api/route_standard_time.py（GET/POST/PUT/DELETE /api/routes, 僅 Admin 可編輯）
 - [ ] T111 [US5] 實作勤務標準時間 Excel 匯入 API 在 backend/src/api/route_standard_time.py（POST /api/routes/import-excel, 驗證格式與欄位）
 - [ ] T112 [US5] 實作駕駛時數查詢 API 在 backend/src/api/driving_stats.py（GET /api/driving/stats, 支援日期與員工篩選）
-- [ ] T113 [US5] 實作駕駛競賽排名 API 在 backend/src/api/driving_competition.py（GET /api/driving/competition, 支援年月與部門篩選）
+- [ ] T113 [US5] 實作駕駛競賽排名 API 在 backend/src/api/driving_competition.py（GET /api/driving/competition?year={year}&quarter={quarter}&department={department}）
+  - **參數變更**：month → quarter（1-4）
+  - **回應格式新增**：
+    - is_qualified（資格狀態）
+    - bonus_amount（獎金金額）
+    - stats.qualified_count（符合資格人數）
+    - stats.bonus_recipients（獲獎人數）
 
 ### 前端實作
 
 - [ ] T114 [P] [US5] 建立勤務標準時間管理頁面在 frontend/src/views/RouteStandardTimes.vue（僅管理員可見、CRUD 表單、Excel 匯入功能）
-- [ ] T115 [P] [US5] 建立駕駛時數查詢頁面在 frontend/src/views/DrivingStats.vue（員工時數統計、圖表顯示）
-- [ ] T116 [P] [US5] 建立駕駛競賽排名頁面在 frontend/src/views/DrivingCompetition.vue（排名榜、積分顯示、部門與全公司排名）
-- [ ] T117 [US5] 建立駕駛時數 Store 在 frontend/src/stores/drivingStats.js（Pinia state、actions）
+- [ ] T115 [P] [US5] 建立駕駛時數查詢頁面在 frontend/src/views/DrivingStats.vue（員工時數統計、季度累計圖表）
+- [ ] T116 [P] [US5] 建立駕駛競賽排名頁面在 frontend/src/views/DrivingCompetition.vue（排名榜、積分顯示、部門排名、資格狀態、獎金金額）
+  - **顯示欄位更新**：季度選擇器（year + quarter）、資格標記、獎金金額
+- [ ] T117 [US5] 建立駕駛時數 Store 在 frontend/src/stores/drivingStats.js（Pinia state、actions、季度參數）
 
-**Checkpoint**: 駕駛時數統計與競賽排名功能完成
+**Checkpoint**: 駕駛時數統計與競賽排名功能完成（季度制）
 
 ---
 
