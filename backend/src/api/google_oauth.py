@@ -25,6 +25,7 @@ from src.config.database import get_db
 from src.config.settings import get_settings
 from src.middleware.auth import get_current_user, require_roles
 from src.models.google_oauth_token import GoogleOAuthToken
+from src.models.oauth_state import OAuthState
 from src.models.user import User
 from src.utils.encryption import encrypt_token, decrypt_token
 
@@ -50,9 +51,6 @@ OAUTH_SCOPES = [
 
 # 有效部門
 VALID_DEPARTMENTS = ["淡海", "安坑"]
-
-# State token 暫存（正式環境應使用 Redis 或資料庫）
-_pending_states: dict[str, dict] = {}
 
 
 # ============================================================
@@ -112,38 +110,64 @@ def _get_oauth_credentials():
     return client_id, client_secret, redirect_uri
 
 
-def _generate_state_token(department: str) -> str:
-    """生成並儲存 state token"""
-    state = secrets.token_urlsafe(32)
-    _pending_states[state] = {
-        "department": department,
-        "created_at": datetime.now(timezone.utc),
-    }
+def _generate_state_token(department: str, db: Session) -> str:
+    """
+    生成並儲存 state token 到資料庫
 
-    # 清理過期的 state（超過 10 分鐘）
-    expired_threshold = datetime.now(timezone.utc) - timedelta(minutes=10)
-    expired_states = [
-        s for s, data in _pending_states.items()
-        if data["created_at"] < expired_threshold
-    ]
-    for s in expired_states:
-        del _pending_states[s]
+    Args:
+        department: 部門名稱
+        db: 資料庫 session
+
+    Returns:
+        str: 生成的 state token
+    """
+    state = secrets.token_urlsafe(32)
+
+    # 建立 state token 記錄
+    oauth_state = OAuthState.create_state(
+        state=state,
+        department=department,
+        expires_in_minutes=10
+    )
+
+    db.add(oauth_state)
+    db.commit()
+
+    # 清理過期的 state tokens
+    OAuthState.cleanup_expired(db)
 
     return state
 
 
-def _validate_state_token(state: str) -> Optional[str]:
-    """驗證 state token，返回部門"""
-    if state not in _pending_states:
+def _validate_state_token(state: str, db: Session) -> Optional[str]:
+    """
+    驗證 state token 並標記為已使用
+
+    Args:
+        state: State token
+        db: 資料庫 session
+
+    Returns:
+        Optional[str]: 部門名稱，驗證失敗則返回 None
+    """
+    # 查詢 state token
+    oauth_state = db.query(OAuthState).filter(
+        OAuthState.state == state
+    ).first()
+
+    if not oauth_state:
         return None
 
-    data = _pending_states.pop(state)
-
-    # 檢查是否過期（10 分鐘）
-    if datetime.now(timezone.utc) - data["created_at"] > timedelta(minutes=10):
+    # 檢查是否有效
+    if not oauth_state.is_valid():
         return None
 
-    return data["department"]
+    # 標記為已使用
+    department = oauth_state.department
+    oauth_state.mark_as_used()
+    db.commit()
+
+    return department
 
 
 # ============================================================
@@ -153,7 +177,8 @@ def _validate_state_token(state: str) -> Optional[str]:
 @router.get("/api/google/auth-url", response_model=AuthUrlResponse)
 async def get_auth_url(
     department: str = Query(..., description="部門名稱（淡海 或 安坑）"),
-    current_user: User = Depends(require_roles(["admin"]))
+    current_user: User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db)
 ):
     """
     生成 Google OAuth 授權 URL
@@ -176,7 +201,7 @@ async def get_auth_url(
         redirect_uri = f"{base_url}/api/auth/google/callback"
 
     # 生成 state token
-    state = _generate_state_token(department)
+    state = _generate_state_token(department, db)
 
     # 建立授權 URL
     params = {
@@ -245,7 +270,7 @@ async def oauth_callback(
         )
 
     # 驗證 state token
-    department = _validate_state_token(state)
+    department = _validate_state_token(state, db)
     if not department:
         raise HTTPException(
             status_code=400,

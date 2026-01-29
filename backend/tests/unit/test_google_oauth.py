@@ -374,9 +374,9 @@ class TestTokenEncryptionInOAuth:
 class TestStateTokenValidation:
     """測試 State Token 驗證"""
 
-    def test_state_token_expiration(self, client, admin_token):
+    def test_state_token_expiration(self, client, admin_token, db_session):
         """測試 state token 過期"""
-        from src.api.google_oauth import _pending_states, _generate_state_token
+        from src.models.oauth_state import OAuthState
         from datetime import timedelta
 
         with patch('src.api.google_oauth._get_oauth_credentials') as mock_creds:
@@ -393,11 +393,13 @@ class TestStateTokenValidation:
             )
             state = auth_response.json()["state"]
 
-            # 修改 state 的建立時間為 15 分鐘前（超過 10 分鐘限制）
-            if state in _pending_states:
-                _pending_states[state]["created_at"] = (
-                    datetime.now(timezone.utc) - timedelta(minutes=15)
-                )
+            # 修改 state 的過期時間為已過期（設為 1 分鐘前）
+            oauth_state = db_session.query(OAuthState).filter(
+                OAuthState.state == state
+            ).first()
+            if oauth_state:
+                oauth_state.expires_at = datetime.now(timezone.utc) - timedelta(minutes=1)
+                db_session.commit()
 
             # 嘗試使用過期的 state
             response = client.get(
@@ -411,9 +413,9 @@ class TestStateTokenValidation:
             assert response.status_code == 400
             assert "無效或過期" in response.json()["detail"]
 
-    def test_state_token_single_use(self, client, admin_token):
+    def test_state_token_single_use(self, client, admin_token, db_session):
         """測試 state token 只能使用一次"""
-        from src.api.google_oauth import _pending_states
+        from src.models.oauth_state import OAuthState
 
         with patch('src.api.google_oauth._get_oauth_credentials') as mock_creds:
             mock_creds.return_value = (
@@ -428,7 +430,7 @@ class TestStateTokenValidation:
             )
             state = auth_response.json()["state"]
 
-            # 第一次使用（會失敗因為沒有真正的 OAuth，但 state 會被消費）
+            # 第一次使用（會失敗因為沒有真正的 OAuth，但 state 會被標記為已使用）
             client.get(
                 "/api/auth/google/callback",
                 params={

@@ -347,8 +347,14 @@ async def process_pdf(
                 uploader = uploaders.get(dept_name)
 
                 if uploader:
-                    # TODO: 從系統設定取得資料夾 ID
-                    folder_id = None  # 需要從設定取得
+                    # 從後端 API 取得資料夾 ID
+                    from desktop_app.src.utils.backend_api_client import get_backend_client
+
+                    backend_client = get_backend_client()
+                    folder_id = backend_client.get_drive_folder_id(dept_name)
+
+                    if not folder_id:
+                        logger.warning(f"未設定 {dept_name} 的 Google Drive Folder ID，檔案將上傳到根目錄")
 
                     upload_result = uploader.upload_file(
                         file_path=result.output_path,

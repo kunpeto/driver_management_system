@@ -196,8 +196,8 @@ import { ElMessage } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import api from '@/utils/api'
 
-// 本機 API 基礎 URL
-const LOCAL_API_BASE = 'http://localhost:8001'
+// 本機 API 基礎 URL（從環境變數讀取）
+const LOCAL_API_BASE = import.meta.env.VITE_LOCAL_API_URL || 'http://localhost:8001'
 
 // 狀態
 const localApiConnected = ref(false)

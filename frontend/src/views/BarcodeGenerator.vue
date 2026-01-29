@@ -238,8 +238,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Picture } from '@element-plus/icons-vue'
 
-// 本機 API 基礎 URL
-const LOCAL_API_BASE = 'http://localhost:8001'
+// 本機 API 基礎 URL（從環境變數讀取）
+const LOCAL_API_BASE = import.meta.env.VITE_LOCAL_API_URL || 'http://localhost:8001'
 
 // 表單資料
 const formRef = ref(null)
