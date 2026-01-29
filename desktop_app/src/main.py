@@ -119,11 +119,14 @@ async def health_credentials():
 
 
 # ============================================================
-# API 路由（後續任務會新增）
+# API 路由
 # ============================================================
 
-# TODO: T094 PDF 處理 API
-# TODO: T095 條碼生成 API
+from desktop_app.src.api.pdf_processor import router as pdf_router
+from desktop_app.src.api.barcode_generator import router as barcode_router
+
+app.include_router(pdf_router)
+app.include_router(barcode_router)
 
 
 # ============================================================

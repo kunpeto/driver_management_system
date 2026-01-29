@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     google_oauth_client_secret: str = Field(default="")
     google_oauth_redirect_uri: str = Field(default="http://localhost:8000/api/auth/google/callback")
 
+    # API 基礎 URL（用於 OAuth 回調等）
+    api_base_url: str = Field(default="http://localhost:8000")
+
     # 加密金鑰（Fernet）
     encryption_key: str = Field(default="")
 

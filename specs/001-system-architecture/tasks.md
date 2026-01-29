@@ -105,207 +105,219 @@
 
 ---
 
-## Phase 3: User Story 1 - 系統管理員初始化系統配置 (Priority: P0) 🎯 MVP
+## Phase 3: User Story 1 - 系統管理員初始化系統配置 (Priority: P0) 🎯 MVP ✅ 完成
 
 **Goal**: 管理員可為淡海和安坑兩個部門分別配置 Google 服務連接資訊
 
 **Independent Test**: 管理員登入後進入系統設定頁面，分別設定淡海和安坑的 Google Sheets ID、Drive 資料夾 ID、API 憑證路徑，儲存後重新載入頁面確認設定保留。
 
+**完成日期**: 2026-01-29
+
 ### 資料模型
 
-- [ ] T034 [P] [US1] 建立 SystemSetting 模型在 backend/src/models/system_setting.py（key, value, department, description, UniqueConstraint）
-- [ ] T035 [P] [US1] 建立 GoogleOAuthToken 模型在 backend/src/models/google_oauth_token.py（department, encrypted_refresh_token, encrypted_access_token）
+- [x] T034 [P] [US1] 建立 SystemSetting 模型在 backend/src/models/system_setting.py（key, value, department, description, UniqueConstraint）✅ 2026-01-29
+- [x] T035 [P] [US1] 建立 GoogleOAuthToken 模型在 backend/src/models/google_oauth_token.py（department, encrypted_refresh_token, encrypted_access_token）✅ 2026-01-29
 
 ### 後端服務
 
-- [ ] T036 [US1] 實作 SystemSettingService 在 backend/src/services/system_setting_service.py（CRUD、部門篩選、憑證驗證）
-- [ ] T037 [US1] 實作 Google 憑證驗證服務在 backend/src/services/google_credential_validator.py（Dry Run 測試連線）
+- [x] T036 [US1] 實作 SystemSettingService 在 backend/src/services/system_setting_service.py（CRUD、部門篩選、憑證驗證）✅ 2026-01-29
+- [x] T037 [US1] 實作 Google 憑證驗證服務在 backend/src/services/google_credential_validator.py（Dry Run 測試連線）✅ 2026-01-29
 
 ### 後端 API 端點
 
-- [ ] T038 [US1] 實作系統設定 API 在 backend/src/api/system_settings.py（GET /api/settings, POST /api/settings, PUT /api/settings/{id}）
-- [ ] T039 [US1] 實作憑證驗證 API 在 backend/src/api/google_credentials.py（POST /api/google/validate-credentials）
+- [x] T038 [US1] 實作系統設定 API 在 backend/src/api/system_settings.py（GET /api/settings, POST /api/settings, PUT /api/settings/{id}）✅ 2026-01-29
+- [x] T039 [US1] 實作憑證驗證 API 在 backend/src/api/google_credentials.py（POST /api/google/validate-credentials）✅ 2026-01-29
 
 ### 前端實作
 
-- [ ] T040 [US1] 建立系統設定頁面在 frontend/src/views/SystemSettings.vue（淡海與安坑設定區塊）
-- [ ] T041 [US1] 建立系統設定 Store 在 frontend/src/stores/systemSettings.js（Pinia state、actions）
-- [ ] T042 [US1] 實作憑證上傳與驗證元件在 frontend/src/components/settings/CredentialUpload.vue（檔案選擇、驗證回饋）
+- [x] T040 [US1] 建立系統設定頁面在 frontend/src/views/SystemSettings.vue（淡海與安坑設定區塊）✅ 2026-01-29
+- [x] T041 [US1] 建立系統設定 Store 在 frontend/src/stores/systemSettings.js（Pinia state、actions）✅ 2026-01-29
+- [x] T042 [US1] 實作憑證上傳與驗證元件在 frontend/src/components/settings/CredentialUpload.vue（檔案選擇、驗證回饋）✅ 2026-01-29
 
-**Checkpoint**: 系統設定功能完成，管理員可配置 Google 服務
+**Checkpoint**: ✅ 系統設定功能完成，管理員可配置 Google 服務
 
 ---
 
-## Phase 4: User Story 2 - 員工資料管理（含部門與調動） (Priority: P1)
+## Phase 4: User Story 2 - 員工資料管理（含部門與調動） (Priority: P1) ✅ 完成
 
 **Goal**: 值班台人員可管理員工基本資料，包含新增、編輯、標記離職、記錄調動
 
 **Independent Test**: 淡海值班台人員新增一位員工，填寫編號、姓名、聯絡資訊，系統自動解析入職年月並設定部門為淡海。後續該員工調動到安坑，記錄調動歷史。
 
+**完成日期**: 2026-01-29
+
 ### 資料模型
 
-- [ ] T043 [P] [US2] 建立 Employee 模型在 backend/src/models/employee.py（employee_id, employee_name, current_department, hire_year_month, 等欄位）
-- [ ] T044 [P] [US2] 建立 EmployeeTransfer 模型在 backend/src/models/employee_transfer.py（employee_id FK, from_department, to_department, transfer_date）
+- [x] T043 [P] [US2] 建立 Employee 模型在 backend/src/models/employee.py（employee_id, employee_name, current_department, hire_year_month, 等欄位）✅ 2026-01-29
+- [x] T044 [P] [US2] 建立 EmployeeTransfer 模型在 backend/src/models/employee_transfer.py（employee_id FK, from_department, to_department, transfer_date）✅ 2026-01-29
 
 ### 後端服務
 
-- [ ] T045 [US2] 實作員工編號解析工具在 backend/src/utils/employee_parser.py（從編號解析入職年月，如 1011M0095 → 2021-11）
-- [ ] T046 [US2] 實作 EmployeeService 在 backend/src/services/employee_service.py（CRUD、部門篩選、離職標記）
-- [ ] T047 [US2] 實作 EmployeeTransferService 在 backend/src/services/employee_transfer_service.py（記錄調動、更新部門、歷史查詢）
-- [ ] T048 [US2] 實作批次匯入服務在 backend/src/services/employee_import_service.py（Excel 匯入、資料驗證）
-- [ ] T049 [US2] 實作批次匯出服務在 backend/src/services/employee_export_service.py（Excel 匯出、部門篩選）
+- [x] T045 [US2] 實作員工編號解析工具在 backend/src/utils/employee_parser.py（從編號解析入職年月，如 1011M0095 → 2021-11）✅ 2026-01-29
+- [x] T046 [US2] 實作 EmployeeService 在 backend/src/services/employee_service.py（CRUD、部門篩選、離職標記）✅ 2026-01-29
+- [x] T047 [US2] 實作 EmployeeTransferService 在 backend/src/services/employee_transfer_service.py（記錄調動、更新部門、歷史查詢）✅ 2026-01-29
+- [x] T048 [US2] 實作批次匯入服務在 backend/src/services/employee_import_service.py（Excel 匯入、資料驗證）✅ 2026-01-29
+- [x] T049 [US2] 實作批次匯出服務在 backend/src/services/employee_export_service.py（Excel 匯出、部門篩選）✅ 2026-01-29
 
 ### 後端 API 端點
 
-- [ ] T050 [US2] 實作員工 CRUD API 在 backend/src/api/employees.py（GET /api/employees, POST, PUT, DELETE）
-- [ ] T051 [US2] 實作員工調動 API 在 backend/src/api/employee_transfers.py（POST /api/employees/{id}/transfer, GET /api/employees/{id}/transfers）
-- [ ] T052 [US2] 實作批次匯入/匯出 API 在 backend/src/api/employee_batch.py（POST /api/employees/import, GET /api/employees/export）
+- [x] T050 [US2] 實作員工 CRUD API 在 backend/src/api/employees.py（GET /api/employees, POST, PUT, DELETE）✅ 2026-01-29
+- [x] T051 [US2] 實作員工調動 API 在 backend/src/api/employee_transfers.py（POST /api/employees/{id}/transfer, GET /api/employees/{id}/transfers）✅ 2026-01-29
+- [x] T052 [US2] 實作批次匯入/匯出 API 在 backend/src/api/employee_batch.py（POST /api/employees/import, GET /api/employees/export）✅ 2026-01-29
 
 ### 前端實作
 
-- [ ] T053 [P] [US2] 建立員工列表頁面在 frontend/src/views/Employees.vue（表格、搜尋、篩選）
-- [ ] T054 [P] [US2] 建立員工詳情頁面在 frontend/src/views/EmployeeDetail.vue（顯示完整資訊、調動歷史）
-- [ ] T055 [P] [US2] 建立員工編輯表單元件在 frontend/src/components/employees/EmployeeForm.vue（新增/編輯共用）
-- [ ] T056 [US2] 建立員工調動對話框元件在 frontend/src/components/employees/TransferDialog.vue（選擇部門、日期、原因）
-- [ ] T057 [US2] 建立員工 Store 在 frontend/src/stores/employees.js（Pinia state、actions、員工列表管理）
-- [ ] T058 [US2] 實作批次匯入/匯出元件在 frontend/src/components/employees/BatchOperations.vue（檔案上傳、匯出下載）
+- [x] T053 [P] [US2] 建立員工列表頁面在 frontend/src/views/Employees.vue（表格、搜尋、篩選）✅ 2026-01-29
+- [x] T054 [P] [US2] 建立員工詳情元件在 frontend/src/components/employees/EmployeeDetail.vue（顯示完整資訊、調動歷史）✅ 2026-01-29
+- [x] T055 [P] [US2] 建立員工編輯表單元件在 frontend/src/components/employees/EmployeeForm.vue（新增/編輯共用）✅ 2026-01-29
+- [x] T056 [US2] 建立員工調動對話框元件在 frontend/src/components/employees/TransferDialog.vue（選擇部門、日期、原因）✅ 2026-01-29
+- [x] T057 [US2] 建立員工 Store 在 frontend/src/stores/employees.js（Pinia state、actions、員工列表管理）✅ 2026-01-29
+- [x] T058 [US2] 實作批次匯入/匯出元件在 frontend/src/components/employees/BatchOperations.vue（檔案上傳、匯出下載）✅ 2026-01-29
 
-**Checkpoint**: 員工資料管理功能完成，可進行 CRUD 與調動操作
+**Checkpoint**: ✅ 員工資料管理功能完成，可進行 CRUD 與調動操作
 
 ---
 
-## Phase 5: User Story 3 - 權限控制與資料過濾 (Priority: P1)
+## Phase 5: User Story 3 - 權限控制與資料過濾 (Priority: P1) ✅ 完成
 
 **Goal**: 系統根據使用者角色和部門限制資料存取權限
 
 **Independent Test**: 淡海值班台人員登入後，列表預設顯示淡海部門資料，但可查詢安坑資料（唯讀）。主管可查看所有部門資料。
 
+**完成日期**: 2026-01-29
+
 ### 資料模型
 
-- [ ] T059 [US3] 建立 User 模型在 backend/src/models/user.py（username, password_hash, role, department, is_active）
+- [x] T059 [US3] 建立 User 模型在 backend/src/models/user.py（username, password_hash, role, department, is_active）✅ 2026-01-29
 
 ### 後端服務
 
-- [ ] T060 [US3] 實作 UserService 在 backend/src/services/user_service.py（CRUD、密碼驗證、角色管理）
-- [ ] T061 [US3] 實作 AuthService 在 backend/src/services/auth_service.py（登入、JWT 生成、Token 刷新）
-- [ ] T062 [US3] 實作權限檢查服務在 backend/src/services/permission_service.py（檢查使用者是否可編輯指定部門資料）
+- [x] T060 [US3] 實作 UserService 在 backend/src/services/user_service.py（CRUD、密碼驗證、角色管理）✅ 2026-01-29
+- [x] T061 [US3] 實作 AuthService 在 backend/src/services/auth_service.py（登入、JWT 生成、Token 刷新）✅ 2026-01-29
+- [x] T062 [US3] 實作權限檢查服務在 backend/src/services/permission_service.py（檢查使用者是否可編輯指定部門資料）✅ 2026-01-29
 
 ### 後端 API 端點
 
-- [ ] T063 [US3] 實作認證 API 在 backend/src/api/auth.py（POST /api/auth/login, POST /api/auth/refresh, POST /api/auth/logout）
-- [ ] T064 [US3] 實作使用者管理 API 在 backend/src/api/users.py（GET /api/users, POST, PUT, DELETE，僅 Admin 可存取）
-- [ ] T065 [US3] 更新員工 API 權限控制在 backend/src/api/employees.py（依角色與部門限制編輯權限）
+- [x] T063 [US3] 實作認證 API 在 backend/src/api/auth.py（POST /api/auth/login, POST /api/auth/refresh, POST /api/auth/logout）✅ 2026-01-29
+- [x] T064 [US3] 實作使用者管理 API 在 backend/src/api/users.py（GET /api/users, POST, PUT, DELETE，僅 Admin 可存取）✅ 2026-01-29
+- [x] T065 [US3] 更新員工 API 權限控制在 backend/src/api/employees.py（依角色與部門限制編輯權限）✅ 2026-01-29
 
 ### 前端實作
 
-- [ ] T066 [P] [US3] 建立登入頁面在 frontend/src/views/Login.vue（使用者名稱、密碼、記住我）
-- [ ] T067 [P] [US3] 建立使用者管理頁面在 frontend/src/views/Users.vue（使用者列表、新增、編輯，僅 Admin）
-- [ ] T068 [US3] 建立認證 Store 在 frontend/src/stores/auth.js（Pinia state、登入/登出 actions、Token 管理）
-- [ ] T069 [US3] 實作 Vue Router 導航守衛在 frontend/src/router/index.js（檢查登入狀態、權限重定向）
-- [ ] T070 [US3] 更新員工列表頁面在 frontend/src/views/Employees.vue（部門預設篩選、編輯按鈕權限控制）
+- [x] T066 [P] [US3] 建立登入頁面在 frontend/src/views/Login.vue（使用者名稱、密碼、記住我）✅ 2026-01-29
+- [x] T067 [P] [US3] 建立使用者管理頁面在 frontend/src/views/Users.vue（使用者列表、新增、編輯，僅 Admin）✅ 2026-01-29
+- [x] T068 [US3] 建立認證 Store 在 frontend/src/stores/auth.js（Pinia state、登入/登出 actions、Token 管理）✅ 2026-01-29
+- [x] T069 [US3] 實作 Vue Router 導航守衛在 frontend/src/router/index.js（檢查登入狀態、權限重定向）✅ 2026-01-29
+- [x] T070 [US3] 更新員工列表頁面在 frontend/src/views/Employees.vue（部門預設篩選、編輯按鈕權限控制）✅ 2026-01-29
 
-**Checkpoint**: 權限控制功能完成，不同角色有不同的資料存取權限
+**Checkpoint**: ✅ 權限控制功能完成，不同角色有不同的資料存取權限
 
 ---
 
-## Phase 6: User Story 6 - 系統連線狀態監控與憑證驗證 (Priority: P2)
+## Phase 6: User Story 6 - 系統連線狀態監控與憑證驗證 (Priority: P2) ✅ 完成
 
 **Goal**: 桌面應用常駐顯示雲端服務與 Google API 連線狀態，管理員上傳憑證時立即驗證有效性
 
 **Independent Test**: 桌面應用啟動後在狀態列顯示「雲端連線：正常」與「Google API：正常」。管理員上傳淡海的 Google 憑證時，系統立即嘗試連接並回報結果。
 
+**完成日期**: 2026-01-29
+
 ### 後端服務
 
-- [ ] T071 [P] [US6] 實作連線狀態檢查服務在 backend/src/services/connection_monitor.py（檢查 TiDB、Google Sheets、Google Drive 連線）
-- [ ] T072 [P] [US6] 實作 Google API 憑證測試服務在 backend/src/services/google_api_tester.py（測試服務帳戶與 OAuth 憑證）
+- [x] T071 [P] [US6] 實作連線狀態檢查服務在 backend/src/services/connection_monitor.py（檢查 TiDB、Google Sheets、Google Drive 連線）✅ 2026-01-29
+- [x] T072 [P] [US6] 實作 Google API 憑證測試服務在 backend/src/services/google_api_tester.py（測試服務帳戶與 OAuth 憑證）✅ 2026-01-29
 
 ### 後端 API 端點
 
-- [ ] T073 [US6] 實作連線狀態 API 在 backend/src/api/connection_status.py（GET /api/status/cloud, GET /api/status/google）
+- [x] T073 [US6] 實作連線狀態 API 在 backend/src/api/connection_status.py（GET /api/status/cloud, GET /api/status/google）✅ 2026-01-29
 
 ### 本機應用實作
 
-- [ ] T074 [US6] 實作連線狀態監控在 desktop_app/src/services/connection_monitor.py（定期檢查雲端 API 與 Google API）
-- [ ] T075 [US6] 更新系統托盤程式在 desktop_app/src/tray_app.py（狀態列圖示、連線狀態顯示）
-- [ ] T076 [US6] 實作憑證驗證介面在 desktop_app/src/ui/credential_validator.py（顯示驗證結果、錯誤訊息）
+- [x] T074 [US6] 實作連線狀態監控在 desktop_app/src/services/connection_monitor.py（定期檢查雲端 API 與 Google API）✅ 2026-01-29
+- [x] T075 [US6] 更新系統托盤程式在 desktop_app/src/tray_app.py（狀態列圖示、連線狀態顯示）✅ 2026-01-29
+- [x] T076 [US6] 實作憑證驗證介面在 desktop_app/src/ui/credential_validator.py（顯示驗證結果、錯誤訊息）✅ 2026-01-29
 
 ### 前端實作
 
-- [ ] T077 [US6] 建立連線狀態元件在 frontend/src/components/common/ConnectionStatus.vue（雲端、本機 API、Google API 狀態顯示）
-- [ ] T078 [US6] 更新系統設定頁面在 frontend/src/views/SystemSettings.vue（整合憑證驗證按鈕與即時回饋）
+- [x] T077 [US6] 建立連線狀態元件在 frontend/src/components/common/ConnectionStatus.vue（雲端、本機 API、Google API 狀態顯示）✅ 2026-01-29
+- [x] T078 [US6] 更新系統設定頁面在 frontend/src/views/SystemSettings.vue（整合憑證驗證按鈕與即時回饋）✅ 2026-01-29
 
-**Checkpoint**: 連線狀態監控與憑證驗證功能完成
+**Checkpoint**: ✅ 連線狀態監控與憑證驗證功能完成
 
 ---
 
-## Phase 7: User Story 4 - Google Sheets 班表自動同步與手動觸發 (Priority: P2)
+## Phase 7: User Story 4 - Google Sheets 班表自動同步與手動觸發 (Priority: P2) ✅ 完成
 
 **Goal**: 系統每日自動從 Google Sheets 同步班表資料，並提供手動同步功能
 
 **Independent Test**: 系統在凌晨 2:00 自動執行同步任務，從淡海和安坑的 Google Sheets 讀取當月班表並寫入資料庫。管理員可在任何時間點點擊「立即同步」按鈕手動觸發同步。
 
+**完成日期**: 2026-01-29
+
 ### 資料模型
 
-- [ ] T079 [US4] 建立 Schedule 模型在 backend/src/models/schedule.py（employee_id, department, schedule_date, shift_type 等欄位）
+- [x] T079 [US4] 建立 Schedule 模型在 backend/src/models/schedule.py（employee_id, department, schedule_date, shift_type 等欄位）✅ 2026-01-29
 
 ### 後端服務
 
-- [ ] T080 [US4] 實作 Google Sheets 讀取服務在 backend/src/services/google_sheets_reader.py（使用服務帳戶憑證、唯讀權限）
-- [ ] T081 [US4] 實作班表解析服務在 backend/src/services/schedule_parser.py（解析分頁資料、員工班別）
-- [ ] T082 [US4] 實作班表同步服務在 backend/src/services/schedule_sync_service.py（讀取、解析、寫入資料庫、錯誤處理）
-- [ ] T083 [US4] 實作定時任務管理在 backend/src/tasks/scheduler.py（APScheduler 配置、班表同步任務註冊）
+- [x] T080 [US4] 實作 Google Sheets 讀取服務在 backend/src/services/google_sheets_reader.py（使用服務帳戶憑證、唯讀權限）✅ 2026-01-29
+- [x] T081 [US4] 實作班表解析服務在 backend/src/services/schedule_parser.py（解析分頁資料、員工班別）✅ 2026-01-29
+- [x] T082 [US4] 實作班表同步服務在 backend/src/services/schedule_sync_service.py（讀取、解析、寫入資料庫、錯誤處理）✅ 2026-01-29
+- [x] T083 [US4] 實作定時任務管理在 backend/src/tasks/scheduler.py（APScheduler 配置、班表同步任務註冊）✅ 2026-01-29
 
 ### 後端 API 端點
 
-- [ ] T084 [US4] 實作班表查詢 API 在 backend/src/api/schedules.py（GET /api/schedules, 支援日期與部門篩選）
-- [ ] T085 [US4] 實作手動同步 API 在 backend/src/api/sync_tasks.py（POST /api/sync/schedule, GET /api/sync/status/{task_id}）
+- [x] T084 [US4] 實作班表查詢 API 在 backend/src/api/schedules.py（GET /api/schedules, 支援日期與部門篩選）✅ 2026-01-29
+- [x] T085 [US4] 實作手動同步 API 在 backend/src/api/sync_tasks.py（POST /api/sync/schedule, GET /api/sync/status/{task_id}）✅ 2026-01-29
 
 ### 前端實作
 
-- [ ] T086 [P] [US4] 建立班表查詢頁面在 frontend/src/views/Schedules.vue（日曆視圖、員工班表）
-- [ ] T087 [P] [US4] 建立 Google 服務管理頁面在 frontend/src/views/GoogleServices.vue（手動同步按鈕、同步歷史）
-- [ ] T088 [US4] 建立同步進度元件在 frontend/src/components/sync/SyncProgress.vue（即時進度條、已處理/總數、取消按鈕）
-- [ ] T089 [US4] 建立同步結果元件在 frontend/src/components/sync/SyncResult.vue（新增/更新/失敗統計）
+- [x] T086 [P] [US4] 建立班表查詢頁面在 frontend/src/views/Schedules.vue（日曆視圖、員工班表）✅ 2026-01-29
+- [x] T087 [P] [US4] 建立 Google 服務管理頁面在 frontend/src/views/GoogleServices.vue（手動同步按鈕、同步歷史）✅ 2026-01-29
+- [x] T088 [US4] 建立同步進度元件在 frontend/src/components/sync/SyncProgress.vue（即時進度條、已處理/總數、取消按鈕）✅ 2026-01-29
+- [x] T089 [US4] 建立同步結果元件在 frontend/src/components/sync/SyncResult.vue（新增/更新/失敗統計）✅ 2026-01-29
 
-**Checkpoint**: Google Sheets 班表同步功能完成（自動與手動）
+**Checkpoint**: ✅ Google Sheets 班表同步功能完成（自動與手動）
 
 ---
 
-## Phase 8: User Story 7 - PDF 條碼識別（含部門判斷） (Priority: P2)
+## Phase 8: User Story 7 - PDF 條碼識別（含部門判斷） (Priority: P2) ✅ 完成
 
 **Goal**: 桌面應用處理 PDF 掃描文件，根據條碼前綴（TH/AK）自動判斷部門並上傳到對應的 Google Drive 資料夾
 
 **Independent Test**: 使用者上傳一個包含多頁的 PDF，條碼為「TH-12345」和「AK-67890」，系統自動切分為兩個檔案並上傳到淡海和安坑的 Drive 資料夾。
 
+**完成日期**: 2026-01-29
+
 ### 本機應用服務
 
-- [ ] T090 [P] [US7] 實作 PDF 條碼識別服務在 desktop_app/src/services/barcode_reader.py（PyPDF2 + pyzbar）
-- [ ] T091 [P] [US7] 實作 PDF 切分服務在 desktop_app/src/services/pdf_splitter.py（依條碼切分多頁 PDF）
-- [ ] T092 [US7] 實作部門判斷服務在 desktop_app/src/services/department_detector.py（TH → 淡海、AK → 安坑）
-- [ ] T093 [US7] 實作 Google Drive 上傳服務在 desktop_app/src/services/google_drive_uploader.py（使用 OAuth 令牌、部門資料夾 ID）
+- [x] T090 [P] [US7] 實作 PDF 條碼識別服務在 desktop_app/src/services/barcode_reader.py（PyPDF2 + pyzbar）✅ 2026-01-29
+- [x] T091 [P] [US7] 實作 PDF 切分服務在 desktop_app/src/services/pdf_splitter.py（依條碼切分多頁 PDF）✅ 2026-01-29
+- [x] T092 [US7] 實作部門判斷服務在 desktop_app/src/services/department_detector.py（TH → 淡海、AK → 安坑）✅ 2026-01-29
+- [x] T093 [US7] 實作 Google Drive 上傳服務在 desktop_app/src/services/google_drive_uploader.py（使用 OAuth 令牌、部門資料夾 ID）✅ 2026-01-29
 
 ### 本機 API 端點
 
-- [ ] T094 [US7] 實作 PDF 處理 API 在 desktop_app/src/api/pdf_processor.py（POST /api/pdf/process, 返回處理結果與 Drive 連結）
-- [ ] T095 [US7] 實作條碼生成 API 在 desktop_app/src/api/barcode_generator.py（POST /api/barcode/generate, 返回 Base64 圖片）
+- [x] T094 [US7] 實作 PDF 處理 API 在 desktop_app/src/api/pdf_processor.py（POST /api/pdf/process, 返回處理結果與 Drive 連結）✅ 2026-01-29
+- [x] T095 [US7] 實作條碼生成 API 在 desktop_app/src/api/barcode_generator.py（POST /api/barcode/generate, 返回 Base64 圖片）✅ 2026-01-29
 
 ### 後端 OAuth 授權流程
 
-- [ ] T096 [US7] 實作 OAuth 授權 URL 生成端點在 backend/src/api/google_oauth.py（GET /api/google/auth-url?department=淡海）
-- [ ] T097 [US7] 實作 OAuth 回調端點在 backend/src/api/google_oauth.py（GET /api/auth/google/callback, 換取 refresh_token 並加密存儲）
-- [ ] T098 [US7] 實作 Access Token 取得端點在 backend/src/api/google_oauth.py（POST /api/google/get-access-token, 刷新令牌）
+- [x] T096 [US7] 實作 OAuth 授權 URL 生成端點在 backend/src/api/google_oauth.py（GET /api/google/auth-url?department=淡海）✅ 2026-01-29
+- [x] T097 [US7] 實作 OAuth 回調端點在 backend/src/api/google_oauth.py（GET /api/auth/google/callback, 換取 refresh_token 並加密存儲）✅ 2026-01-29
+- [x] T098 [US7] 實作 Access Token 取得端點在 backend/src/api/google_oauth.py（POST /api/google/get-access-token, 刷新令牌）✅ 2026-01-29
 
 ### OAuth 回調端點測試 ⭐ **(新增：U1)**
 
-- [ ] T098a [P] [US7] 實作 OAuth 回調端點單元測試在 backend/tests/unit/test_google_oauth.py（測試正常授權、拒絕授權 error='access_denied'、無效 code、遺失 code 參數、驗證 refresh_token 加密儲存）
+- [x] T098a [P] [US7] 實作 OAuth 回調端點單元測試在 backend/tests/unit/test_google_oauth.py（測試正常授權、拒絕授權 error='access_denied'、無效 code、遺失 code 參數、驗證 refresh_token 加密儲存）✅ 2026-01-29
 
 ### 前端實作
 
-- [ ] T099 [P] [US7] 建立 PDF 上傳頁面在 frontend/src/views/PdfUpload.vue（檔案拖放、處理進度、結果顯示）
-- [ ] T100 [P] [US7] 建立條碼生成頁面在 frontend/src/views/BarcodeGenerator.vue（輸入履歷 ID、選擇部門、下載條碼）
-- [ ] T101 [US7] 建立 Google Drive 授權元件在 frontend/src/components/google/DriveAuthorization.vue（授權按鈕、授權狀態顯示）
+- [x] T099 [P] [US7] 建立 PDF 上傳頁面在 frontend/src/views/PdfUpload.vue（檔案拖放、處理進度、結果顯示）✅ 2026-01-29
+- [x] T100 [P] [US7] 建立條碼生成頁面在 frontend/src/views/BarcodeGenerator.vue（輸入履歷 ID、選擇部門、下載條碼）✅ 2026-01-29
+- [x] T101 [US7] 建立 Google Drive 授權元件在 frontend/src/components/google/DriveAuthorization.vue（授權按鈕、授權狀態顯示）✅ 2026-01-29
 
-**Checkpoint**: PDF 條碼識別與 Google Drive 上傳功能完成
+**Checkpoint**: ✅ PDF 條碼識別與 Google Drive 上傳功能完成
 
 ---
 
@@ -366,6 +378,162 @@
 
 ---
 
+## Phase 11: User Story 8 - 司機員事件履歷管理系統 (Priority: P1) ⭐ **(新增)**
+
+**Goal**: 值班台人員可記錄和管理司機員的各類事件履歷，包括事件調查、人員訪談、考核加扣分、矯正措施等，並自動產生對應的 Office 文件
+
+**Independent Test**: 值班台人員建立一筆基本履歷後，將其轉換為「人員訪談」類型，系統自動從 Google Sheets 班表取得該員工事件當天前後的班別資訊，填充資料後產生 Word 文件並嵌入條碼，儲存到本機並記錄 Google Drive 連結。
+
+### 資料模型
+
+- [ ] T130 [P] [US8] 建立 Profile 模型在 backend/src/models/profile.py（id, employee_id FK, profile_type ENUM, event_date, event_location, train_number, event_description, version, conversion_status, file_path, gdrive_link）
+- [ ] T131 [P] [US8] 建立 EventInvestigation 模型在 backend/src/models/event_investigation.py（profile_id FK, incident_time, incident_location, witnesses, cause_analysis, process_description, improvement_suggestions, investigator, investigation_date）
+- [ ] T132 [P] [US8] 建立 PersonnelInterview 模型在 backend/src/models/personnel_interview.py（profile_id FK, hire_date, shift_before_2days, shift_before_1day, shift_event_day, interview_content, interviewer, interview_date）
+- [ ] T133 [P] [US8] 建立 CorrectiveMeasures 模型在 backend/src/models/corrective_measures.py（profile_id FK, event_summary, corrective_actions, responsible_person, completion_deadline, completion_status）
+- [ ] T134 [P] [US8] 建立 AssessmentNotice 模型在 backend/src/models/assessment_notice.py（profile_id FK, assessment_type ENUM('加分','扣分'), assessment_item, assessment_score, issue_date, approver）
+
+### 後端服務
+
+- [ ] T135 [US8] 實作 ProfileService 在 backend/src/services/profile_service.py（CRUD、類型轉換、狀態管理、查詢篩選）
+- [ ] T136 [US8] 實作班表查詢服務在 backend/src/services/schedule_lookup_service.py（從 Google Sheets 查詢指定員工指定日期前後的班別）
+- [ ] T137 [US8] 實作 Office 文件生成服務在 backend/src/services/office_document_generator.py（委派本機 API 生成 Word/Excel，傳遞資料與條碼編碼）
+- [ ] T138 [US8] 實作條碼編碼工具在 backend/src/utils/barcode_encoder.py（生成格式：`{profile_id}|{type_code}|{year}|{month}`）
+- [ ] T139 [US8] 實作檔案命名工具在 backend/src/utils/file_naming.py（根據履歷類型與資料生成檔案名稱）
+- [ ] T140 [US8] 實作樂觀鎖定服務在 backend/src/services/optimistic_lock_service.py（版本號檢查、更新衝突處理）
+
+### 後端 API 端點
+
+- [ ] T141 [US8] 實作履歷 CRUD API 在 backend/src/api/profiles.py（GET /api/profiles, POST, PUT, DELETE, GET /api/profiles/{id}）
+- [ ] T142 [US8] 實作履歷類型轉換 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/convert, 轉換為事件調查/人員訪談/矯正措施/考核通知）
+- [ ] T143 [US8] 實作 Office 文件生成 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/generate-document, 返回檔案路徑與條碼）
+- [ ] T144 [US8] 實作班表查詢 API 在 backend/src/api/profiles.py（GET /api/profiles/schedule-lookup?employee_id={id}&date={date}）
+- [ ] T145 [US8] 實作履歷查詢 API 在 backend/src/api/profiles.py（GET /api/profiles/search, 支援日期區間、員工姓名、車號、地點、關鍵字篩選）
+
+### 本機 API 端點
+
+- [ ] T146 [P] [US8] 實作 Word 文件生成服務在 desktop_app/src/services/word_generator.py（python-docx，填充資料、嵌入條碼）
+- [ ] T147 [P] [US8] 實作 Excel 文件生成服務在 desktop_app/src/services/excel_generator.py（openpyxl，填充資料、嵌入條碼）
+- [ ] T148 [US8] 實作條碼生成服務在 desktop_app/src/services/barcode_service.py（python-barcode Code128，返回圖片物件）
+- [ ] T149 [US8] 實作 Office 文件生成 API 在 desktop_app/src/api/document_generator.py（POST /api/documents/generate, 接收資料與條碼編碼，返回檔案路徑）
+
+### 前端實作
+
+- [ ] T150 [P] [US8] 建立履歷列表頁面在 frontend/src/views/Profiles.vue（表格、搜尋、篩選、類型圖示）
+- [ ] T151 [P] [US8] 建立基本履歷新增表單在 frontend/src/components/profiles/BasicProfileForm.vue（事件日期、員工、地點、車號、描述）
+- [ ] T152 [P] [US8] 建立履歷類型轉換對話框在 frontend/src/components/profiles/ConversionDialog.vue（選擇目標類型、顯示對應表單）
+- [ ] T153 [P] [US8] 建立事件調查表單在 frontend/src/components/profiles/EventInvestigationForm.vue（事故時間、地點、原因、改善建議）
+- [ ] T154 [P] [US8] 建立人員訪談表單在 frontend/src/components/profiles/PersonnelInterviewForm.vue（自動帶入班別、訪談內容）
+- [ ] T155 [P] [US8] 建立矯正措施表單在 frontend/src/components/profiles/CorrectiveMeasuresForm.vue（事件概述、矯正行動、負責人、期限）
+- [ ] T156 [P] [US8] 建立考核通知表單在 frontend/src/components/profiles/AssessmentNoticeForm.vue（加分/扣分、項目、分數、核發日期）
+- [ ] T157 [US8] 建立履歷 Store 在 frontend/src/stores/profiles.js（Pinia state、actions、履歷列表管理）
+- [ ] T158 [US8] 實作文件生成與預覽功能在 frontend/src/components/profiles/DocumentPreview.vue（觸發生成、顯示檔案路徑、開啟文件）
+
+**Checkpoint**: 履歷管理系統功能完成，可建立、轉換、查詢履歷並產生 Office 文件
+
+---
+
+## Phase 12: User Story 9 - 考核系統 V2 升級（累計加重機制） (Priority: P2) ⭐ **(新增)**
+
+**Goal**: 系統支援 2026 年度起的新考核規則，包含累計加重機制、考核標準表管理、雙版本並存（V1/V2）
+
+**Independent Test**: 員工「張三」在 2026 年 1 月發生第 1 次遲到扣 1 分，2 月發生第 2 次遲到扣 1.5 分（累計加重 1.5 倍），3 月發生第 3 次遲到扣 2 分（累計加重 2.0 倍）。系統自動計算累計次數並套用加重公式。
+
+### 資料模型
+
+- [ ] T159 [P] [US9] 建立 AssessmentStandard 模型在 backend/src/models/assessment_standard.py（item_code, item_name, category ENUM('D','W','O','S','R','+M','+A','+B','+C','+R'), base_score, scoring_unit, apply_accumulation, custom_notes, is_active）
+- [ ] T160 [P] [US9] 建立 AssessmentRecord 模型在 backend/src/models/assessment_record.py（employee_id FK, assessment_standard_id FK, event_date, base_score, accumulation_multiplier, weighted_score, occurrence_count, assessment_year, notes）
+
+### 後端服務
+
+- [ ] T161 [US9] 實作 AssessmentStandardService 在 backend/src/services/assessment_standard_service.py（CRUD、Excel 匯入、關鍵字搜尋）
+- [ ] T162 [US9] 實作累計次數計算服務在 backend/src/services/accumulation_calculator.py（查詢員工年度同類別累計次數）
+- [ ] T163 [US9] 實作加重分數計算服務在 backend/src/services/weighted_score_calculator.py（套用公式：實際扣分 = 基本分 × [1 + 係數 × (第N次 - 1)]）
+- [ ] T164 [US9] 實作 AssessmentRecordService 在 backend/src/services/assessment_record_service.py（建立記錄、自動計算加重、年度摘要、重算機制）
+- [ ] T165 [US9] 實作版本選擇服務在 backend/src/services/assessment_version_selector.py（根據事件日期選擇 V1/V2 規則）
+- [ ] T166 [US9] 實作考核記錄重算服務在 backend/src/services/assessment_recalculator.py（刪除或修改記錄後重算所有累計次數）
+
+### 後端 API 端點
+
+- [ ] T167 [US9] 實作考核標準 CRUD API 在 backend/src/api/assessment_standards.py（GET/POST/PUT/DELETE /api/assessment-standards, 僅 Admin 可編輯）
+- [ ] T168 [US9] 實作考核標準 Excel 匯入 API 在 backend/src/api/assessment_standards.py（POST /api/assessment-standards/import-excel, 驗證格式）
+- [ ] T169 [US9] 實作考核標準搜尋 API 在 backend/src/api/assessment_standards.py（GET /api/assessment-standards/search?keyword={keyword}）
+- [ ] T170 [US9] 實作考核記錄 CRUD API 在 backend/src/api/assessment_records.py（GET/POST/PUT/DELETE /api/assessment-records）
+- [ ] T171 [US9] 實作員工年度考核摘要 API 在 backend/src/api/assessment_records.py（GET /api/assessment-records/summary?employee_id={id}&year={year}）
+
+### 前端實作
+
+- [ ] T172 [P] [US9] 建立考核標準管理頁面在 frontend/src/views/AssessmentStandards.vue（僅管理員可見、CRUD 表單、Excel 匯入功能）
+- [ ] T173 [P] [US9] 建立考核記錄列表頁面在 frontend/src/views/AssessmentRecords.vue（表格、篩選、累計次數顯示）
+- [ ] T174 [P] [US9] 建立考核記錄表單元件在 frontend/src/components/assessments/AssessmentRecordForm.vue（選擇項目、自動計算加重分數、顯示公式）
+- [ ] T175 [P] [US9] 建立員工年度考核摘要元件在 frontend/src/components/assessments/AssessmentSummary.vue（圖表、分類統計）
+- [ ] T176 [US9] 建立考核 Store 在 frontend/src/stores/assessments.js（Pinia state、actions）
+
+**Checkpoint**: 考核系統 V2 功能完成，支援累計加重機制與雙版本並存
+
+---
+
+## Phase 13: User Story 10 - 差勤加分自動處理 (Priority: P2) ⭐ **(新增)**
+
+**Goal**: 系統能夠自動從 Google Sheets 班表讀取資料，逐員工判斷全勤、R班出勤、延長工時三種差勤加分情況，並批次建立對應的履歷記錄
+
+**Independent Test**: 管理員選擇「2026 年 1 月」並點擊「執行差勤加分處理」，系統讀取淡海班表，發現員工「張三」當月全勤、員工「李四」有 2 次 R班出勤、員工「王五」有 1 次延長工時 2 小時，系統自動建立對應的履歷記錄並顯示處理統計。
+
+### 後端服務
+
+- [ ] T177 [P] [US10] 實作全勤判定服務在 backend/src/services/attendance_full_month_detector.py（掃描班表所有儲存格，檢查是否包含「(假)」）
+- [ ] T178 [P] [US10] 實作 R班出勤判定服務在 backend/src/services/attendance_r_shift_detector.py（正則匹配 `R/...` 或 `R(國)/...`）
+- [ ] T179 [P] [US10] 實作延長工時判定服務在 backend/src/services/attendance_overtime_detector.py（正則匹配 `(+1)`, `(+2)`, `(+3)`, `(+4)`）
+- [ ] T180 [US10] 實作差勤加分處理服務在 backend/src/services/attendance_bonus_processor.py（讀取班表、逐員工掃描、批次建立履歷、去重檢查）
+- [ ] T181 [US10] 實作複合情況處理服務在 backend/src/services/attendance_composite_handler.py（如 `R/0905G(+2)` 同時建立兩筆履歷）
+
+### 後端 API 端點
+
+- [ ] T182 [US10] 實作差勤加分處理 API 在 backend/src/api/attendance_bonus.py（POST /api/attendance-bonus/process, 參數：year, month, department）
+- [ ] T183 [US10] 實作差勤處理結果查詢 API 在 backend/src/api/attendance_bonus.py（GET /api/attendance-bonus/results/{task_id}）
+
+### 前端實作
+
+- [ ] T184 [P] [US10] 建立差勤加分處理頁面在 frontend/src/views/AttendanceBonus.vue（選擇年月與部門、執行按鈕、進度條）
+- [ ] T185 [P] [US10] 建立差勤處理結果元件在 frontend/src/components/attendance/BonusProcessResult.vue（統計資訊：全勤 X 筆、R班 Y 筆、延長工時 Z 筆、跳過 N 筆）
+
+**Checkpoint**: 差勤加分自動處理功能完成，可批次建立履歷記錄
+
+---
+
+## Phase 14: User Story 11 - 未結案管理系統 (Priority: P3) ⭐ **(新增)**
+
+**Goal**: 系統提供專門的未結案管理功能，透過查詢 `Profile` 表（`conversion_status = 'converted' AND gdrive_link IS NULL`）列出所有已產生文件但尚未上傳 PDF 到 Google Drive 的履歷，追蹤文件處理進度
+
+**Independent Test**: 值班台人員進入「未結案專區」，看到 5 筆待上傳的事件調查履歷和 3 筆待上傳的人員訪談履歷，選擇其中一筆上傳掃描後的 PDF，系統自動上傳到 Google Drive 並更新 `conversion_status` 為「completed」，履歷從未結案列表中消失。
+
+**注意**: ⚠️ 根據 Gemini Review 建議，已移除 `PendingCase` 資料表，改用 `Profile.conversion_status` + 複合索引 `(conversion_status, department)` 查詢未結案項目，確保資料一致性並遵循 "Single Source of Truth" 原則。
+
+### 後端服務
+
+- [ ] T186 [US11] 實作未結案查詢服務在 backend/src/services/pending_profile_service.py（查詢 `conversion_status = 'converted' AND gdrive_link IS NULL` 的履歷、按類型分組統計、最舊未結案日期計算、本月完成率計算）
+- [ ] T187 [US11] 實作 PDF 上傳服務在 backend/src/services/pdf_upload_service.py（委派本機 API 上傳到 Google Drive、上傳成功後更新 Profile.gdrive_link 和 conversion_status）
+
+### 後端 API 端點
+
+- [ ] T188 [US11] 實作未結案列表 API 在 backend/src/api/profiles.py（GET /api/profiles/pending, 查詢條件：conversion_status='converted' AND gdrive_link IS NULL，支援類型與部門篩選，使用複合索引提升效能）
+- [ ] T189 [US11] 實作未結案統計 API 在 backend/src/api/profiles.py（GET /api/profiles/pending/statistics, 統計各類型待處理數量、最舊未結案日期、本月完成率）
+- [ ] T190 [US11] 實作 PDF 上傳 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/upload-pdf, 接收檔案並委派本機 API 上傳，成功後更新 conversion_status='completed'）
+
+### 本機 API 端點
+
+- [ ] T191 [US11] 實作 PDF 上傳到 Google Drive 服務在 desktop_app/src/services/pdf_drive_uploader.py（根據類型和日期上傳到對應資料夾，設定權限為「僅網域內可檢視」）
+- [ ] T192 [US11] 實作 PDF 上傳 API 在 desktop_app/src/api/pdf_uploader.py（POST /api/pdf/upload-to-drive, 返回 Drive 連結）
+
+### 前端實作
+
+- [ ] T193 [P] [US11] 建立未結案專區頁面在 frontend/src/views/PendingProfiles.vue（查詢 conversion_status='converted' 的履歷、類型分類、統計資訊）
+- [ ] T194 [P] [US11] 建立 PDF 上傳元件在 frontend/src/components/profiles/PdfUploadDialog.vue（檔案選擇、上傳進度、錯誤處理）
+- [ ] T195 [US11] 建立未結案統計元件在 frontend/src/components/profiles/PendingStatistics.vue（各類型待處理數量、最舊未結案日期、本月完成率）
+
+**Checkpoint**: 未結案管理系統功能完成，可追蹤文件處理進度
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -377,6 +545,9 @@
   - US4, US5, US6, US7 可並行開發（不同檔案）
   - 或按優先級順序執行（P0 → P1 → P2 → P3）
 - **Polish (Phase 10)**: 依賴所有期望的用戶故事完成
+- **User Stories 8-11 (Phase 11-14)** ⭐ **(新增)**: 全部依賴 Foundational 完成
+  - US8, US9, US10, US11 可並行開發（不同檔案）
+  - 或按建議順序執行：US8 → US5 → US9 → US10 → US11
 
 ### User Story Dependencies
 
@@ -387,6 +558,10 @@
 - **US5 (P3)**: 可在 Foundational 後開始 - 建議在 US4 後（共用 Google Sheets 服務）
 - **US6 (P2)**: 可在 Foundational 後開始 - 無其他用戶故事依賴
 - **US7 (P2)**: 可在 Foundational 後開始 - 建議在 US1 後（需要 OAuth 配置）
+- **US8 (P1)** ⭐: 可在 Foundational 後開始 - 建議在 US4 後（需要 Google Sheets 班表服務、Office 文件生成服務）
+- **US9 (P2)** ⭐: 可在 Foundational 後開始 - 建議在 US8 後（考核記錄與履歷整合）
+- **US10 (P2)** ⭐: 可在 Foundational 後開始 - 建議在 US8 與 US9 後（依賴履歷系統與考核標準）
+- **US11 (P3)** ⭐: 可在 Foundational 後開始 - 建議在 US8 後（依賴履歷系統與 PDF 上傳功能）
 
 ### Within Each User Story
 
@@ -396,6 +571,7 @@
 
 ### Parallel Opportunities
 
+**原有功能**:
 - **Setup 階段**: T002, T003, T004, T005, T006, T007, T010, T011 可並行
 - **Foundational 階段**: 多數任務可並行（不同檔案）
 - **US1**: T034, T035 可並行（不同模型）
@@ -404,6 +580,12 @@
 - **US5**: T102, T103 可並行；T110, T111 可並行
 - **US7**: T090, T091 可並行；T099, T100 可並行
 - **Polish**: T113, T114, T115, T116, T120, T121, T122 可並行
+
+**新增功能** ⭐:
+- **US8**: T130-T134 可並行（5 個資料模型）；T146, T147, T148 可並行；T150-T156 可並行（7 個前端表單）
+- **US9**: T159, T160 可並行（2 個資料模型）；T172-T175 可並行（4 個前端元件）
+- **US10**: T177, T178, T179 可並行（3 個判定服務）；T184, T185 可並行（2 個前端元件）
+- **US11**: T195, T196, T197 可並行（3 個前端元件）
 
 ---
 
@@ -434,7 +616,7 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 6. **STOP and VALIDATE**: 測試核心功能（設定、員工管理、權限）
 7. 部署/演示 MVP
 
-### Incremental Delivery
+### Incremental Delivery（原有功能）
 
 1. Setup + Foundational → 基礎完成
 2. 加入 US1 → 測試獨立 → 部署（系統可配置）
@@ -445,11 +627,50 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 7. 加入 US7 → 測試獨立 → 部署（PDF 處理）
 8. 加入 US5 → 測試獨立 → 部署（駕駛競賽，完整功能）
 
+### Progressive Integration（新增功能 - 建議順序）⭐
+
+**參考**: `docs/architecture_comparison_and_integration_plan.md` - 5-6 週漸進式整合計畫
+
+1. **Week 1-2**: Phase 11（US8）履歷管理系統
+   - 核心資料模型與 CRUD
+   - Office 文件生成與條碼系統
+   - 班表查詢整合
+   - **Milestone**: 可建立、轉換、查詢履歷並產生文件
+
+2. **Week 3**: Phase 9（US5）駕駛時數統計增強
+   - 整合履歷系統的責任事件懲罰係數
+   - 勤務表同步與時數計算
+   - **Milestone**: 駕駛競賽排名完整功能
+
+3. **Week 4**: Phase 12（US9）考核系統 V2
+   - 考核標準表管理
+   - 累計加重機制實作
+   - 雙版本並存（V1/V2）
+   - **Milestone**: 2026 年起考核規則完整運作
+
+4. **Week 5**: Phase 13（US10）差勤加分自動處理
+   - 全勤/R班/延長工時判定服務
+   - 批次建立履歷記錄
+   - **Milestone**: 每月差勤加分自動化
+
+5. **Week 6**: Phase 14（US11）未結案管理
+   - 未結案列表與統計
+   - PDF 上傳與 Google Drive 整合
+   - **Milestone**: 完整的履歷追蹤流程
+
+6. **Week 6+**: Phase 10（Polish）最終優化
+   - 跨模組整合測試
+   - 效能優化與安全審查
+   - 完整文件與部署
+
 ### Parallel Team Strategy
 
 若有多位開發者：
 
+**階段 1: 基礎建設**
 1. 團隊共同完成 Setup + Foundational
+
+**階段 2: MVP 開發（原有功能）**
 2. Foundational 完成後：
    - **開發者 A**: US1（系統設定）
    - **開發者 B**: US2（員工管理）
@@ -458,7 +679,24 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
    - **開發者 A**: US4（班表同步）
    - **開發者 B**: US6（連線監控）
    - **開發者 C**: US7（PDF 處理）
-4. 最後共同完成 US5（駕駛競賽）
+4. 共同完成 US5（駕駛競賽）
+
+**階段 3: 履歷系統整合（新增功能）⭐**
+5. Phase 11（US8）履歷管理系統：
+   - **開發者 A**: 資料模型 + 後端服務（T130-T140）
+   - **開發者 B**: 後端 API + 本機 API（T141-T149）
+   - **開發者 C**: 前端實作（T150-T158）
+6. Phase 12（US9）考核系統 V2：
+   - **開發者 A**: 資料模型 + 累計加重邏輯（T159-T166）
+   - **開發者 B**: 後端 API（T167-T171）
+   - **開發者 C**: 前端實作（T172-T176）
+7. 並行開發：
+   - **開發者 A**: Phase 13（US10）差勤加分自動處理
+   - **開發者 B**: Phase 14（US11）未結案管理
+   - **開發者 C**: Phase 9（US5）駕駛時數統計增強
+
+**階段 4: 最終整合**
+8. 團隊共同完成 Phase 10（Polish）
 
 ---
 
@@ -475,23 +713,35 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 
 ## Summary
 
-- **總任務數**: 131 個任務（新增勤務標準時間管理、憑證驗證、OAuth 回調測試任務）
-- **已完成任務**: 35 個（Phase 1: 11 個 + Phase 2: 24 個）
-- **進度**: 26.7%
-- **用戶故事數**: 7 個（US1-US7，對應 spec.md 的 P0-P3 優先級）
-- **可並行任務**: 約 40% 的任務標記為 [P]，可並行執行
+- **總任務數**: 197 個任務（原 131 個 + 新增 User Stories 8-11 共 66 個任務）
+- **已完成任務**: 103 個（Phase 1: 11 個 + Phase 2: 24 個 + Phase 3: 9 個 + Phase 4: 16 個 + Phase 5: 12 個 + Phase 6: 8 個 + Phase 7: 11 個 + Phase 8: 12 個）
+- **進度**: 52.3%
+- **用戶故事數**: 11 個（US1-US7 原有 + US8-US11 新增，對應 spec.md 的 P0-P3 優先級）
+- **可並行任務**: 約 45% 的任務標記為 [P]，可並行執行
 - **建議 MVP 範圍**: Phase 1-5（Setup + Foundational + US1 + US2 + US3）
 - **駕駛競賽模組**: PC-001 已釐清，Phase 9 任務可立即執行
 - **測試覆蓋**: 新增憑證驗證測試（G1: T037a, T037b）與 OAuth 回調測試（U1: T098a）
-- **完整功能交付**: 全部 10 個階段（包含所有用戶故事與優化）
+- **履歷管理模組** ⭐: Phase 11（US8）包含 29 個任務，整合 Office 文件生成與條碼系統
+- **考核系統 V2** ⭐: Phase 12（US9）包含 18 個任務，實作累計加重機制
+- **差勤加分自動化** ⭐: Phase 13（US10）包含 9 個任務，自動判定全勤、R班、延長工時
+- **未結案管理** ⭐: Phase 14（US11）包含 10 個任務，透過 Profile.conversion_status 追蹤文件處理進度（已移除冗餘的 PendingCase 資料表）
+- **完整功能交付**: 全部 14 個階段（包含所有用戶故事與優化）
+- **架構優化** ✅: 根據 Gemini Review 建議，移除 PendingCase 資料表，改用 Profile 表 + 複合索引查詢，確保資料一致性
 
 ### 進度更新記錄
 
-| 日期 | 完成任務 | 累計完成 | 進度 |
-|------|----------|----------|------|
-| 2026-01-28 | T001-T014, T023, T026 | 16 | 12.2% |
-| 2026-01-29 | T015-T033, T037a | 34 | 26.0% |
-| 2026-01-28 | T037b (憑證驗證整合測試) | 35 | 26.7% |
+| 日期 | 完成任務 | 累計完成 | 進度 | 備註 |
+|------|----------|----------|------|------|
+| 2026-01-28 | T001-T014, T023, T026 | 16 | 12.2% | Phase 1 完成 |
+| 2026-01-29 | T015-T033, T037a | 34 | 26.0% | Phase 2 基本完成 |
+| 2026-01-28 | T037b (憑證驗證整合測試) | 35 | 26.7% | Phase 2 完成 |
+| 2026-01-29 | 新增 User Stories 8-11 | 35 | 17.6% | 新增 68 個任務（T130-T197），總任務數從 131 增至 199 |
+| 2026-01-29 | T034-T042 (Phase 3) | 44 | 22.1% | Phase 3 (US1 系統設定) 完成 |
+| 2026-01-29 | T043-T058 (Phase 4) | 60 | 30.2% | Phase 4 (US2 員工管理) 完成 |
+| 2026-01-29 | T059-T070 (Phase 5) | 72 | 36.2% | Phase 5 (US3 權限控制) 完成，MVP 完成 |
+| 2026-01-29 | T071-T078 (Phase 6) | 80 | 40.6% | Phase 6 (US6 連線狀態監控) 完成 |
+| 2026-01-29 | T079-T089 (Phase 7) | 91 | 46.2% | Phase 7 (US4 班表同步) 完成 |
+| 2026-01-29 | T090-T101 (Phase 8) | 103 | 52.3% | Phase 8 (US7 PDF條碼識別) 完成 |
 
 ---
 

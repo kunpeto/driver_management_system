@@ -48,6 +48,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[ERROR] 資料庫初始化失敗: {e}")
 
+    # 啟動定時任務排程器 (Phase 7)
+    try:
+        from src.tasks.scheduler import start_scheduler
+        start_scheduler()
+        print("[OK] 定時任務排程器已啟動")
+    except Exception as e:
+        print(f"[WARNING] 定時任務排程器啟動失敗: {e}")
+
     print("=" * 60)
     print(f"環境: {settings.api_environment}")
     print("=" * 60)
@@ -57,6 +65,15 @@ async def lifespan(app: FastAPI):
     # 關閉時執行
     print("=" * 60)
     print("司機員管理系統 - 雲端 API 關閉中...")
+
+    # 停止定時任務排程器
+    try:
+        from src.tasks.scheduler import stop_scheduler
+        stop_scheduler()
+        print("[OK] 定時任務排程器已停止")
+    except Exception as e:
+        print(f"[WARNING] 定時任務排程器停止失敗: {e}")
+
     print("=" * 60)
 
 
@@ -116,11 +133,90 @@ async def database_health_check():
 # ============================================================
 # API 路由註冊
 # ============================================================
-# 這些路由會在建立後補充
-# from backend.src.api import auth, employees, profiles, system_settings, ...
-# app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
-# app.include_router(employees.router, prefix="/api/employees", tags=["Employees"])
-# ...
+from src.api import (
+    google_credentials_router,
+    system_settings_router,
+    employees_router,
+    employee_transfers_router,
+    employee_batch_router,
+    auth_router,
+    users_router,
+    connection_status_router,
+    schedules_router,
+    sync_tasks_router,
+    google_oauth_router,
+)
+
+# 系統設定 API
+app.include_router(
+    system_settings_router,
+    prefix="/api/settings",
+    tags=["System Settings"]
+)
+
+# Google 憑證驗證 API
+app.include_router(
+    google_credentials_router,
+    prefix="/api/google",
+    tags=["Google Credentials"]
+)
+
+# 員工管理 API
+app.include_router(
+    employees_router,
+    prefix="/api/employees",
+    tags=["Employees"]
+)
+
+# 員工調動 API（部分路由需要與員工路由整合）
+app.include_router(
+    employee_transfers_router,
+    prefix="/api/employees",
+    tags=["Employee Transfers"]
+)
+
+# 員工批次匯入/匯出 API
+app.include_router(
+    employee_batch_router,
+    prefix="/api/employees",
+    tags=["Employee Batch Operations"]
+)
+
+# 認證 API
+app.include_router(
+    auth_router,
+    tags=["Authentication"]
+)
+
+# 使用者管理 API
+app.include_router(
+    users_router,
+    tags=["Users"]
+)
+
+# 連線狀態 API
+app.include_router(
+    connection_status_router,
+    tags=["Connection Status"]
+)
+
+# 班表管理 API (Phase 7)
+app.include_router(
+    schedules_router,
+    tags=["Schedules"]
+)
+
+# 同步任務 API (Phase 7)
+app.include_router(
+    sync_tasks_router,
+    tags=["Sync Tasks"]
+)
+
+# Google OAuth API (Phase 8)
+app.include_router(
+    google_oauth_router,
+    tags=["Google OAuth"]
+)
 
 
 # ============================================================
