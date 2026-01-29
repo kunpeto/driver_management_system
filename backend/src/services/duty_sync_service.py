@@ -5,7 +5,7 @@ DutySyncService 勤務表同步服務
 提供從 Google Sheets 勤務表讀取資料、計算駕駛時數的功能。
 """
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 
 from sqlalchemy import and_
@@ -142,9 +142,7 @@ class DutySyncService:
             total_skipped += result["skipped"]
             all_errors.extend(result["errors"])
             days_processed += 1
-            current_date = current_date.replace(day=current_date.day + 1) if current_date.day < 28 else \
-                          (current_date.replace(month=current_date.month + 1, day=1) if current_date.month < 12 else
-                           current_date.replace(year=current_date.year + 1, month=1, day=1))
+            current_date += timedelta(days=1)  # 使用 timedelta 正確遞增日期
 
         return {
             "department": department,
@@ -218,8 +216,7 @@ class DutySyncService:
         current = start_date
         while current <= end_date:
             all_dates.append(current)
-            from datetime import timedelta
-            current = current + timedelta(days=1)
+            current += timedelta(days=1)
 
         # 返回未處理的日期
         return [d for d in all_dates if d not in processed_dates]
@@ -236,7 +233,6 @@ class DutySyncService:
         Returns:
             dict: 同步狀態
         """
-        from datetime import timedelta
         from src.models.driving_daily_stats import DrivingDailyStats
 
         # 計算月份日期範圍

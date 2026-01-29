@@ -66,6 +66,8 @@ class RouteStandardTimeService:
         """
         建立勤務標準時間
 
+        如果相同部門/勤務代碼已存在但為停用狀態，會重新啟用並更新資料。
+
         Args:
             department: 部門
             route_code: 勤務代碼
@@ -74,10 +76,10 @@ class RouteStandardTimeService:
             description: 說明備註
 
         Returns:
-            RouteStandardTime: 新建立的勤務標準時間
+            RouteStandardTime: 新建立或重新啟用的勤務標準時間
 
         Raises:
-            DuplicateRouteError: 勤務代碼已存在
+            DuplicateRouteError: 勤務代碼已存在且為啟用狀態
             RouteStandardTimeServiceError: 參數驗證錯誤
         """
         # 驗證部門
@@ -87,9 +89,31 @@ class RouteStandardTimeService:
         if standard_minutes < 0:
             raise RouteStandardTimeServiceError("標準分鐘數不可為負數")
 
+        normalized_code = route_code.strip().upper()
+
+        # 檢查是否已存在（包含停用的）
+        existing = self.get_by_code(department, normalized_code, include_inactive=True)
+
+        if existing:
+            if existing.is_active:
+                # 已啟用的記錄，報錯
+                raise DuplicateRouteError(
+                    f"部門 '{department}' 的勤務代碼 '{route_code}' 已存在"
+                )
+            else:
+                # 已停用的記錄，重新啟用並更新資料
+                existing.route_name = route_name.strip()
+                existing.standard_minutes = standard_minutes
+                existing.description = description
+                existing.is_active = True
+                self.db.commit()
+                self.db.refresh(existing)
+                return existing
+
+        # 新建記錄
         route = RouteStandardTime(
             department=department,
-            route_code=route_code.strip().upper(),
+            route_code=normalized_code,
             route_name=route_name.strip(),
             standard_minutes=standard_minutes,
             description=description,

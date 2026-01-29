@@ -11,15 +11,20 @@
 - 提供任務管理介面
 """
 
+from contextlib import contextmanager
 from datetime import datetime
 from typing import Optional, List
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.executors.pool import ThreadPoolExecutor
+from pytz import timezone as pytz_timezone
 
 from src.config.settings import get_settings
 from src.utils.logger import logger
+
+# 台灣時區
+TW_TIMEZONE = pytz_timezone("Asia/Taipei")
 
 
 class TaskScheduler:
@@ -79,6 +84,22 @@ class TaskScheduler:
 
         logger.info("定時任務排程器已初始化")
 
+    @contextmanager
+    def _get_db_context(self):
+        """
+        提供給排程任務使用的資料庫 Context Manager
+        確保 Session 正確開啟與關閉
+        """
+        from src.config.database import SyncSessionLocal
+        db = SyncSessionLocal()
+        try:
+            yield db
+        except Exception as e:
+            logger.error(f"資料庫操作發生錯誤: {e}")
+            raise
+        finally:
+            db.close()
+
     def _register_jobs(self):
         """
         註冊所有定時任務
@@ -125,7 +146,7 @@ class TaskScheduler:
         try:
             from src.services.schedule_sync_service import get_schedule_sync_service
 
-            now = datetime.now()
+            now = datetime.now(TW_TIMEZONE)  # 使用台灣時區
             year = now.year
             month = now.month
 
@@ -164,17 +185,15 @@ class TaskScheduler:
         logger.info("執行定時勤務表同步任務")
 
         try:
-            from src.config.database import get_db
             from src.services.duty_sync_service import DutySyncService
             from datetime import timedelta
 
-            now = datetime.now()
+            now = datetime.now(TW_TIMEZONE)  # 使用台灣時區
             # 同步前一天的資料
             target_date = (now - timedelta(days=1)).date()
 
-            # 取得資料庫連線
-            db = next(get_db())
-            try:
+            # 使用 Context Manager 管理資料庫連線
+            with self._get_db_context() as db:
                 sync_service = DutySyncService(db)
                 result = sync_service.sync_all_departments_for_date(target_date)
 
@@ -184,8 +203,6 @@ class TaskScheduler:
                     total_processed=result["total_processed"],
                     total_errors=result["total_errors"]
                 )
-            finally:
-                db.close()
 
         except Exception as e:
             logger.error("定時勤務表同步例外", error=str(e))
@@ -205,10 +222,9 @@ class TaskScheduler:
         logger.info("執行定時駕駛競賽排名計算任務")
 
         try:
-            from src.config.database import get_db
             from src.services.driving_competition_ranker import DrivingCompetitionRanker
 
-            now = datetime.now()
+            now = datetime.now(TW_TIMEZONE)  # 使用台灣時區
             year = now.year
             month = now.month
 
@@ -231,9 +247,8 @@ class TaskScheduler:
                 logger.warning(f"非季度首日執行競賽排名計算: {now}")
                 return
 
-            # 取得資料庫連線
-            db = next(get_db())
-            try:
+            # 使用 Context Manager 管理資料庫連線
+            with self._get_db_context() as db:
                 ranker = DrivingCompetitionRanker(db)
                 result = ranker.calculate_quarterly_ranking(target_year, target_quarter)
 
@@ -252,8 +267,6 @@ class TaskScheduler:
                         quarter=target_quarter,
                         errors=result["errors"]
                     )
-            finally:
-                db.close()
 
         except Exception as e:
             logger.error("定時駕駛競賽排名計算例外", error=str(e))

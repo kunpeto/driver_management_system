@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from typing import Optional
 
 from sqlalchemy import and_, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from src.models.driving_competition import DrivingCompetition
 from src.models.driving_daily_stats import DrivingDailyStats
@@ -319,20 +319,26 @@ class DrivingCompetitionRanker:
 
         # 分配排名與獎金
         processed = 0
+        records_to_save = []
         for rank, entry in enumerate(rankings, 1):
             entry["rank"] = rank
             entry["bonus_amount"] = self.get_bonus_amount(
                 department, rank, entry["is_qualified"]
             )
 
-            # 儲存到資料庫
-            self._save_competition_record(
+            # 準備記錄（不立即 commit）
+            record = self._prepare_competition_record(
                 year=year,
                 quarter=quarter,
                 department=department,
                 entry=entry
             )
+            records_to_save.append(record)
             processed += 1
+
+        # 批次提交所有記錄
+        self.db.add_all(records_to_save)
+        self.db.commit()
 
         # 統計資訊
         qualified_count = sum(1 for r in rankings if r["is_qualified"])
@@ -348,7 +354,7 @@ class DrivingCompetitionRanker:
             "rankings": rankings
         }
 
-    def _save_competition_record(
+    def _prepare_competition_record(
         self,
         year: int,
         quarter: int,
@@ -356,7 +362,7 @@ class DrivingCompetitionRanker:
         entry: dict
     ) -> DrivingCompetition:
         """
-        儲存競賽排名記錄
+        準備競賽排名記錄（不立即提交）
 
         Args:
             year: 年份
@@ -377,7 +383,7 @@ class DrivingCompetitionRanker:
         ).first()
 
         if existing:
-            # 更新
+            # 更新現有記錄
             existing.department = department
             existing.total_driving_minutes = entry["total_minutes"]
             existing.holiday_work_bonus_minutes = entry["holiday_work_minutes"]
@@ -387,10 +393,9 @@ class DrivingCompetitionRanker:
             existing.is_qualified = entry["is_qualified"]
             existing.is_employed_on_last_day = entry["is_employed_on_last_day"]
             existing.bonus_amount = entry["bonus_amount"]
-            self.db.commit()
             return existing
         else:
-            # 新建
+            # 新建記錄
             record = DrivingCompetition(
                 employee_id=entry["employee_id"],
                 competition_year=year,
@@ -405,8 +410,6 @@ class DrivingCompetitionRanker:
                 is_employed_on_last_day=entry["is_employed_on_last_day"],
                 bonus_amount=entry["bonus_amount"]
             )
-            self.db.add(record)
-            self.db.commit()
             return record
 
     # ============================================================
@@ -430,7 +433,9 @@ class DrivingCompetitionRanker:
         Returns:
             dict: 排名資料
         """
-        query = self.db.query(DrivingCompetition).filter(
+        query = self.db.query(DrivingCompetition).options(
+            joinedload(DrivingCompetition.employee)  # 預先載入員工資訊，避免 N+1 查詢
+        ).filter(
             and_(
                 DrivingCompetition.competition_year == year,
                 DrivingCompetition.competition_quarter == quarter
@@ -456,10 +461,8 @@ class DrivingCompetitionRanker:
         }
 
         for record in records:
-            # 取得員工資訊
-            employee = self.db.query(Employee).filter(
-                Employee.id == record.employee_id
-            ).first()
+            # 員工資訊已預先載入
+            employee = record.employee
 
             results["rankings"].append({
                 "id": record.id,

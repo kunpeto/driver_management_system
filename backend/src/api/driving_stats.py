@@ -94,7 +94,27 @@ async def list_daily_stats(
     - 支援部門篩選
     - 支援日期範圍篩選
     - 支援分頁
+    - 非管理員僅能查詢自己的資料
     """
+    # 日期範圍驗證
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="起始日期不能晚於結束日期"
+        )
+
+    # 權限檢查：非管理員僅能查詢自己的資料
+    if not current_user.is_admin:
+        if employee_id is None:
+            # 未指定員工 ID，預設查詢自己
+            employee_id = current_user.employee_id
+        elif employee_id != current_user.employee_id:
+            # 試圖查詢他人資料，拒絕
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="權限不足，僅能查詢個人資料"
+            )
+
     calculator = DrivingStatsCalculator(db)
 
     items = calculator.list_daily_stats(
@@ -138,7 +158,15 @@ async def get_employee_quarter_stats(
     查詢員工季度統計
 
     返回指定員工在指定季度的累計統計資料。
+    非管理員僅能查詢自己的資料。
     """
+    # 權限檢查：非管理員僅能查詢自己的資料
+    if not current_user.is_admin and employee_id != current_user.employee_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="權限不足，僅能查詢個人資料"
+        )
+
     calculator = DrivingStatsCalculator(db)
 
     stats = calculator.get_quarter_stats(employee_id, year, quarter)
