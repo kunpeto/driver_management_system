@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from sqlalchemy import and_, extract, select
 from sqlalchemy.orm import Session
 
+from src.constants.attendance import A_SERIES_POINTS
 from src.models.assessment_record import AssessmentRecord
 from src.models.employee import Employee
 from src.services.attendance_sheet_parser import (
@@ -84,17 +85,8 @@ class AttendanceBonusProcessor:
     差勤加分處理服務
 
     整合班表解析與考核記錄建立，自動處理差勤加分。
+    分數對照表從 src.constants.attendance.A_SERIES_POINTS 載入。
     """
-
-    # +A 系列分數對照表
-    A_SERIES_POINTS = {
-        "+A01": 3.0,   # R班出勤
-        "+A02": 1.0,   # 國定假日出勤
-        "+A03": 0.5,   # 延長工時 1 小時
-        "+A04": 1.0,   # 延長工時 2 小時
-        "+A05": 1.5,   # 延長工時 3 小時
-        "+A06": 2.0,   # 延長工時 4 小時
-    }
 
     def __init__(self, db: Session):
         """
@@ -215,7 +207,7 @@ class AttendanceBonusProcessor:
                     employee_code=summary.employee_id,
                     employee_name=summary.employee_name,
                     record_date=r_record.record_date,
-                    points=self.A_SERIES_POINTS["+A01"],
+                    points=A_SERIES_POINTS["+A01"],
                     description=f"R班出勤 {r_record.shift_code}",
                     created=False,
                     skipped_reason="已存在"
@@ -227,7 +219,7 @@ class AttendanceBonusProcessor:
                     standard_code="+A01",
                     record_date=r_record.record_date,
                     description=f"R班出勤 {r_record.shift_code}",
-                    points=self.A_SERIES_POINTS["+A01"]
+                    points=A_SERIES_POINTS["+A01"]
                 )
                 result.records.append(BonusRecordResult(
                     standard_code="+A01",
@@ -235,7 +227,7 @@ class AttendanceBonusProcessor:
                     employee_code=summary.employee_id,
                     employee_name=summary.employee_name,
                     record_date=r_record.record_date,
-                    points=self.A_SERIES_POINTS["+A01"],
+                    points=A_SERIES_POINTS["+A01"],
                     description=f"R班出勤 {r_record.shift_code}",
                     created=True
                 ))
@@ -252,7 +244,7 @@ class AttendanceBonusProcessor:
                         employee_code=summary.employee_id,
                         employee_name=summary.employee_name,
                         record_date=r_record.record_date,
-                        points=self.A_SERIES_POINTS["+A02"],
+                        points=A_SERIES_POINTS["+A02"],
                         description=f"國定假日出勤 {r_record.shift_code}",
                         created=False,
                         skipped_reason="已存在"
@@ -264,7 +256,7 @@ class AttendanceBonusProcessor:
                         standard_code="+A02",
                         record_date=r_record.record_date,
                         description=f"國定假日出勤 {r_record.shift_code}",
-                        points=self.A_SERIES_POINTS["+A02"]
+                        points=A_SERIES_POINTS["+A02"]
                     )
                     result.records.append(BonusRecordResult(
                         standard_code="+A02",
@@ -272,7 +264,7 @@ class AttendanceBonusProcessor:
                         employee_code=summary.employee_id,
                         employee_name=summary.employee_name,
                         record_date=r_record.record_date,
-                        points=self.A_SERIES_POINTS["+A02"],
+                        points=A_SERIES_POINTS["+A02"],
                         description=f"國定假日出勤 {r_record.shift_code}",
                         created=True
                     ))
@@ -449,9 +441,13 @@ class AttendanceBonusProcessor:
                         if reward.all_zero_violation:
                             result.m03_count += 1
                 except Exception as e:
-                    result.warnings.append(
-                        f"月度獎勵計算失敗（員工 {emp_id}）：{str(e)}"
+                    # Gemini Review 建議：增強部分失敗的警告訊息，提供明確操作指引
+                    msg = (
+                        f"月度獎勵計算失敗（員工 {emp_id}）：{str(e)}。"
+                        f"該員工的差勤加分(+A)可能已建立，請修正問題後重新執行此月份處理以補算月度獎勵。"
                     )
+                    result.warnings.append(msg)
+                    logger.error(msg)
 
             # 提交事務
             try:

@@ -13,6 +13,11 @@ from typing import List, Any, Optional
 from datetime import date
 from dataclasses import dataclass
 
+from src.constants.attendance import (
+    OVERTIME_PATTERN,
+    OVERTIME_CODE_MAP,
+    OVERTIME_POINTS_MAP
+)
 from src.utils.logger import logger
 
 
@@ -45,14 +50,9 @@ class AttendanceOvertimeDetector:
     對應考核項目：+A03~+A06
     """
 
-    # 延長工時正則
-    # 匹配：(+1), (+2), (+3), (+4) 及全形變體
-    OVERTIME_PATTERN = re.compile(
-        r"[（\(]\+([1-4])[）\)]"
-    )
-
     def __init__(self):
-        pass
+        # 從常量模組載入模式並編譯
+        self._overtime_pattern = re.compile(OVERTIME_PATTERN)
 
     def _normalize_text(self, text: str) -> str:
         """正規化文字"""
@@ -78,7 +78,7 @@ class AttendanceOvertimeDetector:
             return None
 
         text = self._normalize_text(str(cell_value))
-        match = self.OVERTIME_PATTERN.search(text)
+        match = self._overtime_pattern.search(text)
 
         if match:
             return int(match.group(1))
@@ -228,13 +228,7 @@ class AttendanceOvertimeDetector:
         Returns:
             考核代碼（+A03~+A06）
         """
-        code_map = {
-            1: "+A03",
-            2: "+A04",
-            3: "+A05",
-            4: "+A06"
-        }
-        return code_map.get(hours, "+A03")
+        return OVERTIME_CODE_MAP.get(hours, "+A03")
 
     @staticmethod
     def get_assessment_points(hours: int) -> float:
@@ -247,13 +241,7 @@ class AttendanceOvertimeDetector:
         Returns:
             加分分數
         """
-        points_map = {
-            1: 0.5,
-            2: 1.0,
-            3: 1.5,
-            4: 2.0
-        }
-        return points_map.get(hours, 0.5)
+        return OVERTIME_POINTS_MAP.get(hours, 0.5)
 
 
 # 單例

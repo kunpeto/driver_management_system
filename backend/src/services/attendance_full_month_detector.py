@@ -12,6 +12,7 @@ import re
 from typing import List, Any, Optional
 from dataclasses import dataclass
 
+from src.constants.attendance import LEAVE_PATTERNS
 from src.utils.logger import logger
 
 
@@ -33,18 +34,9 @@ class AttendanceFullMonthDetector:
     全勤定義：整月無任何請假（不含「(假)」、「(特)」、「(公)」等）
     """
 
-    # 請假標記（含全形變體）
-    LEAVE_PATTERNS = [
-        r"\(假\)", r"（假）", r"\(特\)", r"（特）",
-        r"\(公\)", r"（公）", r"\(婚\)", r"（婚）",
-        r"\(喪\)", r"（喪）", r"\(病\)", r"（病）",
-        r"\(事\)", r"（事）", r"\(育\)", r"（育）",
-        r"\(產\)", r"（產）", r"\(傷\)", r"（傷）"
-    ]
-
     def __init__(self):
-        # 編譯合併的正則
-        combined_pattern = "|".join(self.LEAVE_PATTERNS)
+        # 從常量模組載入請假模式並編譯
+        combined_pattern = "|".join(LEAVE_PATTERNS)
         self.leave_regex = re.compile(combined_pattern)
 
     def _normalize_text(self, text: str) -> str:

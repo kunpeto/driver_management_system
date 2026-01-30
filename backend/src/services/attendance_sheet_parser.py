@@ -13,6 +13,10 @@ from datetime import date
 from dataclasses import dataclass, field
 from calendar import monthrange
 
+from src.constants.attendance import (
+    EMPLOYEE_ID_COLUMN_ALIASES,
+    EMPLOYEE_NAME_COLUMN_ALIASES
+)
 from src.utils.logger import logger
 from src.services.schedule_parser import ScheduleParser
 from src.services.attendance_full_month_detector import (
@@ -114,13 +118,14 @@ class AttendanceSheetParser:
         employees = {}
         _, days_in_month = monthrange(year, month)
 
-        # 找表頭列
+        # 找表頭列（使用別名常量進行匹配）
         header_row_idx = -1
+        all_aliases = EMPLOYEE_ID_COLUMN_ALIASES + EMPLOYEE_NAME_COLUMN_ALIASES
         for i, row in enumerate(data):
             if not row:
                 continue
             row_str = str(row).lower()
-            if "編號" in row_str or "員工" in row_str or "姓名" in row_str:
+            if any(alias.lower() in row_str for alias in all_aliases):
                 header_row_idx = i
                 break
 
@@ -130,17 +135,20 @@ class AttendanceSheetParser:
 
         header_row = data[header_row_idx]
 
-        # 找關鍵欄位
+        # 找關鍵欄位（使用別名常量進行匹配）
         emp_id_col = -1
         name_col = -1
         date_start_col = -1
 
         for i, cell in enumerate(header_row):
             cell_str = str(cell).strip()
-            if "編號" in cell_str or cell_str == "員編":
+            # 員工編號欄位匹配
+            if any(alias in cell_str or cell_str == alias for alias in EMPLOYEE_ID_COLUMN_ALIASES):
                 emp_id_col = i
-            elif "姓名" in cell_str:
+            # 員工姓名欄位匹配
+            elif any(alias in cell_str or cell_str == alias for alias in EMPLOYEE_NAME_COLUMN_ALIASES):
                 name_col = i
+            # 日期欄位（數字 1-31）
             elif cell_str.isdigit() and 1 <= int(cell_str) <= 31:
                 if date_start_col == -1:
                     date_start_col = i

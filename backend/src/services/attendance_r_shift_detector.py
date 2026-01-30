@@ -13,6 +13,7 @@ from typing import List, Any, Optional
 from datetime import date
 from dataclasses import dataclass
 
+from src.constants.attendance import R_SHIFT_PATTERN, NATIONAL_HOLIDAY_PATTERN
 from src.utils.logger import logger
 
 
@@ -45,21 +46,10 @@ class AttendanceRShiftDetector:
     - R(國)/0905G：國定假日 R班（+A01 +3分 + +A02 +1分）
     """
 
-    # R班正則
-    # 匹配：R/0905G, R(國)/1425G, R(國)/0905G(+2) 等
-    R_SHIFT_PATTERN = re.compile(
-        r"^R(?:\((國|国)\))?/(.+)$",
-        re.IGNORECASE
-    )
-
-    # 國定假日標記
-    NATIONAL_HOLIDAY_PATTERN = re.compile(
-        r"^R\((國|国)\)/",
-        re.IGNORECASE
-    )
-
     def __init__(self):
-        pass
+        # 從常量模組載入模式並編譯
+        self._r_shift_pattern = re.compile(R_SHIFT_PATTERN, re.IGNORECASE)
+        self._national_holiday_pattern = re.compile(NATIONAL_HOLIDAY_PATTERN, re.IGNORECASE)
 
     def _normalize_text(self, text: str) -> str:
         """正規化文字"""
@@ -85,7 +75,7 @@ class AttendanceRShiftDetector:
         text = self._normalize_text(str(cell_value))
 
         # R班必須以 R/ 或 R(國)/ 開頭
-        return bool(self.R_SHIFT_PATTERN.match(text))
+        return bool(self._r_shift_pattern.match(text))
 
     def check_is_national_holiday(self, cell_value: Any) -> bool:
         """
@@ -102,7 +92,7 @@ class AttendanceRShiftDetector:
 
         text = self._normalize_text(str(cell_value))
 
-        return bool(self.NATIONAL_HOLIDAY_PATTERN.match(text))
+        return bool(self._national_holiday_pattern.match(text))
 
     def detect_single(
         self,
