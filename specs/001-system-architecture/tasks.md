@@ -463,6 +463,17 @@
 
 **Checkpoint**: ✅ 履歷管理系統功能完成，可建立、轉換、查詢履歷並在後端產生 Office 文件直接下載
 
+**完成日期**: 2026-01-30
+
+**Gemini Code Review 評分**: 34/40 (85%) ✅ 通過
+
+**Gemini Review 改進項目** (2026-01-30 已完成):
+- ✅ P0: 文件生成加入 Rate Limiting（5次/分鐘，使用 slowapi）
+- ✅ P1: 實作「重置為 Basic」功能（POST /api/profiles/{id}/reset）
+- ✅ P2: 統一權限邏輯至 ProfilePolicy 類別
+- ✅ P4: 補充單元測試（test_profile_service.py）
+- 🔵 P3: 前後端類型定義動態同步（待後續優化）
+
 ---
 
 ## Phase 12: User Story 9 - 考核系統 V2 升級（累計加重機制） (Priority: P2) ⭐ **(新增)**

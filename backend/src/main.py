@@ -1,12 +1,18 @@
 """
 FastAPI 主程式
 對應 tasks.md T023: 建立 FastAPI 主程式
+
+Gemini Review 優化:
+- 加入 Rate Limiting 異常處理（防止 OOM）
 """
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from src.config.database import check_database_connection, init_database
 from src.config.settings import get_settings
@@ -105,6 +111,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate Limiting 設置（Gemini Review P0: 防止 OOM）
+from src.api.profiles import limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # ============================================================

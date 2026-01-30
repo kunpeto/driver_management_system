@@ -23,6 +23,9 @@ bcrypt==5.0.0
 # 定時任務
 APScheduler==3.11.2
 
+# Rate Limiting（防止文件生成 OOM）
+slowapi==0.1.9
+
 # Google API（Sheets 同步）
 google-auth==2.48.0
 google-auth-oauthlib==1.2.4

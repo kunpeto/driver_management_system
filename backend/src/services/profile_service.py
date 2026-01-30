@@ -429,6 +429,50 @@ class ProfileService:
     # 狀態管理
     # ============================================================
 
+    def reset_to_basic(self, profile_id: int) -> Profile:
+        """
+        重置履歷為基本類型（Gemini Review P1）
+
+        刪除子表資料，將 profile_type 改回 basic，
+        conversion_status 改回 pending。
+
+        規則：
+        - 已完成（completed）的履歷不可重置
+        - 基本履歷不需要重置
+
+        Args:
+            profile_id: 履歷 ID
+
+        Returns:
+            重置後的履歷
+
+        Raises:
+            ProfileNotFoundError: 履歷不存在
+            InvalidConversionError: 無效的重置操作
+        """
+        profile = self.get_by_id(profile_id)
+        if not profile:
+            raise ProfileNotFoundError(f"履歷 ID {profile_id} 不存在")
+
+        # 檢查規則
+        if profile.conversion_status == ConversionStatus.COMPLETED.value:
+            raise InvalidConversionError("已完成的履歷不可重置")
+
+        if profile.profile_type == ProfileType.BASIC.value:
+            raise InvalidConversionError("基本履歷不需要重置")
+
+        # 刪除子表資料
+        self._delete_sub_tables(profile)
+
+        # 重置類型和狀態
+        profile.profile_type = ProfileType.BASIC.value
+        profile.conversion_status = ConversionStatus.PENDING.value
+
+        self.db.commit()
+        self.db.refresh(profile)
+
+        return profile
+
     def mark_completed(
         self,
         profile_id: int,

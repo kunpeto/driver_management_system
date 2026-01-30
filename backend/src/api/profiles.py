@@ -9,14 +9,20 @@ API 端點：
 - T143: POST /api/profiles/{id}/generate-document
 - T144: GET /api/profiles/schedule-lookup
 - T145: GET /api/profiles/search
+
+Gemini Review 優化:
+- Rate Limiting 加入文件生成 API（防止 OOM）
+- 重置為 Basic 功能（提升操作彈性）
 """
 
 from datetime import date, time
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 from src.config.database import get_db
@@ -38,6 +44,7 @@ from src.services.profile_service import (
     ProfileNotFoundError,
     ProfileService,
 )
+from src.services.profile_policy import ProfilePolicy
 from src.services.schedule_lookup_service import (
     ScheduleLookupService,
     EmployeeNotFoundError as ScheduleEmployeeNotFoundError,
@@ -49,6 +56,10 @@ from src.services.office_document_service import (
 )
 
 router = APIRouter()
+
+# Rate Limiter 設置（Gemini Review P0: 防止 OOM）
+# 使用 IP 地址作為限制鍵，文件生成限制每分鐘 5 次
+limiter = Limiter(key_func=get_remote_address)
 
 
 # ============================================================
@@ -221,9 +232,10 @@ async def get_profiles(
     """
     service = ProfileService(db)
 
-    # Staff 只能查看自己部門的資料
-    if current_user.role == Role.STAFF.value:
-        department = current_user.department
+    # 使用 Policy 過濾部門（Gemini Review P2）
+    department = ProfilePolicy.filter_department(
+        current_user.role, current_user.department, department
+    )
 
     profiles = service.get_list(
         department=department,
@@ -289,10 +301,11 @@ async def get_profile(
     if not profile:
         raise HTTPException(status_code=404, detail="履歷不存在")
 
-    # Staff 只能查看自己部門的資料
-    if current_user.role == Role.STAFF.value:
-        if profile.department != current_user.department:
-            raise HTTPException(status_code=403, detail="無權限查看此履歷")
+    # 使用 Policy 檢查權限（Gemini Review P2）
+    if not ProfilePolicy.can_view(
+        current_user.role, current_user.department, profile
+    ):
+        raise HTTPException(status_code=403, detail="無權限查看此履歷")
 
     return _profile_to_response(profile)
 
@@ -309,14 +322,15 @@ async def update_profile(
     """
     service = ProfileService(db)
 
-    # 檢查權限
+    # 檢查權限（使用 Policy，Gemini Review P2）
     profile = service.get_by_id(profile_id, load_relations=False)
     if not profile:
         raise HTTPException(status_code=404, detail="履歷不存在")
 
-    if current_user.role == Role.STAFF.value:
-        if profile.department != current_user.department:
-            raise HTTPException(status_code=403, detail="無權限編輯此履歷")
+    if not ProfilePolicy.can_edit(
+        current_user.role, current_user.department, profile
+    ):
+        raise HTTPException(status_code=403, detail="無權限編輯此履歷")
 
     try:
         updated = service.update(
@@ -365,14 +379,15 @@ async def convert_profile(
     """
     service = ProfileService(db)
 
-    # 檢查權限
+    # 檢查權限（使用 Policy，Gemini Review P2）
     profile = service.get_by_id(profile_id, load_relations=False)
     if not profile:
         raise HTTPException(status_code=404, detail="履歷不存在")
 
-    if current_user.role == Role.STAFF.value:
-        if profile.department != current_user.department:
-            raise HTTPException(status_code=403, detail="無權限轉換此履歷")
+    if not ProfilePolicy.can_convert(
+        current_user.role, current_user.department, profile
+    ):
+        raise HTTPException(status_code=403, detail="無權限轉換此履歷")
 
     # 準備子表資料
     sub_table_data = {}
@@ -399,11 +414,54 @@ async def convert_profile(
 
 
 # ============================================================
+# 重置為 Basic API（Gemini Review P1）
+# ============================================================
+
+@router.post("/{profile_id}/reset", response_model=ProfileResponse)
+async def reset_profile(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    重置履歷為基本類型
+
+    刪除子表資料，將類型改回 basic，狀態改回 pending。
+    適用於選錯類型需要重新轉換的情況。
+
+    規則（Gemini Review P1）：
+    - 已完成履歷不可重置
+    - 基本履歷不需要重置
+    """
+    service = ProfileService(db)
+
+    # 檢查權限（使用 Policy，Gemini Review P2）
+    profile = service.get_by_id(profile_id, load_relations=False)
+    if not profile:
+        raise HTTPException(status_code=404, detail="履歷不存在")
+
+    if not ProfilePolicy.can_reset(
+        current_user.role, current_user.department, profile
+    ):
+        raise HTTPException(status_code=403, detail="無權限重置此履歷")
+
+    try:
+        reset = service.reset_to_basic(profile_id)
+        return _profile_to_response(reset)
+    except ProfileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except InvalidConversionError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ============================================================
 # T143: Office 文件生成 API
 # ============================================================
 
 @router.post("/{profile_id}/generate-document")
+@limiter.limit("5/minute")
 async def generate_document(
+    request: Request,
     profile_id: int,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
@@ -412,6 +470,8 @@ async def generate_document(
     生成 Office 文件
 
     返回 Word 文件流，供瀏覽器直接下載。
+
+    Rate Limit: 每用戶每分鐘 5 次請求（Gemini Review P0）
     """
     profile_service = ProfileService(db)
     doc_service = OfficeDocumentService()
@@ -421,9 +481,11 @@ async def generate_document(
     if not profile:
         raise HTTPException(status_code=404, detail="履歷不存在")
 
-    if current_user.role == Role.STAFF.value:
-        if profile.department != current_user.department:
-            raise HTTPException(status_code=403, detail="無權限存取此履歷")
+    # 使用 Policy 檢查權限（Gemini Review P2）
+    if not ProfilePolicy.can_generate_document(
+        current_user.role, current_user.department, profile
+    ):
+        raise HTTPException(status_code=403, detail="無權限存取此履歷")
 
     # 取得員工
     employee = profile.employee
@@ -511,9 +573,10 @@ async def search_profiles(
     """
     service = ProfileService(db)
 
-    # Staff 只能搜尋自己部門
-    if current_user.role == Role.STAFF.value:
-        department = current_user.department
+    # 使用 Policy 過濾部門（Gemini Review P2）
+    department = ProfilePolicy.filter_department(
+        current_user.role, current_user.department, department
+    )
 
     profiles = service.search(
         keyword=keyword,
@@ -551,8 +614,10 @@ async def get_pending_profiles(
     """
     service = ProfileService(db)
 
-    if current_user.role == Role.STAFF.value:
-        department = current_user.department
+    # 使用 Policy 過濾部門（Gemini Review P2）
+    department = ProfilePolicy.filter_department(
+        current_user.role, current_user.department, department
+    )
 
     profiles = service.get_pending_profiles(
         department=department,
@@ -575,8 +640,10 @@ async def get_pending_statistics(
     """
     service = ProfileService(db)
 
-    if current_user.role == Role.STAFF.value:
-        department = current_user.department
+    # 使用 Policy 過濾部門（Gemini Review P2）
+    department = ProfilePolicy.filter_department(
+        current_user.role, current_user.department, department
+    )
 
     stats = service.count_pending(department)
     total = sum(stats.values())
@@ -600,9 +667,11 @@ async def mark_profile_complete(
     if not profile:
         raise HTTPException(status_code=404, detail="履歷不存在")
 
-    if current_user.role == Role.STAFF.value:
-        if profile.department != current_user.department:
-            raise HTTPException(status_code=403, detail="無權限操作此履歷")
+    # 使用 Policy 檢查權限（Gemini Review P2）
+    if not ProfilePolicy.can_mark_complete(
+        current_user.role, current_user.department, profile
+    ):
+        raise HTTPException(status_code=403, detail="無權限操作此履歷")
 
     try:
         updated = service.mark_completed(profile_id, gdrive_link)
