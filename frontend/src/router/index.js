@@ -104,6 +104,15 @@ const routes = [
       title: '事件履歷'
     }
   },
+  {
+    path: '/pending-profiles',
+    name: 'pending-profiles',
+    component: () => import('@/views/PendingProfiles.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '未結案專區'
+    }
+  },
 
   // 考核系統
   {

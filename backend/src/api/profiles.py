@@ -44,6 +44,14 @@ from src.services.profile_service import (
     ProfileNotFoundError,
     ProfileService,
 )
+from src.services.pending_profile_service import (
+    PendingProfileService,
+    get_pending_profile_service,
+)
+from src.services.pdf_upload_service import (
+    PdfUploadService,
+    get_pdf_upload_service,
+)
 from src.services.profile_policy import ProfilePolicy
 from src.services.schedule_lookup_service import (
     ScheduleLookupService,
@@ -290,9 +298,27 @@ class ScheduleLookupResponse(BaseModel):
 
 
 class PendingStatsResponse(BaseModel):
-    """未結案統計回應"""
+    """未結案統計回應（T186 增強）"""
     total: int
     by_type: dict[str, int]
+    oldest_pending_date: Optional[date] = None
+    this_month_completed: int = 0
+    this_month_total: int = 0
+    completion_rate: float = 0.0
+
+
+class UploadParamsResponse(BaseModel):
+    """上傳參數回應（T190）"""
+    profile_id: int
+    profile_type: str
+    employee_id: str
+    employee_name: str
+    event_date: Optional[date] = None
+    department: str
+    suggested_folder_name: str
+    suggested_file_name: str
+    can_upload: bool
+    error_message: Optional[str] = None
 
 
 # ============================================================
@@ -723,19 +749,69 @@ async def get_pending_statistics(
     current_user: TokenData = Depends(get_current_user),
 ):
     """
-    取得未結案統計
-    """
-    service = ProfileService(db)
+    取得未結案統計（T186 增強）
 
+    包含：
+    - 各類型未結案數量
+    - 最舊未結案日期
+    - 本月完成數 / 本月轉換總數
+    - 本月完成率
+    """
     # 使用 Policy 過濾部門（Gemini Review P2）
     department = ProfilePolicy.filter_department(
         current_user.role, current_user.department, department
     )
 
-    stats = service.count_pending(department)
-    total = sum(stats.values())
+    pending_service = get_pending_profile_service(db)
+    stats = pending_service.get_full_statistics(department)
 
-    return PendingStatsResponse(total=total, by_type=stats)
+    return PendingStatsResponse(
+        total=stats.total,
+        by_type=stats.by_type,
+        oldest_pending_date=stats.oldest_pending_date,
+        this_month_completed=stats.this_month_completed,
+        this_month_total=stats.this_month_total,
+        completion_rate=stats.completion_rate
+    )
+
+
+@router.get("/{profile_id}/upload-params", response_model=UploadParamsResponse)
+async def get_upload_params(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    取得 PDF 上傳參數（T190）
+
+    前端在上傳 PDF 前呼叫此 API 取得：
+    - 建議的檔案名稱
+    - 建議的資料夾路徑
+    - 是否可以上傳
+
+    實際上傳流程：
+    1. 前端呼叫此 API 取得參數
+    2. 前端呼叫本機 API 上傳 PDF 到 Google Drive
+    3. 前端呼叫 POST /{profile_id}/complete 更新 gdrive_link
+    """
+    upload_service = get_pdf_upload_service(db)
+    params = upload_service.get_upload_params(profile_id)
+
+    if not params.can_upload and "不存在" in (params.error_message or ""):
+        raise HTTPException(status_code=404, detail=params.error_message)
+
+    return UploadParamsResponse(
+        profile_id=params.profile_id,
+        profile_type=params.profile_type,
+        employee_id=params.employee_id,
+        employee_name=params.employee_name,
+        event_date=params.event_date,
+        department=params.department,
+        suggested_folder_name=params.suggested_folder_name,
+        suggested_file_name=params.suggested_file_name,
+        can_upload=params.can_upload,
+        error_message=params.error_message
+    )
 
 
 @router.post("/{profile_id}/complete", response_model=ProfileResponse)
@@ -746,7 +822,7 @@ async def mark_profile_complete(
     current_user: TokenData = Depends(get_current_user),
 ):
     """
-    標記履歷為已完成
+    標記履歷為已完成（上傳 PDF 後呼叫）
     """
     service = ProfileService(db)
 

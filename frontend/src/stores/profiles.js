@@ -357,6 +357,19 @@ export const useProfilesStore = defineStore('profiles', () => {
   }
 
   /**
+   * 取得上傳參數（Phase 14 T190）
+   */
+  async function fetchUploadParams(profileId) {
+    try {
+      const response = await cloudApi.get(`${API_BASE}/${profileId}/upload-params`)
+      return response.data
+    } catch (err) {
+      error.value = err.response?.data?.detail || '取得上傳參數失敗'
+      throw err
+    }
+  }
+
+  /**
    * 設定篩選條件並重新載入
    */
   function setFilters(newFilters) {
@@ -428,6 +441,7 @@ export const useProfilesStore = defineStore('profiles', () => {
     fetchPendingProfiles,
     fetchPendingStats,
     markComplete,
+    fetchUploadParams,
     setFilters,
     setPage,
     resetFilters,

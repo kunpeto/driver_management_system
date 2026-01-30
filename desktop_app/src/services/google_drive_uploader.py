@@ -502,3 +502,282 @@ def create_uploader_from_credential_manager(
         client_id=token_data.get('client_id'),
         client_secret=token_data.get('client_secret')
     )
+
+
+# ============================================================
+# Phase 14: 履歷 PDF 上傳功能（T191）
+# ============================================================
+
+# 履歷類型對應的資料夾名稱
+PROFILE_TYPE_FOLDER_NAMES = {
+    "event_investigation": "事件調查",
+    "personnel_interview": "人員訪談",
+    "corrective_measures": "矯正措施",
+    "assessment_notice": "考核通知",
+    "basic": "其他",
+}
+
+
+@dataclass
+class ProfileUploadResult:
+    """履歷 PDF 上傳結果"""
+    success: bool
+    file_id: Optional[str]
+    web_view_link: Optional[str]
+    file_name: str
+    folder_path: str  # 例如：202601/事件調查
+    error_message: Optional[str] = None
+
+
+class ProfilePdfUploader:
+    """
+    履歷 PDF 上傳器
+
+    依履歷類型與日期自動分類資料夾，
+    並設定權限為「僅網域內可檢視」。
+    """
+
+    def __init__(
+        self,
+        uploader: GoogleDriveUploader,
+        root_folder_id: str,
+        domain: Optional[str] = None
+    ):
+        """
+        初始化
+
+        Args:
+            uploader: Google Drive 上傳器
+            root_folder_id: 根資料夾 ID（各部門的履歷資料夾）
+            domain: 網域（用於設定權限，例如 "metro.taipei"）
+        """
+        self.uploader = uploader
+        self.root_folder_id = root_folder_id
+        self.domain = domain
+        self._folder_cache: dict[str, str] = {}  # 資料夾路徑 -> ID 快取
+
+    def _get_or_create_folder(
+        self,
+        folder_name: str,
+        parent_id: str,
+        credentials=None
+    ) -> Optional[str]:
+        """
+        取得或建立資料夾
+
+        先檢查資料夾是否存在，不存在則建立。
+
+        Args:
+            folder_name: 資料夾名稱
+            parent_id: 父資料夾 ID
+            credentials: OAuth 憑證
+
+        Returns:
+            資料夾 ID
+        """
+        cache_key = f"{parent_id}/{folder_name}"
+
+        # 檢查快取
+        if cache_key in self._folder_cache:
+            return self._folder_cache[cache_key]
+
+        # 搜尋現有資料夾
+        files = self.uploader.list_files(
+            folder_id=parent_id,
+            query=f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder'",
+            credentials=credentials
+        )
+
+        if files:
+            folder_id = files[0]['id']
+            self._folder_cache[cache_key] = folder_id
+            return folder_id
+
+        # 建立新資料夾
+        folder_id = self.uploader.create_folder(
+            folder_name=folder_name,
+            parent_folder_id=parent_id,
+            credentials=credentials
+        )
+
+        if folder_id:
+            self._folder_cache[cache_key] = folder_id
+
+        return folder_id
+
+    def _ensure_folder_path(
+        self,
+        folder_path: str,
+        credentials=None
+    ) -> Optional[str]:
+        """
+        確保資料夾路徑存在
+
+        依序建立路徑中的每個資料夾（如 "202601/事件調查"）。
+
+        Args:
+            folder_path: 資料夾路徑（使用 / 分隔）
+            credentials: OAuth 憑證
+
+        Returns:
+            最終資料夾的 ID
+        """
+        parts = folder_path.split('/')
+        current_parent = self.root_folder_id
+
+        for part in parts:
+            if not part:
+                continue
+
+            folder_id = self._get_or_create_folder(
+                folder_name=part,
+                parent_id=current_parent,
+                credentials=credentials
+            )
+
+            if not folder_id:
+                logger.error(f"無法建立資料夾: {part}")
+                return None
+
+            current_parent = folder_id
+
+        return current_parent
+
+    def upload_profile_pdf(
+        self,
+        file_path: str | Path,
+        profile_type: str,
+        year_month: str,
+        file_name: Optional[str] = None,
+        folder_path: Optional[str] = None,
+        credentials=None,
+        set_domain_permission: bool = True
+    ) -> ProfileUploadResult:
+        """
+        上傳履歷 PDF
+
+        自動建立資料夾結構並上傳。
+
+        Args:
+            file_path: PDF 檔案路徑
+            profile_type: 履歷類型（event_investigation, personnel_interview 等）
+            year_month: 年月（格式：YYYYMM，例如 202601）
+            file_name: 檔案名稱（None 則使用原檔名）
+            folder_path: 資料夾路徑（由後端提供，優先使用）- Gemini Review P1 修正
+            credentials: OAuth 憑證
+            set_domain_permission: 是否設定網域權限
+
+        Returns:
+            ProfileUploadResult
+        """
+        file_path = Path(file_path)
+
+        # Gemini Review P1 修正：優先使用後端提供的 folder_path
+        if folder_path:
+            # 使用後端提供的路徑（確保前後端一致）
+            actual_folder_path = folder_path
+        else:
+            # 後備方案：自行組裝路徑（舊邏輯，僅當後端未提供時使用）
+            type_folder_name = PROFILE_TYPE_FOLDER_NAMES.get(
+                profile_type,
+                "其他"
+            )
+            actual_folder_path = f"{year_month}/{type_folder_name}"
+            logger.warning(
+                f"未提供 folder_path，使用本地邏輯組裝路徑: {actual_folder_path}"
+            )
+
+        try:
+            # 確保資料夾存在
+            target_folder_id = self._ensure_folder_path(
+                actual_folder_path,
+                credentials=credentials
+            )
+
+            if not target_folder_id:
+                return ProfileUploadResult(
+                    success=False,
+                    file_id=None,
+                    web_view_link=None,
+                    file_name=file_name or file_path.name,
+                    folder_path=actual_folder_path,
+                    error_message=f"無法建立資料夾: {actual_folder_path}"
+                )
+
+            # 上傳檔案
+            type_label = PROFILE_TYPE_FOLDER_NAMES.get(profile_type, profile_type)
+            result = self.uploader.upload_file(
+                file_path=file_path,
+                folder_id=target_folder_id,
+                file_name=file_name,
+                credentials=credentials,
+                description=f"履歷類型: {type_label}"
+            )
+
+            if not result.success:
+                return ProfileUploadResult(
+                    success=False,
+                    file_id=None,
+                    web_view_link=None,
+                    file_name=file_name or file_path.name,
+                    folder_path=actual_folder_path,
+                    error_message=result.error_message
+                )
+
+            # 設定網域權限
+            if set_domain_permission and self.domain and result.file_id:
+                self.uploader.set_permissions(
+                    file_id=result.file_id,
+                    role='reader',
+                    type='domain',
+                    domain=self.domain,
+                    credentials=credentials
+                )
+                logger.info(f"已設定網域權限: {self.domain}")
+
+            return ProfileUploadResult(
+                success=True,
+                file_id=result.file_id,
+                web_view_link=result.web_view_link,
+                file_name=result.file_name,
+                folder_path=actual_folder_path
+            )
+
+        except Exception as e:
+            logger.error(f"履歷 PDF 上傳失敗: {e}")
+            return ProfileUploadResult(
+                success=False,
+                file_id=None,
+                web_view_link=None,
+                file_name=file_name or file_path.name,
+                folder_path=actual_folder_path,
+                error_message=str(e)
+            )
+
+
+def create_profile_uploader(
+    department: str,
+    root_folder_id: str,
+    domain: Optional[str] = None
+) -> Optional[ProfilePdfUploader]:
+    """
+    建立履歷 PDF 上傳器
+
+    Args:
+        department: 部門（淡海 或 安坑）
+        root_folder_id: 根資料夾 ID
+        domain: 網域（用於設定權限）
+
+    Returns:
+        ProfilePdfUploader 實例，失敗則返回 None
+    """
+    uploader = create_uploader_from_credential_manager(department)
+
+    if not uploader:
+        return None
+
+    return ProfilePdfUploader(
+        uploader=uploader,
+        root_folder_id=root_folder_id,
+        domain=domain
+    )

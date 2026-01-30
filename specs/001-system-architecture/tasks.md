@@ -567,25 +567,25 @@
 
 ### Phase 12 補強任務 ⭐ **新增**
 
-- [ ] T193 [US10] 修正 MonthlyRewardCalculatorService 在 backend/src/services/monthly_reward_calculator.py（修正：接收 is_full_attendance=True 時，自動建立 +M01 的 AssessmentRecord，而非僅更新 MonthlyReward 總表）
+- [x] T193 [US10] 修正 MonthlyRewardCalculatorService 在 backend/src/services/monthly_reward_calculator.py（修正：接收 is_full_attendance=True 時，自動建立 +M01 的 AssessmentRecord，而非僅更新 MonthlyReward 總表）✅ 2026-01-30
   - **問題描述**：目前 Phase 12 只更新 MonthlyReward 表，沒有建立 +M01 考核記錄，導致員工總分未加上全勤的 3 分
   - **修正內容**：
     1. 若 is_full_attendance=True，建立 +M01 AssessmentRecord（+3 分）
     2. 若符合 +M02（R+S 零扣分），建立 +M02 AssessmentRecord（+1 分）
     3. 若符合 +M03（全類別零扣分），建立 +M03 AssessmentRecord（+2 分）
     4. 同步更新 MonthlyReward 總表
-- [ ] T194 [US10] 確認/更新考核標準種子資料（確認 +A01 分數為 +3.0，新增 +A02 國定假日出勤 +1.0）
+- [x] T194 [US10] 確認/更新考核標準種子資料（確認 +A01 分數為 +3.0，新增 +A02 國定假日出勤 +1.0）✅ 2026-01-30
 
 ### 後端服務 - 班表解析與判定
 
-- [ ] T195 [P] [US10] 實作班表解析服務在 backend/src/services/attendance_sheet_parser.py（解析 Google Sheets 班表，返回標準化的每日出勤物件：含 R 班標記、國定假日標記、加班時數、請假標記）
-- [ ] T196 [P] [US10] 實作全勤判定服務在 backend/src/services/attendance_full_month_detector.py（掃描班表所有儲存格，檢查是否包含「(假)」，正規化處理：移除多餘空白、全形符號轉半形）
-- [ ] T197 [P] [US10] 實作 R班出勤判定服務在 backend/src/services/attendance_r_shift_detector.py（正則匹配 `R/...` 判定一般 R班，`R(國)/...` 判定國定假日 R班）
-- [ ] T198 [P] [US10] 實作延長工時判定服務在 backend/src/services/attendance_overtime_detector.py（正則匹配 `\(\+[1-4]\)` 提取加班時數）
+- [x] T195 [P] [US10] 實作班表解析服務在 backend/src/services/attendance_sheet_parser.py（解析 Google Sheets 班表，返回標準化的每日出勤物件：含 R 班標記、國定假日標記、加班時數、請假標記）✅ 2026-01-30
+- [x] T196 [P] [US10] 實作全勤判定服務在 backend/src/services/attendance_full_month_detector.py（掃描班表所有儲存格，檢查是否包含「(假)」，正規化處理：移除多餘空白、全形符號轉半形）✅ 2026-01-30
+- [x] T197 [P] [US10] 實作 R班出勤判定服務在 backend/src/services/attendance_r_shift_detector.py（正則匹配 `R/...` 判定一般 R班，`R(國)/...` 判定國定假日 R班）✅ 2026-01-30
+- [x] T198 [P] [US10] 實作延長工時判定服務在 backend/src/services/attendance_overtime_detector.py（正則匹配 `\(\+[1-4]\)` 提取加班時數）✅ 2026-01-30
 
 ### 後端服務 - 加分處理與整合
 
-- [ ] T199 [US10] 實作差勤加分處理服務在 backend/src/services/attendance_bonus_processor.py
+- [x] T199 [US10] 實作差勤加分處理服務在 backend/src/services/attendance_bonus_processor.py ✅ 2026-01-30
   - **核心職責**：
     1. 呼叫 Parser 取得班表數據
     2. 根據數據批次建立 +A 系列考核紀錄（+A01 R班、+A02 國定假日、+A03~A06 延長工時）
@@ -594,25 +594,25 @@
     5. 返回處理統計結果
   - **防重複機制**：使用 UNIQUE(employee_id, record_date, standard_code) 約束
   - **Transaction 處理**：整個流程在同一 Transaction 中執行，失敗時全部回滾
-- [ ] T200 [US10] 實作複合情況處理邏輯（如 `R/0905G(+2)` 同時建立 +A01 和 +A04 兩筆記錄；`R(國)/1425G(+2)` 建立 +A01、+A02、+A04 三筆記錄）
+- [x] T200 [US10] 實作複合情況處理邏輯（如 `R/0905G(+2)` 同時建立 +A01 和 +A04 兩筆記錄；`R(國)/1425G(+2)` 建立 +A01、+A02、+A04 三筆記錄）✅ 2026-01-30
 
 ### 後端 API 端點
 
-- [ ] T201 [US10] 實作差勤加分處理 API 在 backend/src/api/attendance_bonus.py
+- [x] T201 [US10] 實作差勤加分處理 API 在 backend/src/api/attendance_bonus.py ✅ 2026-01-30
   - `POST /api/attendance-bonus/process`：參數 year, month, department，觸發處理流程
   - `GET /api/attendance-bonus/preview`：預覽模式，返回將建立的記錄但不寫入
   - `GET /api/attendance-bonus/history`：查詢歷史處理記錄
-- [ ] T202 [US10] 實作差勤處理結果查詢 API 在 backend/src/api/attendance_bonus.py
+- [x] T202 [US10] 實作差勤處理結果查詢 API 在 backend/src/api/attendance_bonus.py ✅ 2026-01-30
   - `GET /api/attendance-bonus/results/{year}/{month}`：查詢指定月份的處理結果統計
 
 ### 前端實作
 
-- [ ] T203 [P] [US10] 建立差勤加分處理頁面在 frontend/src/views/AttendanceBonus.vue
+- [x] T203 [P] [US10] 建立差勤加分處理頁面在 frontend/src/views/AttendanceBonus.vue ✅ 2026-01-30
   - 選擇年月與部門
   - 「預覽」按鈕：顯示將建立的記錄
   - 「執行」按鈕：執行處理流程
   - 進度條顯示處理狀態
-- [ ] T204 [P] [US10] 建立差勤處理結果元件在 frontend/src/components/attendance/BonusProcessResult.vue
+- [x] T204 [P] [US10] 建立差勤處理結果元件在 frontend/src/components/attendance/BonusProcessResult.vue ✅ 2026-01-30
   - 統計資訊：
     - 全勤(+M01) X 筆
     - 行車零違規(+M02) Y 筆
@@ -621,11 +621,13 @@
     - 國定假日出勤(+A02) B 筆
     - 延長工時(+A03~06) C 筆
     - 跳過 N 筆（已存在）
-- [ ] T205 [US10] 建立差勤加分 Store 在 frontend/src/stores/attendanceBonus.js（Pinia state、actions）
+- [x] T205 [US10] 建立差勤加分 Store 在 frontend/src/stores/attendanceBonus.js（Pinia state、actions）✅ 2026-01-30
 
-**Checkpoint**: 差勤加分自動處理功能完成，可批次建立考核記錄並整合月度獎勵計算
+**Checkpoint**: ✅ 差勤加分自動處理功能完成，可批次建立考核記錄並整合月度獎勵計算
 
-**任務總數**: 13 個（T193-T205）
+**完成日期**: 2026-01-30
+
+**任務總數**: 13 個（T193-T205）- 全部完成
 
 ---
 
@@ -639,27 +641,29 @@
 
 ### 後端服務
 
-- [ ] T186 [US11] 實作未結案查詢服務在 backend/src/services/pending_profile_service.py（查詢 `conversion_status = 'converted' AND gdrive_link IS NULL` 的履歷、按類型分組統計、最舊未結案日期計算、本月完成率計算）
-- [ ] T187 [US11] 實作 PDF 上傳服務在 backend/src/services/pdf_upload_service.py（委派本機 API 上傳到 Google Drive、上傳成功後更新 Profile.gdrive_link 和 conversion_status）
+- [x] T186 [US11] 實作未結案查詢服務在 backend/src/services/pending_profile_service.py（查詢 `conversion_status = 'converted' AND gdrive_link IS NULL` 的履歷、按類型分組統計、最舊未結案日期計算、本月完成率計算）
+- [x] T187 [US11] 實作 PDF 上傳服務在 backend/src/services/pdf_upload_service.py（委派本機 API 上傳到 Google Drive、上傳成功後更新 Profile.gdrive_link 和 conversion_status）
 
 ### 後端 API 端點
 
-- [ ] T188 [US11] 實作未結案列表 API 在 backend/src/api/profiles.py（GET /api/profiles/pending, 查詢條件：conversion_status='converted' AND gdrive_link IS NULL，支援類型與部門篩選，使用複合索引提升效能）
-- [ ] T189 [US11] 實作未結案統計 API 在 backend/src/api/profiles.py（GET /api/profiles/pending/statistics, 統計各類型待處理數量、最舊未結案日期、本月完成率）
-- [ ] T190 [US11] 實作 PDF 上傳 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/upload-pdf, 接收檔案並委派本機 API 上傳，成功後更新 conversion_status='completed'）
+- [x] T188 [US11] 實作未結案列表 API 在 backend/src/api/profiles.py（GET /api/profiles/pending, 查詢條件：conversion_status='converted' AND gdrive_link IS NULL，支援類型與部門篩選，使用複合索引提升效能）✅ 已於 Phase 11 實作
+- [x] T189 [US11] 實作未結案統計 API 在 backend/src/api/profiles.py（GET /api/profiles/pending/statistics, 統計各類型待處理數量、最舊未結案日期、本月完成率）✅ 已於 Phase 11 實作並於 T186 增強
+- [x] T190 [US11] 實作 PDF 上傳 API 在 backend/src/api/profiles.py（GET /api/profiles/{id}/upload-params 取得上傳參數，POST /api/profiles/{id}/complete 更新 conversion_status='completed'）
 
 ### 本機 API 端點（複用 Phase 8 服務）⭐
 
-- [ ] T191 [US11] 擴充 Google Drive 上傳服務在 desktop_app/src/services/google_drive_uploader.py（複用 T093 服務，新增依履歷類型與日期自動分類資料夾的邏輯，設定權限為「僅網域內可檢視」）
+- [x] T191 [US11] 擴充 Google Drive 上傳服務在 desktop_app/src/services/google_drive_uploader.py（新增 ProfilePdfUploader 類別，依履歷類型與日期自動分類資料夾的邏輯，設定權限為「僅網域內可檢視」）
 - ~~T192 已合併至 T191~~（不需獨立 API 端點，直接使用 T093 的現有端點）
 
 ### 前端實作
 
-- [ ] T193 [P] [US11] 建立未結案專區頁面在 frontend/src/views/PendingProfiles.vue（查詢 conversion_status='converted' 的履歷、類型分類、統計資訊）
-- [ ] T194 [P] [US11] 建立 PDF 上傳元件在 frontend/src/components/profiles/PdfUploadDialog.vue（檔案選擇、上傳進度、錯誤處理）
-- [ ] T195 [US11] 建立未結案統計元件在 frontend/src/components/profiles/PendingStatistics.vue（各類型待處理數量、最舊未結案日期、本月完成率）
+- [x] T193 [P] [US11] 建立未結案專區頁面在 frontend/src/views/PendingProfiles.vue（查詢 conversion_status='converted' 的履歷、類型分類、統計資訊）
+- [x] T194 [P] [US11] 建立 PDF 上傳元件在 frontend/src/components/profiles/PdfUploadDialog.vue（檔案選擇、上傳進度、錯誤處理）
+- [x] T195 [US11] 建立未結案統計元件在 frontend/src/components/profiles/PendingStatistics.vue（各類型待處理數量、最舊未結案日期、本月完成率）
 
-**Checkpoint**: 未結案管理系統功能完成，可追蹤文件處理進度
+**Checkpoint**: ✅ 未結案管理系統功能完成，可追蹤文件處理進度
+
+**完成日期**: 2026-01-30
 
 ---
 

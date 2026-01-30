@@ -414,3 +414,133 @@ async def get_task_status(task_id: str):
         "status": "completed",
         "message": "目前為同步處理模式，任務已完成"
     }
+
+
+# ============================================================
+# Phase 14: 履歷 PDF 上傳（T191）
+# ============================================================
+
+class ProfileUploadRequest(BaseModel):
+    """履歷上傳請求"""
+    profile_type: str  # event_investigation, personnel_interview, etc.
+    year_month: str    # YYYYMM 格式
+    file_name: Optional[str] = None
+    set_domain_permission: bool = True
+
+
+class ProfileUploadResponse(BaseModel):
+    """履歷上傳回應"""
+    success: bool
+    file_id: Optional[str] = None
+    web_view_link: Optional[str] = None
+    file_name: str
+    folder_path: str
+    error_message: Optional[str] = None
+
+
+@router.post("/upload-profile", response_model=ProfileUploadResponse)
+async def upload_profile_pdf(
+    file: UploadFile = File(..., description="PDF 檔案"),
+    profile_type: str = Form(..., description="履歷類型"),
+    year_month: str = Form(..., description="年月 (YYYYMM)"),
+    department: str = Form(..., description="部門 (淡海/安坑)"),
+    file_name: Optional[str] = Form(None, description="自訂檔案名稱"),
+    folder_path: Optional[str] = Form(None, description="資料夾路徑（由後端提供，優先使用）"),
+    set_domain_permission: bool = Form(True, description="設定網域權限")
+):
+    """
+    上傳履歷 PDF 到 Google Drive（Phase 14 T191）
+
+    自動依履歷類型與日期建立資料夾結構：
+    - {根資料夾}/{年月}/{類型}/檔案.pdf
+    - 例如：履歷/202601/事件調查/事件調查_A12345_20260115.pdf
+
+    權限設定：
+    - 預設設定為「僅網域內可檢視」
+
+    流程：
+    1. 前端呼叫後端 GET /api/profiles/{id}/upload-params 取得參數
+    2. 前端呼叫本 API 上傳 PDF
+    3. 前端呼叫後端 POST /api/profiles/{id}/complete 更新 gdrive_link
+    """
+    from desktop_app.src.services.google_drive_uploader import (
+        create_profile_uploader,
+        ProfileUploadResult
+    )
+    from desktop_app.src.utils.backend_api_client import get_backend_client
+
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="僅支援 PDF 檔案")
+
+    # 驗證年月格式
+    if len(year_month) != 6 or not year_month.isdigit():
+        raise HTTPException(status_code=400, detail="年月格式錯誤，應為 YYYYMM")
+
+    try:
+        # 從後端取得資料夾 ID
+        backend_client = get_backend_client()
+        folder_id = backend_client.get_drive_folder_id(department)
+
+        if not folder_id:
+            return ProfileUploadResponse(
+                success=False,
+                file_name=file_name or file.filename,
+                folder_path=f"{year_month}/{profile_type}",
+                error_message=f"未設定 {department} 的 Google Drive 資料夾 ID"
+            )
+
+        # 從組態取得網域（用於設定權限）
+        domain = backend_client.get_domain_for_permission()
+
+        # 建立上傳器
+        uploader = create_profile_uploader(
+            department=department,
+            root_folder_id=folder_id,
+            domain=domain if set_domain_permission else None
+        )
+
+        if not uploader:
+            return ProfileUploadResponse(
+                success=False,
+                file_name=file_name or file.filename,
+                folder_path=f"{year_month}/{profile_type}",
+                error_message=f"無法建立 {department} 的上傳器，請檢查 OAuth 授權"
+            )
+
+        # 儲存檔案到暫存
+        content = await file.read()
+        temp_path = Path(tempfile.mktemp(suffix='.pdf'))
+        with open(temp_path, 'wb') as f:
+            f.write(content)
+
+        try:
+            # 上傳（優先使用後端提供的 folder_path，Gemini Review P1 修正）
+            result = uploader.upload_profile_pdf(
+                file_path=temp_path,
+                profile_type=profile_type,
+                year_month=year_month,
+                file_name=file_name or file.filename,
+                folder_path=folder_path,  # 後端提供的路徑優先
+                set_domain_permission=set_domain_permission
+            )
+
+            return ProfileUploadResponse(
+                success=result.success,
+                file_id=result.file_id,
+                web_view_link=result.web_view_link,
+                file_name=result.file_name,
+                folder_path=result.folder_path,
+                error_message=result.error_message
+            )
+        finally:
+            # 清理暫存檔案
+            temp_path.unlink(missing_ok=True)
+
+    except Exception as e:
+        logger.error(f"履歷 PDF 上傳失敗: {e}")
+        return ProfileUploadResponse(
+            success=False,
+            file_name=file_name or file.filename or "unknown",
+            folder_path=f"{year_month}/{profile_type}",
+            error_message=str(e)
+        )

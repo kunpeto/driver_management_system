@@ -101,6 +101,15 @@ class BackendApiClient:
         """
         return self.get_system_setting("google_drive_folder_id", department)
 
+    def get_domain_for_permission(self) -> Optional[str]:
+        """
+        取得用於 Google Drive 權限設定的網域
+
+        Returns:
+            Optional[str]: 網域名稱（例如 "metro.taipei"），未設定則返回 None
+        """
+        return self.get_system_setting("google_drive_domain")
+
     def clear_cache(self):
         """清除所有快取"""
         self._cache.clear()
