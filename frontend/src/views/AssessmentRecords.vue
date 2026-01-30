@@ -13,7 +13,7 @@
     <!-- 員工選擇與摘要 -->
     <el-row :gutter="20">
       <!-- 左側：篩選與列表 -->
-      <el-col :span="16">
+      <el-col :xs="24" :lg="16">
         <!-- 篩選區 -->
         <el-card class="filter-card" shadow="never">
           <el-row :gutter="20">
@@ -171,7 +171,7 @@
       </el-col>
 
       <!-- 右側：年度摘要 -->
-      <el-col :span="8">
+      <el-col :xs="24" :lg="8" class="summary-col">
         <el-card v-if="selectedEmployeeId" shadow="never" class="summary-card">
           <template #header>
             <div class="card-header">
@@ -642,5 +642,16 @@ onMounted(() => {
 :deep(.deleted-row) {
   background-color: #f5f5f5 !important;
   color: #999;
+}
+
+/* 響應式調整 */
+@media (max-width: 1199px) {
+  .summary-col {
+    margin-top: 20px;
+  }
+
+  .summary-card {
+    position: static;
+  }
 }
 </style>

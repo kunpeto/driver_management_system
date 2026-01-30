@@ -8,8 +8,8 @@
 
     <!-- 統計卡片區 -->
     <el-row :gutter="20" class="stats-row">
-      <el-col :span="6">
-        <el-card class="stat-card" shadow="hover" @click="$router.push('/employees')">
+      <el-col :xs="24" :sm="12" :md="12" :lg="6">
+        <el-card class="stat-card" shadow="hover" @click="$router.push('/employees')" tabindex="0" role="button" @keydown.enter="$router.push('/employees')">
           <div class="stat-content">
             <div class="stat-icon employees">
               <el-icon :size="32"><User /></el-icon>
@@ -26,8 +26,8 @@
         </el-card>
       </el-col>
 
-      <el-col :span="6">
-        <el-card class="stat-card warning" shadow="hover" @click="$router.push('/profiles/pending')">
+      <el-col :xs="24" :sm="12" :md="12" :lg="6">
+        <el-card class="stat-card warning" shadow="hover" @click="$router.push('/profiles/pending')" tabindex="0" role="button" @keydown.enter="$router.push('/profiles/pending')">
           <div class="stat-content">
             <div class="stat-icon pending">
               <el-icon :size="32"><Document /></el-icon>
@@ -44,8 +44,8 @@
         </el-card>
       </el-col>
 
-      <el-col :span="6">
-        <el-card class="stat-card" shadow="hover" @click="$router.push('/assessment-records')">
+      <el-col :xs="24" :sm="12" :md="12" :lg="6">
+        <el-card class="stat-card" shadow="hover" @click="$router.push('/assessment-records')" tabindex="0" role="button" @keydown.enter="$router.push('/assessment-records')">
           <div class="stat-content">
             <div class="stat-icon assessments">
               <el-icon :size="32"><Histogram /></el-icon>
@@ -62,8 +62,8 @@
         </el-card>
       </el-col>
 
-      <el-col :span="6">
-        <el-card class="stat-card" shadow="hover" @click="$router.push('/driving-competition')">
+      <el-col :xs="24" :sm="12" :md="12" :lg="6">
+        <el-card class="stat-card" shadow="hover" @click="$router.push('/driving-competition')" tabindex="0" role="button" @keydown.enter="$router.push('/driving-competition')">
           <div class="stat-content">
             <div class="stat-icon competition">
               <el-icon :size="32"><Trophy /></el-icon>
@@ -83,7 +83,7 @@
     <!-- 主要內容區 -->
     <el-row :gutter="20" class="main-content">
       <!-- 左側：未結案履歷 -->
-      <el-col :span="12">
+      <el-col :xs="24" :lg="12">
         <el-card shadow="never">
           <template #header>
             <div class="card-header">
@@ -139,7 +139,7 @@
       </el-col>
 
       <!-- 右側：快速操作 & 最近記錄 -->
-      <el-col :span="12">
+      <el-col :xs="24" :lg="12">
         <!-- 快速操作 -->
         <el-card shadow="never" class="quick-actions-card">
           <template #header>

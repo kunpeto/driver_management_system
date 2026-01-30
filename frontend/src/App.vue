@@ -4,7 +4,7 @@
  * 包含頂部導航、側邊欄和主內容區
  * 優化：加入未結案履歷徽章提醒
  */
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProfilesStore } from '@/stores/profiles'
@@ -119,15 +119,22 @@ watch(() => authStore.isLoggedIn, (isLoggedIn) => {
 }, { immediate: true })
 
 // 定時刷新未結案統計（每 5 分鐘）
+let refreshInterval = null
+
 onMounted(() => {
-  const refreshInterval = setInterval(() => {
+  refreshInterval = setInterval(() => {
     if (authStore.isLoggedIn) {
       loadPendingStats()
     }
   }, 5 * 60 * 1000)
+})
 
-  // 清理定時器
-  return () => clearInterval(refreshInterval)
+// 正確清理定時器
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
 })
 </script>
 
