@@ -19,6 +19,8 @@ from .google_oauth import router as google_oauth_router
 from .route_standard_time import router as route_standard_time_router
 from .driving_stats import router as driving_stats_router
 from .driving_competition import router as driving_competition_router
+# Phase 11: 履歷管理
+from .profiles import router as profiles_router
 
 __all__ = [
     "system_settings_router",
@@ -36,4 +38,6 @@ __all__ = [
     "route_standard_time_router",
     "driving_stats_router",
     "driving_competition_router",
+    # Phase 11
+    "profiles_router",
 ]

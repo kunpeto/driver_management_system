@@ -94,6 +94,17 @@ const routes = [
     }
   },
 
+  // 履歷管理
+  {
+    path: '/profiles',
+    name: 'profiles',
+    component: () => import('@/views/Profiles.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '事件履歷'
+    }
+  },
+
   // PDF 處理
   {
     path: '/pdf-upload',
@@ -203,12 +214,17 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
+  // 初始化 auth store（從 localStorage/sessionStorage 載入）
+  if (!authStore.initialized) {
+    authStore.init()
+  }
+
   // 1. 設定頁面標題
   const baseTitle = '司機員管理系統'
   document.title = to.meta.title ? `${to.meta.title} | ${baseTitle}` : baseTitle
 
   // 2. 檢查認證狀態
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
     // 需要登入但未登入，重定向到登入頁
     return next({
       name: 'login',
@@ -217,13 +233,13 @@ router.beforeEach((to, from, next) => {
   }
 
   // 3. 檢查管理員權限
-  if (to.meta.requiresAdmin && authStore.user?.role !== 'admin') {
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
     // 需要管理員權限但沒有，重定向到 403 頁面
     return next({ name: 'forbidden' })
   }
 
   // 4. 已登入使用者訪問登入頁，重定向到儀表板
-  if (to.name === 'login' && authStore.isAuthenticated) {
+  if (to.name === 'login' && authStore.isLoggedIn) {
     return next({ name: 'dashboard' })
   }
 

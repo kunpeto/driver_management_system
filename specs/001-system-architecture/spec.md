@@ -487,38 +487,73 @@
 
 ---
 
-### User Story 8 - 司機員事件履歷管理系統 (Priority: P1) ⭐ **(新增)**
+### User Story 8 - 司機員事件履歷管理系統 (Priority: P1) ⭐ **(新增 + Gemini Review 優化)**
 
 值班台人員需要能夠記錄和管理司機員的各類事件履歷，包括事件調查、人員訪談、考核加扣分、矯正措施等，並自動產生對應的 Office 文件。
 
 **Why this priority**: 事件履歷是司機員考核管理的核心，所有事件記錄都需要完整的文件化流程。
 
-**Independent Test**: 值班台人員建立一筆基本履歷後，將其轉換為「人員訪談」類型，系統自動從 Google Sheets 班表取得該員工事件當天前後的班別資訊，填充資料後產生 Word 文件並嵌入條碼，儲存到本機並記錄 Google Drive 連結。
+**Independent Test**: 值班台人員建立一筆基本履歷後，將其轉換為「人員訪談」類型，系統自動從本地資料庫（schedules 表）查詢該員工事件當天前後的班別資訊，填充資料後在後端產生 Word 文件並嵌入條碼，直接下載到瀏覽器。
+
+**架構優化** ⭐ **(Gemini Review 2026-01-30 + Render 免費版評估)**:
+- ✅ **Office 文件生成移至後端**（python-docx/openpyxl 可在 Render 免費版運行，每天 < 10 份無記憶體壓力）
+- ✅ **條碼版本號機制**（格式：`{profile_id}|{type_code}|{YYYYMM}|V{version}`，防止同一履歷多次生成條碼重複）
+- ✅ **班表查詢優先本地 DB**（優先查詢 schedules 表，僅在必要時呼叫 Google API）
+- ✅ **履歷轉換規則明確**（僅允許 basic → 專業類型，防止資料遺失）
+- ✅ **EventInvestigation 強化統計欄位**（新增 has_responsibility、category，支援 Phase 9 駕駛競賽責任事件統計）
+
+**資料模型修正** ⭐ **(Gemini 模板欄位驗證 2026-01-30)**:
+- ✅ **Profile 主表擴充**：新增 event_time、event_title、data_source、assessment_item、assessment_score 欄位
+  - 設計理由：所有 Profile 類型都可能需要考核資訊，將這些欄位提升至主表確保「一事一檔」資料一致性
+- ✅ **PersonnelInterview 模型補完**：
+  - 新增 `interview_result_data` (JSON)：儲存訪談結果勾選 (ir_1~ir_7, ir_other_text)
+  - 新增 `follow_up_action_data` (JSON)：儲存後續行動勾選 (fa_1~fa_7, fa_other_text)
+  - 新增 `conclusion` (TEXT)：結論欄位
+  - 設計理由：使用 JSON 欄位保持彈性，避免新增 16+ 個 Boolean 欄位
+- ✅ **欄位映射邏輯標準化**：建立完整的模板佔位符與資料庫欄位映射表（詳見 `backend/src/templates/README.md`）
 
 **Acceptance Scenarios**:
 
-1. **Given** 值班台人員登入系統，**When** 點擊「新增履歷」並填寫事件日期、員工姓名、事件地點、列車車號、事件描述，**Then** 系統建立基本履歷並儲存到資料庫
-2. **Given** 基本履歷已建立，**When** 點擊「轉換類型」並選擇「事件調查」，**Then** 系統彈出事件調查表單，包含事故時間、地點、目擊者、原因、經過、改善建議等欄位
-3. **Given** 填寫事件調查表單，**When** 點擊「儲存並產生文件」，**Then** 系統將表單資料儲存到資料庫，透過本機 API 產生 Word 文件，在文件底部嵌入 Code128 條碼（編碼格式：`{profile_id}|EI|{year}|{month}`）
-4. **Given** Word 文件產生完成，**When** 系統開啟文件供確認，**Then** 文件已填入所有資料庫欄位，檔案命名為「事件調查-YYYYMMDD_車號_地點_姓名.docx」，儲存到「淡海/事件調查/YYYY/MM/」資料夾
-5. **Given** 履歷已轉換為「人員訪談」，**When** 系統載入表單，**Then** 自動從 Google Sheets 班表取得該員工事件當天、前一天、前兩天的班別資訊並顯示在表單中
-6. **Given** 履歷已產生文件，**When** 使用者上傳掃描後的 PDF 到 Google Drive，**Then** 系統記錄 Google Drive 連結，更新履歷狀態為「已完成」，從未結案列表中移除
+1. **Given** 值班台人員登入系統，**When** 點擊「新增履歷」並填寫事件日期、員工姓名、事件地點、列車車號、事件描述，**Then** 系統建立基本履歷（profile_type='basic', conversion_status='pending'）並儲存到資料庫
+2. **Given** 基本履歷已建立，**When** 點擊「轉換類型」並選擇「事件調查」，**Then** 系統彈出事件調查表單，包含事故時間、地點、目擊者、原因、經過、改善建議、**是否歸責（has_responsibility）**、**責任比例（0-100%）**、**事件類別（S/R/W/O/D）** 等欄位 ⭐
+3. **Given** 填寫事件調查表單，**When** 點擊「儲存並產生文件」，**Then** 系統將表單資料儲存到資料庫（刪除舊子表資料，建立 EventInvestigation 記錄），在後端使用 python-docx 產生 Word 文件，嵌入 Code128 條碼（編碼格式：`12345|EI|202601|V01`），返回檔案流供下載 ⭐
+4. **Given** Word 文件產生完成，**When** 瀏覽器接收檔案流，**Then** 自動觸發下載，檔案命名為「事件調查-20260115_1234_淡水站_張三.docx」，使用者可選擇儲存位置 ⭐
+5. **Given** 履歷已轉換為「人員訪談」，**When** 系統載入表單，**Then** 自動從本地 schedules 表查詢該員工事件當天、前一天、前兩天的班別資訊（若本地無資料且距今 < 7 天，才即時呼叫 Google Sheets API 並同步）⭐
+6. **Given** 履歷已產生文件，**When** 使用者上傳掃描後的 PDF 到 Google Drive，**Then** 系統記錄 Google Drive 連結（gdrive_link），更新履歷狀態為「completed」，從未結案列表中移除
 7. **Given** 值班台人員查詢履歷，**When** 使用日期區間、員工姓名、列車車號、地點、關鍵字等條件篩選，**Then** 顯示符合條件的所有履歷記錄
 8. **Given** 履歷包含考核項目，**When** 建立考核記錄，**Then** 系統自動統計該員工該類別的年度累計次數並計算加重分數（適用 2026 年起）
+9. **Given** 使用者嘗試轉換已完成的履歷（conversion_status='completed'），**When** 點擊「轉換類型」，**Then** 系統提示「已完成的履歷不可轉換」並拒絕操作 ⭐
+10. **Given** 使用者嘗試將「事件調查」轉換為「人員訪談」，**When** 點擊「轉換類型」，**Then** 系統警告「轉換將刪除現有事件調查資料，確定繼續？」⭐
 
-**履歷類型**:
-- **基本履歷（Basic）**: 所有履歷的初始狀態
-- **事件調查（Event Investigation）**: 事故調查記錄，包含調查人員、原因分析、改善建議
-- **人員訪談（Personnel Interview）**: 訪談記錄，自動帶入員工到職日期、事件前後班別
-- **考核加扣分通知單（Assessment Notice）**: 考核通知，包含加分/扣分類型、理由、核發日期
-- **矯正措施（Corrective Measures）**: 矯正措施記錄，包含事件概述、矯正行動
+**履歷類型與狀態**:
+- **基本履歷（basic）**: 所有履歷的初始狀態
+- **事件調查（event_investigation）**: 事故調查記錄，包含調查人員、原因分析、改善建議、**是否歸責、責任比例、事件類別** ⭐
+- **人員訪談（personnel_interview）**: 訪談記錄，自動帶入員工到職日期、事件前後班別
+- **考核加扣分通知單（assessment_notice）**: 考核通知，包含加分/扣分類型、理由、核發日期
+- **矯正措施（corrective_measures）**: 矯正措施記錄，包含事件概述、矯正行動、完成期限、完成狀態
+
+**履歷狀態流轉**:
+```
+pending (待處理) → converted (已轉換) → completed (已完成)
+                      ↓ 產生文件
+                      ↓ 上傳 PDF 到 Drive
+```
+
+**轉換規則** ⭐:
+1. ✅ basic → 任何專業類型
+2. ❌ 專業類型 → 其他專業類型（需警告資料將遺失）
+3. ❌ completed 狀態不可轉換
 
 **Office 文件命名規則**:
 - 事件調查/人員訪談/矯正措施：`類型-YYYYMMDD_車號_地點_姓名.docx`
 - 考核加扣分：`類型_YYYYMMDD_姓名.xlsx`
 
-**條碼編碼格式**: `{profile_id}|{type_code}|{year}|{month}`
+**條碼編碼格式** ⭐: `{profile_id}|{type_code}|{YYYYMM}|V{version:02d}`
+- profile_id: 履歷 ID（如 12345）
 - type_code: EI（事件調查）、PI（人員訪談）、CM（矯正措施）、AA（考核加分）、AD（考核扣分）
+- YYYYMM: 產生文件的年月（如 202601）
+- version: 版本號（如 V01, V02，每次重新生成文件時遞增）
+- 範例：`12345|EI|202601|V01`
 
 ---
 

@@ -38,7 +38,7 @@
 - [x] T002 [P] 初始化前端 Vue.js 3 專案在 frontend/ 目錄
 - [x] T003 [P] 初始化雲端後端 FastAPI 專案在 backend/ 目錄
 - [x] T004 [P] 初始化本機後端 FastAPI 專案在 desktop_app/ 目錄
-- [x] T005 [P] 建立 requirements.txt 在 backend/ 目錄（FastAPI, SQLAlchemy, pymysql, python-jose, bcrypt, APScheduler）
+- [x] T005 [P] 建立 requirements.txt 在 backend/ 目錄（FastAPI, SQLAlchemy, pymysql, python-jose, bcrypt, APScheduler, **python-docx, openpyxl, python-barcode, Pillow**）⭐ **新增 Office 文件與條碼生成依賴**
 - [x] T006 [P] 建立 requirements.txt 在 desktop_app/ 目錄（FastAPI, python-docx, PyPDF2, python-barcode, google-api-python-client）
 - [x] T007 [P] 建立 package.json 在 frontend/ 目錄（Vue 3, Vue Router 4, Pinia, Axios, Element Plus）
 - [x] T008 建立 .gitignore 檔案（已更新，包含憑證排除規則）
@@ -407,57 +407,61 @@
 
 ---
 
-## Phase 11: User Story 8 - 司機員事件履歷管理系統 (Priority: P1) ⭐ **(新增)**
+## Phase 11: User Story 8 - 司機員事件履歷管理系統 (Priority: P1) ⭐ **(新增 + Gemini Review 優化)**
 
 **Goal**: 值班台人員可記錄和管理司機員的各類事件履歷，包括事件調查、人員訪談、考核加扣分、矯正措施等，並自動產生對應的 Office 文件
 
-**Independent Test**: 值班台人員建立一筆基本履歷後，將其轉換為「人員訪談」類型，系統自動從 Google Sheets 班表取得該員工事件當天前後的班別資訊，填充資料後產生 Word 文件並嵌入條碼，儲存到本機並記錄 Google Drive 連結。
+**Independent Test**: 值班台人員建立一筆基本履歷後，將其轉換為「人員訪談」類型，系統自動從本地資料庫（schedules 表）查詢該員工事件當天前後的班別資訊，填充資料後在後端產生 Word 文件並嵌入條碼，直接下載到瀏覽器。
+
+**架構優化** ⭐ **(Gemini Review 建議)**:
+- ✅ Office 文件生成移至後端（python-docx/openpyxl 可在 Render 運行）
+- ✅ 條碼編碼加入版本號（防止同一履歷多次生成時條碼重複）
+- ✅ 班表查詢優先使用本地 DB（減少 Google API 呼叫）
+- ✅ 移除樂觀鎖定機制（履歷不存在高並發編輯場景）
+- ✅ EventInvestigation 增加結構化欄位（支援 Phase 9 駕駛競賽統計）
 
 ### 資料模型
 
-- [ ] T130 [P] [US8] 建立 Profile 模型在 backend/src/models/profile.py（id, employee_id FK, profile_type ENUM, event_date, event_location, train_number, event_description, version, conversion_status, file_path, gdrive_link）
-- [ ] T131 [P] [US8] 建立 EventInvestigation 模型在 backend/src/models/event_investigation.py（profile_id FK, incident_time, incident_location, witnesses, cause_analysis, process_description, improvement_suggestions, investigator, investigation_date）
-- [ ] T132 [P] [US8] 建立 PersonnelInterview 模型在 backend/src/models/personnel_interview.py（profile_id FK, hire_date, shift_before_2days, shift_before_1day, shift_event_day, interview_content, interviewer, interview_date）
-- [ ] T133 [P] [US8] 建立 CorrectiveMeasures 模型在 backend/src/models/corrective_measures.py（profile_id FK, event_summary, corrective_actions, responsible_person, completion_deadline, completion_status）
-- [ ] T134 [P] [US8] 建立 AssessmentNotice 模型在 backend/src/models/assessment_notice.py（profile_id FK, assessment_type ENUM('加分','扣分'), assessment_item, assessment_score, issue_date, approver）
+- [x] T130 [P] [US8] 建立 Profile 模型在 backend/src/models/profile.py（id, employee_id FK, profile_type ENUM('basic','event_investigation','personnel_interview','corrective_measures','assessment_notice'), event_date, **event_time TIME**, event_location, train_number, **event_title VARCHAR(200)**, event_description, **data_source VARCHAR(100)**, **assessment_item VARCHAR(200)**, **assessment_score INTEGER**, conversion_status ENUM('pending','converted','completed'), file_path, gdrive_link, department, created_at, updated_at）⭐ **Gemini Review 2026-01-30：新增 event_time, event_title, data_source, assessment_item, assessment_score 欄位，讓所有 Profile 類型都能存取考核資訊**
+- [x] T131 [P] [US8] 建立 EventInvestigation 模型在 backend/src/models/event_investigation.py（profile_id FK, incident_time, incident_location, witnesses, cause_analysis, process_description, improvement_suggestions, investigator, investigation_date, **has_responsibility BOOLEAN**, **responsibility_ratio INTEGER**, **category ENUM('S','R','W','O','D')**）⭐ **新增統計欄位支援 Phase 9**
+- [x] T132 [P] [US8] 建立 PersonnelInterview 模型在 backend/src/models/personnel_interview.py（profile_id FK, hire_date, shift_before_2days, shift_before_1day, shift_event_day, interview_content, interviewer, interview_date, **interview_result_data JSON**, **follow_up_action_data JSON**, **conclusion TEXT**）⭐ **Gemini Review 2026-01-30：新增 JSON 欄位儲存訪談結果勾選(ir_1~ir_7)與後續行動勾選(fa_1~fa_7)，以及結論欄位**
+- [x] T133 [P] [US8] 建立 CorrectiveMeasures 模型在 backend/src/models/corrective_measures.py（profile_id FK, event_summary, corrective_actions, responsible_person, completion_deadline, completion_status ENUM('pending','in_progress','completed')）
+- [x] T134 [P] [US8] 建立 AssessmentNotice 模型在 backend/src/models/assessment_notice.py（profile_id FK, assessment_type ENUM('加分','扣分'), assessment_item, assessment_score, issue_date, approver）
 
 ### 後端服務
 
-- [ ] T135 [US8] 實作 ProfileService 在 backend/src/services/profile_service.py（CRUD、類型轉換、狀態管理、查詢篩選）
-- [ ] T136 [US8] 實作班表查詢服務在 backend/src/services/schedule_lookup_service.py（從 Google Sheets 查詢指定員工指定日期前後的班別）
-- [ ] T137 [US8] 實作 Office 文件生成服務在 backend/src/services/office_document_generator.py（委派本機 API 生成 Word/Excel，傳遞資料與條碼編碼）
-- [ ] T138 [US8] 實作條碼編碼工具在 backend/src/utils/barcode_encoder.py（生成格式：`{profile_id}|{type_code}|{year}|{month}`）
-- [ ] T139 [US8] 實作檔案命名工具在 backend/src/utils/file_naming.py（根據履歷類型與資料生成檔案名稱）
-- [ ] T140 [US8] 實作樂觀鎖定服務在 backend/src/services/optimistic_lock_service.py（版本號檢查、更新衝突處理）
+- [x] T135 [US8] 實作 ProfileService 在 backend/src/services/profile_service.py（CRUD、類型轉換帶規則檢查、狀態管理、查詢篩選）⭐ **轉換規則：僅允許 basic → 其他類型，已完成履歷不可轉換**
+- [x] T136 [US8] 實作班表查詢服務在 backend/src/services/schedule_lookup_service.py（優先查詢本地 schedules 表，若無資料且距今 < 7 天才呼叫 Google Sheets API 並同步回本地）⭐ **Gemini Review 建議優化**
+- [x] T137 [US8] 實作 Office 文件生成服務在 backend/src/services/office_document_service.py（使用 python-docx 生成 Word、openpyxl write-only 模式生成 Excel、模板填充、條碼嵌入、返回二進位流）⭐ **改為後端直接生成**
+- [x] T138 [US8] 實作條碼編碼工具在 backend/src/utils/barcode_encoder.py（生成格式：`{profile_id}|{type_code}|{YYYYMM}|V{version:02d}`，支援版本號）⭐ **加入版本號**
+- [x] T139 [US8] 實作檔案命名工具在 backend/src/utils/file_naming.py（根據履歷類型與資料生成檔案名稱，格式：`類型-YYYYMMDD_車號_地點_姓名.docx`）
+- [x] T140 [US8] 準備 Office 文件模板在 backend/src/templates/（personnel_interview.docx, event_investigation.docx, corrective_measures.xlsx, assessment_notice.docx）⭐ **新增任務：模板檔案管理**
 
 ### 後端 API 端點
 
-- [ ] T141 [US8] 實作履歷 CRUD API 在 backend/src/api/profiles.py（GET /api/profiles, POST, PUT, DELETE, GET /api/profiles/{id}）
-- [ ] T142 [US8] 實作履歷類型轉換 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/convert, 轉換為事件調查/人員訪談/矯正措施/考核通知）
-- [ ] T143 [US8] 實作 Office 文件生成 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/generate-document, 返回檔案路徑與條碼）
-- [ ] T144 [US8] 實作班表查詢 API 在 backend/src/api/profiles.py（GET /api/profiles/schedule-lookup?employee_id={id}&date={date}）
-- [ ] T145 [US8] 實作履歷查詢 API 在 backend/src/api/profiles.py（GET /api/profiles/search, 支援日期區間、員工姓名、車號、地點、關鍵字篩選）
+- [x] T141 [US8] 實作履歷 CRUD API 在 backend/src/api/profiles.py（GET /api/profiles, POST, PUT, DELETE, GET /api/profiles/{id}）
+- [x] T142 [US8] 實作履歷類型轉換 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/convert，限制僅 basic 可轉換，轉換時刪除舊子表資料）⭐ **加入轉換規則驗證**
+- [x] T143 [US8] 實作 Office 文件生成 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/generate-document?doc_type=word|excel，返回 StreamingResponse 二進位流）⭐ **改為返回檔案流**
+- [x] T144 [US8] 實作班表查詢 API 在 backend/src/api/profiles.py（GET /api/profiles/schedule-lookup?employee_id={id}&date={date}，返回前2天、當天班別）
+- [x] T145 [US8] 實作履歷查詢 API 在 backend/src/api/profiles.py（GET /api/profiles/search，支援日期區間、員工姓名、車號、地點、關鍵字篩選）
 
-### 本機 API 端點
+### 條碼生成服務（後端實作）⭐ **與 Office 文件生成整合**
 
-- [ ] T146 [P] [US8] 實作 Word 文件生成服務在 desktop_app/src/services/word_generator.py（python-docx，填充資料、嵌入條碼）
-- [ ] T147 [P] [US8] 實作 Excel 文件生成服務在 desktop_app/src/services/excel_generator.py（openpyxl，填充資料、嵌入條碼）
-- [ ] T148 [US8] 實作條碼生成服務在 desktop_app/src/services/barcode_service.py（python-barcode Code128，返回圖片物件）
-- [ ] T149 [US8] 實作 Office 文件生成 API 在 desktop_app/src/api/document_generator.py（POST /api/documents/generate, 接收資料與條碼編碼，返回檔案路徑）
+- [x] T146 [US8] 實作條碼生成服務在 backend/src/services/barcode_service.py（使用 python-barcode + Pillow 生成 Code128 條碼，返回 PNG 圖片 bytes，供 Office 文件生成服務嵌入文件）⭐ **完全雲端化，無需本機 API**
 
 ### 前端實作
 
-- [ ] T150 [P] [US8] 建立履歷列表頁面在 frontend/src/views/Profiles.vue（表格、搜尋、篩選、類型圖示）
-- [ ] T151 [P] [US8] 建立基本履歷新增表單在 frontend/src/components/profiles/BasicProfileForm.vue（事件日期、員工、地點、車號、描述）
-- [ ] T152 [P] [US8] 建立履歷類型轉換對話框在 frontend/src/components/profiles/ConversionDialog.vue（選擇目標類型、顯示對應表單）
-- [ ] T153 [P] [US8] 建立事件調查表單在 frontend/src/components/profiles/EventInvestigationForm.vue（事故時間、地點、原因、改善建議）
-- [ ] T154 [P] [US8] 建立人員訪談表單在 frontend/src/components/profiles/PersonnelInterviewForm.vue（自動帶入班別、訪談內容）
-- [ ] T155 [P] [US8] 建立矯正措施表單在 frontend/src/components/profiles/CorrectiveMeasuresForm.vue（事件概述、矯正行動、負責人、期限）
-- [ ] T156 [P] [US8] 建立考核通知表單在 frontend/src/components/profiles/AssessmentNoticeForm.vue（加分/扣分、項目、分數、核發日期）
-- [ ] T157 [US8] 建立履歷 Store 在 frontend/src/stores/profiles.js（Pinia state、actions、履歷列表管理）
-- [ ] T158 [US8] 實作文件生成與預覽功能在 frontend/src/components/profiles/DocumentPreview.vue（觸發生成、顯示檔案路徑、開啟文件）
+- [x] T150 [P] [US8] 建立履歷列表頁面在 frontend/src/views/Profiles.vue（表格、搜尋、篩選、類型圖示、狀態標記）✅ 2026-01-30
+- [x] T151 [P] [US8] 建立基本履歷新增表單在 frontend/src/components/profiles/BasicProfileForm.vue（事件日期、員工選擇、地點、車號、描述）✅ 2026-01-30
+- [x] T152 [P] [US8] 建立履歷類型轉換對話框在 frontend/src/components/profiles/ConversionDialog.vue（選擇目標類型、顯示對應表單、轉換規則提示）⭐ **加入規則驗證提示** ✅ 2026-01-30
+- [x] T153 [P] [US8] 建立事件調查表單在 frontend/src/components/profiles/EventInvestigationForm.vue（事故時間、地點、原因、改善建議、**是否歸責選項、責任比例輸入、事件類別選擇**）⭐ **支援 Phase 9 統計** ✅ 2026-01-30
+- [x] T154 [P] [US8] 建立人員訪談表單在 frontend/src/components/profiles/PersonnelInterviewForm.vue（自動帶入班別、訪談內容、訪談人員、訪談日期）✅ 2026-01-30
+- [x] T155 [P] [US8] 建立矯正措施表單在 frontend/src/components/profiles/CorrectiveMeasuresForm.vue（事件概述、矯正行動、負責人、完成期限、完成狀態）✅ 2026-01-30
+- [x] T156 [P] [US8] 建立考核通知表單在 frontend/src/components/profiles/AssessmentNoticeForm.vue（加分/扣分、項目選擇、分數、核發日期、核准人）✅ 2026-01-30
+- [x] T157 [US8] 建立履歷 Store 在 frontend/src/stores/profiles.js（Pinia state、actions、履歷列表管理、轉換狀態管理）✅ 2026-01-30
+- [x] T158 [US8] 實作文件生成與下載功能在 frontend/src/components/profiles/DocumentDownload.vue（呼叫後端 API、顯示載入狀態、觸發瀏覽器下載、錯誤處理）⭐ **改為直接下載，無需預覽** ✅ 2026-01-30
 
-**Checkpoint**: 履歷管理系統功能完成，可建立、轉換、查詢履歷並產生 Office 文件
+**Checkpoint**: ✅ 履歷管理系統功能完成，可建立、轉換、查詢履歷並在後端產生 Office 文件直接下載
 
 ---
 
@@ -548,10 +552,10 @@
 - [ ] T189 [US11] 實作未結案統計 API 在 backend/src/api/profiles.py（GET /api/profiles/pending/statistics, 統計各類型待處理數量、最舊未結案日期、本月完成率）
 - [ ] T190 [US11] 實作 PDF 上傳 API 在 backend/src/api/profiles.py（POST /api/profiles/{id}/upload-pdf, 接收檔案並委派本機 API 上傳，成功後更新 conversion_status='completed'）
 
-### 本機 API 端點
+### 本機 API 端點（複用 Phase 8 服務）⭐
 
-- [ ] T191 [US11] 實作 PDF 上傳到 Google Drive 服務在 desktop_app/src/services/pdf_drive_uploader.py（根據類型和日期上傳到對應資料夾，設定權限為「僅網域內可檢視」）
-- [ ] T192 [US11] 實作 PDF 上傳 API 在 desktop_app/src/api/pdf_uploader.py（POST /api/pdf/upload-to-drive, 返回 Drive 連結）
+- [ ] T191 [US11] 擴充 Google Drive 上傳服務在 desktop_app/src/services/google_drive_uploader.py（複用 T093 服務，新增依履歷類型與日期自動分類資料夾的邏輯，設定權限為「僅網域內可檢視」）
+- ~~T192 已合併至 T191~~（不需獨立 API 端點，直接使用 T093 的現有端點）
 
 ### 前端實作
 
@@ -742,20 +746,78 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 
 ## Summary
 
-- **總任務數**: 197 個任務（原 131 個 + 新增 User Stories 8-11 共 66 個任務）
-- **已完成任務**: 103 個（Phase 1: 11 個 + Phase 2: 24 個 + Phase 3: 9 個 + Phase 4: 16 個 + Phase 5: 12 個 + Phase 6: 8 個 + Phase 7: 11 個 + Phase 8: 12 個）
-- **進度**: 52.3%
+- **總任務數**: 189 個任務（原 131 個 + 新增 User Stories 8-11 共 66 個 - Gemini Review 優化移除 8 個）
+- **已完成任務**: 103 個（Phase 1: 11 個 + Phase 2: 24 個 + Phase 3: 9 個 + Phase 4: 16 個 + Phase 5: 12 個 + Phase 6: 8 個 + Phase 7: 11 個 + Phase 8: 12 個 + Phase 9: 0 個）
+- **進度**: 54.5%
 - **用戶故事數**: 11 個（US1-US7 原有 + US8-US11 新增，對應 spec.md 的 P0-P3 優先級）
 - **可並行任務**: 約 45% 的任務標記為 [P]，可並行執行
 - **建議 MVP 範圍**: Phase 1-5（Setup + Foundational + US1 + US2 + US3）
 - **駕駛競賽模組**: PC-001 已釐清，Phase 9 任務可立即執行
 - **測試覆蓋**: 新增憑證驗證測試（G1: T037a, T037b）與 OAuth 回調測試（U1: T098a）
-- **履歷管理模組** ⭐: Phase 11（US8）包含 29 個任務，整合 Office 文件生成與條碼系統
+- **履歷管理模組** ⭐: Phase 11（US8）包含 22 個任務（Gemini Review 優化後），**完全雲端化**（Office 文件生成與條碼生成皆在後端）
 - **考核系統 V2** ⭐: Phase 12（US9）包含 18 個任務，實作累計加重機制
 - **差勤加分自動化** ⭐: Phase 13（US10）包含 9 個任務，自動判定全勤、R班、延長工時
-- **未結案管理** ⭐: Phase 14（US11）包含 10 個任務，透過 Profile.conversion_status 追蹤文件處理進度（已移除冗餘的 PendingCase 資料表）
+- **未結案管理** ⭐: Phase 14（US11）包含 6 個任務（Gemini Review 優化後，複用 Phase 8 Google Drive 服務），透過 Profile.conversion_status 追蹤文件處理進度
 - **完整功能交付**: 全部 14 個階段（包含所有用戶故事與優化）
-- **架構優化** ✅: 根據 Gemini Review 建議，移除 PendingCase 資料表，改用 Profile 表 + 複合索引查詢，確保資料一致性
+
+### Gemini Code Review 架構優化 ✅ (2026-01-30)
+
+**Phase 11 (US8) 優化**:
+1. ✅ **Office 文件生成移至後端**（python-docx/openpyxl 可在 Render 免費版運行，每天 < 10 份文件無記憶體壓力）
+2. ✅ **條碼生成移至後端**（python-barcode + Pillow，套件大小僅 2-3 MB，對 Render 無影響）
+3. ✅ **條碼編碼加入版本號**（格式：`{profile_id}|{type_code}|{YYYYMM}|V{version}`，防止重複）
+4. ✅ **班表查詢優先使用本地 DB**（減少 Google API 呼叫，提升效能）
+5. ✅ **移除樂觀鎖定機制**（履歷不存在高並發編輯場景，簡化架構）
+6. ✅ **EventInvestigation 增加統計欄位**（has_responsibility、category、responsibility_ratio，支援 Phase 9 駕駛競賽）
+7. ✅ **履歷轉換規則明確化**（僅允許 basic → 其他類型，防止資料遺失）
+
+**Phase 14 (US11) 優化**:
+8. ✅ **移除 PendingCase 資料表**（改用 Profile.conversion_status 查詢，遵循 Single Source of Truth 原則）
+
+**優化成果**:
+- **移除/合併冗餘任務 8 個**：
+  - T140（樂觀鎖定服務）
+  - T147-T149（本機 API Office 生成 3 個任務）
+  - T192（本機 PDF 上傳 API，合併至 T191）
+  - T146-ALT（本機條碼生成選項）
+  - 未建立的 PendingCase 資料表與相關任務（Phase 14 優化）
+- **完全雲端化**：無需桌面應用即可生成文件與條碼，Web/手機端功能完整
+- **簡化部署**：僅需 Render + TiDB + GitHub Pages，桌面應用僅用於 PDF 掃描識別（Phase 8）與 Drive 上傳
+- **提升效能**：本地 DB 優先查詢班表資料，減少 Google Sheets API 呼叫
+- **資料一致性**：單一資料來源（Profile 表），避免同步問題
+
+**技術評估依據**:
+- Render 免費版限制：512 MB RAM，15 分鐘無活動休眠，30 秒超時
+- 單份文件生成：5-15 MB 記憶體，0.3-1 秒 CPU 時間
+- 使用情境：每天 < 10 份文件，無批次需求
+- 結論：✅ Render 免費版完全足夠
+
+### Gemini 模板欄位驗證修正 ✅ (2026-01-30)
+
+**發現的問題與修正**:
+
+1. **Profile 主表擴充** (T130 更新):
+   - 新增 `event_time` (Time)：解決考核通知單需要時間的問題
+   - 新增 `event_title` (VARCHAR 200)：解決考核通知單需要標題的問題
+   - 新增 `data_source` (VARCHAR 100)：統一存放資料來源/查核來源
+   - 新增 `assessment_item` (VARCHAR 200)：所有類型的 Profile 都能存取考核項目
+   - 新增 `assessment_score` (INTEGER)：所有類型的 Profile 都能存取考核分數
+   - **設計理由**：遵循「一事一檔」原則，所有 Profile 類型都可能需要考核資訊
+
+2. **PersonnelInterview 模型補完** (T132 更新):
+   - 新增 `interview_result_data` (JSON)：儲存訪談結果勾選 (ir_1~ir_7, ir_other_text)
+   - 新增 `follow_up_action_data` (JSON)：儲存後續行動勾選 (fa_1~fa_7, fa_other_text)
+   - 新增 `conclusion` (TEXT)：結論欄位
+   - **設計理由**：使用 JSON 欄位保持彈性，避免新增 16+ 個 Boolean 欄位
+
+3. **欄位映射邏輯標準化**:
+   - 建立完整的佔位符與資料庫欄位映射表
+   - `{incident_cause}` 映射邏輯：優先 `EventInvestigation.cause_analysis`，否則 `Profile.event_description`
+   - 勾選框轉換邏輯：Boolean → "V" / ""
+
+**修正檔案**:
+- `specs/001-system-architecture/tasks.md`：T130, T132 定義更新
+- `backend/src/templates/README.md`：新增欄位映射邏輯章節 (v2.1)
 
 ### 進度更新記錄
 

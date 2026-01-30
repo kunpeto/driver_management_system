@@ -15,6 +15,13 @@ from .route_standard_time import RouteStandardTime
 from .system_setting import DepartmentScope, SettingKeys, SystemSetting
 from .user import User
 
+# Phase 11: 履歷管理模型
+from .profile import ConversionStatus, Profile, ProfileType
+from .event_investigation import EventCategory, EventInvestigation
+from .personnel_interview import PersonnelInterview
+from .corrective_measures import CompletionStatus, CorrectiveMeasures
+from .assessment_notice import AssessmentNotice, AssessmentType
+
 __all__ = [
     # Base
     "Base",
@@ -37,4 +44,15 @@ __all__ = [
     "RouteStandardTime",
     "DrivingDailyStats",
     "DrivingCompetition",
+    # Phase 11: 履歷管理
+    "Profile",
+    "ProfileType",
+    "ConversionStatus",
+    "EventInvestigation",
+    "EventCategory",
+    "PersonnelInterview",
+    "CorrectiveMeasures",
+    "CompletionStatus",
+    "AssessmentNotice",
+    "AssessmentType",
 ]
