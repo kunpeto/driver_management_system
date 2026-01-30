@@ -11,6 +11,8 @@ from typing import Optional
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
+from src.models.assessment_record import AssessmentRecord
+from src.models.assessment_standard import AssessmentStandard
 from src.models.driving_daily_stats import DrivingDailyStats
 from src.models.employee import Employee
 from src.models.google_oauth_token import Department
@@ -79,7 +81,7 @@ class DrivingStatsCalculator:
         return False
 
     # ============================================================
-    # 責任事件統計（待 US8 整合）
+    # 責任事件統計（已整合 Phase 12 考核系統）
     # ============================================================
 
     def count_incidents_for_date(
@@ -91,7 +93,7 @@ class DrivingStatsCalculator:
         統計員工指定日期的責任事件次數
 
         責任事件定義：S類別（行車運轉）+ R類別（故障排除）扣分項目
-        資料來源：profiles 表（待 US8 整合）
+        資料來源：assessment_records 表（Phase 12 考核系統）
 
         Args:
             employee_id: 員工 ID
@@ -100,9 +102,21 @@ class DrivingStatsCalculator:
         Returns:
             int: 責任事件次數
         """
-        # TODO: 待 User Story 8（履歷系統）整合後實作
-        # 目前暫時返回 0
-        return 0
+        # 查詢該日期的責任事件（S類或R類且有實際扣分）
+        count = self.db.query(func.count(AssessmentRecord.id)).join(
+            AssessmentStandard,
+            AssessmentRecord.standard_code == AssessmentStandard.code
+        ).filter(
+            and_(
+                AssessmentRecord.employee_id == employee_id,
+                AssessmentRecord.record_date == record_date,
+                AssessmentRecord.is_deleted == False,
+                AssessmentRecord.final_points < 0,  # 負分才算責任事件
+                AssessmentStandard.category.in_(['S', 'R'])  # S類或R類
+            )
+        ).scalar()
+
+        return count or 0
 
     def count_incidents_for_quarter(
         self,
@@ -113,6 +127,9 @@ class DrivingStatsCalculator:
         """
         統計員工指定季度的責任事件次數
 
+        責任事件定義：S類別（行車運轉）+ R類別（故障排除）扣分項目
+        資料來源：assessment_records 表（Phase 12 考核系統）
+
         Args:
             employee_id: 員工 ID
             year: 年份
@@ -121,9 +138,25 @@ class DrivingStatsCalculator:
         Returns:
             int: 責任事件次數
         """
-        # TODO: 待 User Story 8（履歷系統）整合後實作
-        # 目前暫時返回 0
-        return 0
+        # 取得季度起止日期
+        start_date, end_date = self.get_quarter_dates(year, quarter)
+
+        # 查詢該季度的責任事件（S類或R類且有實際扣分）
+        count = self.db.query(func.count(AssessmentRecord.id)).join(
+            AssessmentStandard,
+            AssessmentRecord.standard_code == AssessmentStandard.code
+        ).filter(
+            and_(
+                AssessmentRecord.employee_id == employee_id,
+                AssessmentRecord.record_date >= start_date,
+                AssessmentRecord.record_date <= end_date,
+                AssessmentRecord.is_deleted == False,
+                AssessmentRecord.final_points < 0,  # 負分才算責任事件
+                AssessmentStandard.category.in_(['S', 'R'])  # S類或R類
+            )
+        ).scalar()
+
+        return count or 0
 
     # ============================================================
     # 每日時數計算

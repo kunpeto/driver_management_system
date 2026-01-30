@@ -578,3 +578,144 @@ TiDB Serverless 免費版不提供自動備份。
 ---
 
 **審查完成** | **下次審查時機**: Phase 3 完成後（US1-US3 實作完成）
+
+---
+
+## 10. Gemini Code Review - Phase 12 完成後審查
+
+**審查日期**: 2026-01-30
+**審查者**: Gemini 3 Pro
+**審查範圍**: Phase 0-12 完整專案（205 個檔案，60,196 行代碼）
+
+### 總體評價
+
+**專案基礎非常穩固，架構清晰。** Gemini 對專案進行了全面的深度審查，以下為審查結果：
+
+### 10.1 優點（做得好的地方）
+
+1. **架構設計清晰且符合 Spec**
+   - ✅ 成功實作混合式三層架構（雲端後端 Port 8000、本機桌面 API Port 8001、前端 Vue 3）
+   - ✅ 職責劃分明確：業務邏輯封裝在 `services/` 層，API 層僅負責路由與驗證
+
+2. **代碼品質高**
+   - ✅ 廣泛使用 Python Type Hints，提升可讀性與 IDE 支援
+   - ✅ 關鍵模組有詳細 Docstring（如 AssessmentRecord 的累計倍率計算公式）
+
+3. **資料庫設計嚴謹**
+   - ✅ 針對高頻查詢建立複合索引（如 `ix_assessment_records_employee_year`）
+   - ✅ 正確使用 ForeignKey 維護參照完整性
+   - ✅ 核心資料實作軟刪除機制
+
+4. **並發處理**
+   - ✅ 在 `recalculate_counts` 中使用 `.with_for_update()` 防止 Race Condition
+
+5. **安全性**
+   - ✅ 引入 `slowapi` 防止暴力破解
+   - ✅ JWT 實作包含 Access/Refresh Token 機制
+
+---
+
+### 10.2 已修正的問題（2026-01-30）
+
+#### 🔴 高優先級：Phase 9 與 Phase 12 整合斷點 ✅ 已修正
+
+**問題描述**：
+`driving_stats_calculator.py` 中的 `count_incidents_for_date` 和 `count_incidents_for_quarter` 方法返回 `0` 並標註 `TODO: 待 User Story 8 整合`。
+
+這意味著「駕駛競賽排名」**無法**正確反映 Phase 12（考核系統）中的扣分事件，導致排名計算不準確。
+
+**修正內容**：
+```python
+# 修改前
+def count_incidents_for_quarter(self, employee_id: int, year: int, quarter: int) -> int:
+    # TODO: 待 User Story 8（履歷系統）整合後實作
+    return 0
+
+# 修改後
+def count_incidents_for_quarter(self, employee_id: int, year: int, quarter: int) -> int:
+    start_date, end_date = self.get_quarter_dates(year, quarter)
+    count = self.db.query(func.count(AssessmentRecord.id)).join(
+        AssessmentStandard,
+        AssessmentRecord.standard_code == AssessmentStandard.code
+    ).filter(
+        and_(
+            AssessmentRecord.employee_id == employee_id,
+            AssessmentRecord.record_date >= start_date,
+            AssessmentRecord.record_date <= end_date,
+            AssessmentRecord.is_deleted == False,
+            AssessmentRecord.final_points < 0,  # 負分才算責任事件
+            AssessmentStandard.category.in_(['S', 'R'])  # S類或R類
+        )
+    ).scalar()
+    return count or 0
+```
+
+**修正檔案**: `backend/src/services/driving_stats_calculator.py`
+
+**變更摘要**：
+- 新增 `AssessmentRecord` 和 `AssessmentStandard` 模型導入
+- 實作 `count_incidents_for_date()` - 統計指定日期的責任事件次數
+- 實作 `count_incidents_for_quarter()` - 統計指定季度的責任事件次數
+- 責任事件定義：S類別（行車運轉）+ R類別（故障排除）且 final_points < 0
+
+---
+
+### 10.3 待改進項目
+
+#### ⚠️ 前後端邏輯重複 (DRY Violation) 🟡 待處理
+
+**問題描述**：
+前端 `stores/assessments.js` 硬編碼了與後端 `fault_responsibility_service.py` 相同的業務規則（如「完全責任」的定義、9項疏失清單）。
+
+**建議方案**：
+設計 `/api/config/constants` 端點，讓前端動態獲取業務常數：
+```python
+@router.get("/config/rules")
+def get_business_rules():
+    return {
+        "responsibility_levels": RESPONSIBILITY_LEVELS,
+        "checklist_items": CHECKLIST_KEYS
+    }
+```
+
+**預計實作時機**: Phase 10 (Polish)
+
+---
+
+#### ⚠️ 環境變數預設值風險 🟡 待處理
+
+**問題描述**：
+Settings 類別包含預設的 `api_secret_key`。若在生產環境未正確注入環境變數，可能導致使用不安全的預設密鑰。
+
+**建議方案**：
+在 `is_production` 為 True 時，若檢測到預設密鑰應強制報錯並停止啟動。
+
+**預計實作時機**: Phase 10 (Polish)
+
+---
+
+### 10.4 長期優化項目
+
+| 項目 | 優先級 | 描述 | 預計時機 |
+|------|--------|------|----------|
+| 快取策略 | 🟡 中 | 駕駛競賽排名引入 Redis 快取（TTL 1-5 分鐘） | Phase 10+ |
+| 批次處理 | 🔵 低 | 新增考核記錄 `bulk_create` 接口 | Phase 10+ |
+| 審計日誌 | 🟡 中 | 新增 `AuditLog` 表記錄 AssessmentRecord 修改歷史 | Phase 10+ |
+
+---
+
+### 結論
+
+**Phase 9 與 Phase 12 的最後一哩路整合已完成。**
+
+駕駛競賽排名系統現在可以正確統計司機員的責任事件次數，計算公式完整：
+
+```
+最終積分 = (Σ 每日實際駕駛時數 × R班係數) / (1 + 責任事件次數)
+```
+
+專案已準備好進入 Phase 10 (Polish) 階段。
+
+---
+
+**審查完成** | **下次審查時機**: Phase 10 完成後（系統上線前）
