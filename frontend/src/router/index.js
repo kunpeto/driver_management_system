@@ -124,6 +124,15 @@ const routes = [
       title: '月度獎勵'
     }
   },
+  {
+    path: '/attendance-bonus',
+    name: 'attendance-bonus',
+    component: () => import('@/views/AttendanceBonus.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '差勤加分處理'
+    }
+  },
 
   // PDF 處理
   {

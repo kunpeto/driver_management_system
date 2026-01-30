@@ -45,7 +45,8 @@ const menuItems = computed(() => {
       icon: Histogram,
       children: [
         { index: '/assessment-records', title: '考核記錄', icon: List },
-        { index: '/monthly-rewards', title: '月度獎勵', icon: Medal }
+        { index: '/monthly-rewards', title: '月度獎勵', icon: Medal },
+        { index: '/attendance-bonus', title: '差勤加分', icon: Calendar }
       ]
     },
     {

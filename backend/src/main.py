@@ -165,6 +165,8 @@ from src.api import (
     # Phase 12: 考核系統
     assessment_standards_router,
     assessment_records_router,
+    # Phase 13: 差勤加分
+    attendance_bonus_router,
 )
 
 # 系統設定 API
@@ -276,6 +278,12 @@ app.include_router(
 app.include_router(
     assessment_records_router,
     tags=["Assessment Records"]
+)
+
+# 差勤加分 API (Phase 13)
+app.include_router(
+    attendance_bonus_router,
+    tags=["Attendance Bonus"]
 )
 
 

@@ -106,6 +106,7 @@ class MonthlyRewardCalculatorService:
 
         if existing:
             # 檢查是否需要撤銷部分獎勵（例如：原本有 +M03，現在只有 +M02）
+            old_full_attendance = existing.full_attendance
             old_driving_zero = existing.driving_zero_violation
             old_all_zero = existing.all_zero_violation
 
@@ -119,8 +120,8 @@ class MonthlyRewardCalculatorService:
             # P1 修正：撤銷不再符合的獎勵
             self._sync_reward_records(
                 employee_id, year, month,
-                old_driving_zero, old_all_zero,
-                driving_zero, all_zero
+                old_full_attendance, old_driving_zero, old_all_zero,
+                include_full_attendance, driving_zero, all_zero
             )
         else:
             # 建立新記錄
@@ -134,7 +135,7 @@ class MonthlyRewardCalculatorService:
             )
             self.db.add(reward)
             # 建立對應的考核記錄
-            self._create_reward_records(employee_id, year, month, driving_zero, all_zero)
+            self._create_reward_records(employee_id, year, month, include_full_attendance, driving_zero, all_zero)
 
         return reward
 
@@ -281,6 +282,7 @@ class MonthlyRewardCalculatorService:
         employee_id: int,
         year: int,
         month: int,
+        full_attendance: bool,
         driving_zero: bool,
         all_zero: bool
     ) -> list[AssessmentRecord]:
@@ -291,6 +293,7 @@ class MonthlyRewardCalculatorService:
             employee_id: 員工 ID
             year: 年度
             month: 月份
+            full_attendance: 是否獲得 +M01 全勤
             driving_zero: 是否獲得 +M02
             all_zero: 是否獲得 +M03
 
@@ -299,6 +302,41 @@ class MonthlyRewardCalculatorService:
         """
         records = []
         record_date = date(year, month, 1)
+
+        # 檢查是否已有該月的 +M01 記錄（全勤）
+        if full_attendance:
+            existing_m01 = self.db.execute(
+                select(AssessmentRecord).where(
+                    and_(
+                        AssessmentRecord.employee_id == employee_id,
+                        AssessmentRecord.standard_code == '+M01',
+                        extract('year', AssessmentRecord.record_date) == year,
+                        extract('month', AssessmentRecord.record_date) == month,
+                        AssessmentRecord.is_deleted == False
+                    )
+                )
+            ).scalar_one_or_none()
+
+            if not existing_m01:
+                record = AssessmentRecord(
+                    employee_id=employee_id,
+                    standard_code='+M01',
+                    record_date=record_date,
+                    description=f"{year}年{month}月 全勤獎勵",
+                    base_points=3.0,
+                    responsibility_coefficient=1.0,
+                    actual_points=3.0,
+                    cumulative_multiplier=1.0,
+                    final_points=3.0
+                )
+                self.db.add(record)
+                records.append(record)
+
+                # 更新員工分數
+                employee = self.db.execute(
+                    select(Employee).where(Employee.id == employee_id)
+                ).scalar_one()
+                employee.current_score += 3.0
 
         # 檢查是否已有該月的 +M02 記錄
         if driving_zero:
@@ -392,6 +430,25 @@ class MonthlyRewardCalculatorService:
         """
         points_to_deduct = 0.0
 
+        # 撤銷 +M01（全勤）
+        if existing_reward.full_attendance:
+            m01_record = self.db.execute(
+                select(AssessmentRecord).where(
+                    and_(
+                        AssessmentRecord.employee_id == employee_id,
+                        AssessmentRecord.standard_code == '+M01',
+                        extract('year', AssessmentRecord.record_date) == year,
+                        extract('month', AssessmentRecord.record_date) == month,
+                        AssessmentRecord.is_deleted == False
+                    )
+                )
+            ).scalar_one_or_none()
+
+            if m01_record:
+                m01_record.is_deleted = True
+                m01_record.deleted_at = datetime.now()
+                points_to_deduct += 3.0
+
         # 撤銷 +M02
         if existing_reward.driving_zero_violation:
             m02_record = self.db.execute(
@@ -442,8 +499,10 @@ class MonthlyRewardCalculatorService:
         employee_id: int,
         year: int,
         month: int,
+        old_full_attendance: bool,
         old_driving_zero: bool,
         old_all_zero: bool,
+        new_full_attendance: bool,
         new_driving_zero: bool,
         new_all_zero: bool
     ) -> None:
@@ -456,12 +515,69 @@ class MonthlyRewardCalculatorService:
             employee_id: 員工 ID
             year: 年度
             month: 月份
+            old_full_attendance: 原本是否有 +M01
             old_driving_zero: 原本是否有 +M02
             old_all_zero: 原本是否有 +M03
+            new_full_attendance: 現在是否符合 +M01
             new_driving_zero: 現在是否符合 +M02
             new_all_zero: 現在是否符合 +M03
         """
         record_date = date(year, month, 1)
+
+        # 處理 +M01（全勤）
+        if old_full_attendance and not new_full_attendance:
+            # 撤銷 +M01
+            m01_record = self.db.execute(
+                select(AssessmentRecord).where(
+                    and_(
+                        AssessmentRecord.employee_id == employee_id,
+                        AssessmentRecord.standard_code == '+M01',
+                        extract('year', AssessmentRecord.record_date) == year,
+                        extract('month', AssessmentRecord.record_date) == month,
+                        AssessmentRecord.is_deleted == False
+                    )
+                )
+            ).scalar_one_or_none()
+
+            if m01_record:
+                m01_record.is_deleted = True
+                m01_record.deleted_at = datetime.now()
+                employee = self.db.execute(
+                    select(Employee).where(Employee.id == employee_id)
+                ).scalar_one()
+                employee.current_score -= 3.0
+
+        elif not old_full_attendance and new_full_attendance:
+            # 補發 +M01
+            existing = self.db.execute(
+                select(AssessmentRecord).where(
+                    and_(
+                        AssessmentRecord.employee_id == employee_id,
+                        AssessmentRecord.standard_code == '+M01',
+                        extract('year', AssessmentRecord.record_date) == year,
+                        extract('month', AssessmentRecord.record_date) == month,
+                        AssessmentRecord.is_deleted == False
+                    )
+                )
+            ).scalar_one_or_none()
+
+            if not existing:
+                record = AssessmentRecord(
+                    employee_id=employee_id,
+                    standard_code='+M01',
+                    record_date=record_date,
+                    description=f"{year}年{month}月 全勤獎勵",
+                    base_points=3.0,
+                    responsibility_coefficient=1.0,
+                    actual_points=3.0,
+                    cumulative_multiplier=1.0,
+                    final_points=3.0
+                )
+                self.db.add(record)
+                employee = self.db.execute(
+                    select(Employee).where(Employee.id == employee_id)
+                ).scalar_one()
+                employee.current_score += 3.0
 
         # 處理 +M02
         if old_driving_zero and not new_driving_zero:

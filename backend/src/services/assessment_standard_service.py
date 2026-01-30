@@ -423,7 +423,7 @@ class AssessmentStandardService:
             {"code": "+M02", "category": "+M", "name": "月度行車零違規", "base_points": 1.0, "has_cumulative": False, "calculation_cycle": "monthly"},
             {"code": "+M03", "category": "+M", "name": "月度全項目零違規", "base_points": 2.0, "has_cumulative": False, "calculation_cycle": "monthly"},
             # +A 類：出勤類
-            {"code": "+A01", "category": "+A", "name": "R班出勤（每日）", "base_points": 0.5, "has_cumulative": False},
+            {"code": "+A01", "category": "+A", "name": "R班出勤", "base_points": 3.0, "has_cumulative": False},
             {"code": "+A02", "category": "+A", "name": "國定假日出勤", "base_points": 1.0, "has_cumulative": False},
             {"code": "+A03", "category": "+A", "name": "延長工時 1 小時", "base_points": 0.5, "has_cumulative": False},
             {"code": "+A04", "category": "+A", "name": "延長工時 2 小時", "base_points": 1.0, "has_cumulative": False},

@@ -24,6 +24,8 @@ from .profiles import router as profiles_router
 # Phase 12: 考核系統
 from .assessment_standards import router as assessment_standards_router
 from .assessment_records import router as assessment_records_router
+# Phase 13: 差勤加分
+from .attendance_bonus import router as attendance_bonus_router
 
 __all__ = [
     "system_settings_router",
@@ -46,4 +48,6 @@ __all__ = [
     # Phase 12
     "assessment_standards_router",
     "assessment_records_router",
+    # Phase 13
+    "attendance_bonus_router",
 ]
