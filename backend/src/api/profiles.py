@@ -54,6 +54,7 @@ from src.services.office_document_service import (
     InvalidProfileTypeError,
     TemplateNotFoundError,
 )
+from src.services.profile_date_updater import ProfileDateUpdaterService
 
 router = APIRouter()
 
@@ -166,6 +167,92 @@ class ProfileConvert(BaseModel):
     personnel_interview: Optional[PersonnelInterviewData] = None
     corrective_measures: Optional[CorrectiveMeasuresData] = None
     assessment_notice: Optional[AssessmentNoticeData] = None
+
+
+# ============================================================
+# Phase 12 整合：考核系統（T183, T184）
+# ============================================================
+
+class FaultResponsibilityChecklistData(BaseModel):
+    """9 項疏失查核結果"""
+    awareness_delay: bool = Field(False, description="1. 察覺過晚或誤判")
+    report_delay: bool = Field(False, description="2. 通報延遲或不完整")
+    unfamiliar_procedure: bool = Field(False, description="3. 不熟悉故障排除程序")
+    wrong_operation: bool = Field(False, description="4. 故障排除決策/操作錯誤")
+    slow_action: bool = Field(False, description="5. 動作遲緩")
+    unconfirmed_result: bool = Field(False, description="6. 未確認結果或誤認完成")
+    no_progress_report: bool = Field(False, description="7. 未主動回報處理進度")
+    repeated_error: bool = Field(False, description="8. 重複性錯誤")
+    mental_state_issue: bool = Field(False, description="9. 心理狀態影響表現")
+
+
+class ProfileFaultResponsibilityData(BaseModel):
+    """R02-R05 責任判定資料"""
+    delay_seconds: int = Field(..., ge=0, description="延誤時間（秒）")
+    checklist_results: FaultResponsibilityChecklistData = Field(..., description="9 項疏失查核結果")
+    time_t0: Optional[str] = Field(None, description="T0: 事件/故障發生時間")
+    time_t1: Optional[str] = Field(None, description="T1: 司機員察覺異常時間")
+    time_t2: Optional[str] = Field(None, description="T2: 開始通報/處理時間")
+    time_t3: Optional[str] = Field(None, description="T3: 故障排除完成時間")
+    time_t4: Optional[str] = Field(None, description="T4: 恢復正常運轉時間")
+    notes: Optional[str] = Field(None, description="備註")
+
+
+class ProfileCreateWithAssessment(BaseModel):
+    """建立履歷並同時建立考核記錄請求（Phase 12）"""
+    employee_id: int = Field(..., description="員工 ID")
+    event_date: date = Field(..., description="事件日期")
+    department: str = Field(..., description="部門")
+    assessment_code: str = Field(..., max_length=10, description="考核代碼（如 D01, R03）")
+    event_location: Optional[str] = Field(None, max_length=100, description="事件地點")
+    train_number: Optional[str] = Field(None, max_length=20, description="列車車號")
+    event_title: Optional[str] = Field(None, max_length=200, description="事件標題")
+    event_description: Optional[str] = Field(None, description="事件描述")
+    event_time: Optional[str] = Field(None, description="事件時間 (HH:MM)")
+    data_source: Optional[str] = Field(None, max_length=100, description="資料來源")
+    fault_responsibility_data: Optional[ProfileFaultResponsibilityData] = Field(
+        None, description="R02-R05 責任判定資料（R02-R05 必填）"
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "employee_id": 1,
+                    "event_date": "2026-01-15",
+                    "department": "淡海",
+                    "assessment_code": "R03",
+                    "event_description": "人為疏失延誤 3 分鐘",
+                    "fault_responsibility_data": {
+                        "delay_seconds": 180,
+                        "checklist_results": {
+                            "awareness_delay": True,
+                            "report_delay": False,
+                            "unfamiliar_procedure": True,
+                            "wrong_operation": False,
+                            "slow_action": True,
+                            "unconfirmed_result": False,
+                            "no_progress_report": False,
+                            "repeated_error": False,
+                            "mental_state_issue": False
+                        }
+                    }
+                }
+            ]
+        }
+    }
+
+
+class ProfileUpdateDate(BaseModel):
+    """履歷日期變更請求（Phase 12 T184）"""
+    new_date: date = Field(..., description="新的事件日期")
+
+
+class ProfileWithAssessmentResponse(BaseModel):
+    """建立履歷並考核記錄的回應"""
+    profile: ProfileResponse
+    assessment_record: dict
+    responsibility_assessment: Optional[dict] = None
 
 
 class ProfileResponse(BaseModel):
@@ -678,6 +765,203 @@ async def mark_profile_complete(
         return _profile_to_response(updated)
     except ProfileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+# ============================================================
+# Phase 12 整合 API（T183, T184）
+# ============================================================
+
+@router.post("/with-assessment", response_model=ProfileWithAssessmentResponse, status_code=status.HTTP_201_CREATED)
+async def create_profile_with_assessment(
+    data: ProfileCreateWithAssessment,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    建立履歷並同時建立考核記錄（Phase 12 整合）
+
+    當考核代碼為 R02-R05 時，會同時建立：
+    - Profile（基本履歷）
+    - AssessmentRecord（考核記錄）
+    - FaultResponsibilityAssessment（責任判定）
+
+    注意：R02-R05 必須提供 fault_responsibility_data
+    """
+    service = ProfileService(db)
+
+    # Staff 只能建立自己部門的履歷
+    department = data.department
+    if current_user.role == Role.STAFF.value:
+        department = current_user.department
+
+    # 準備責任判定資料
+    fault_data = None
+    if data.fault_responsibility_data:
+        fault_data = {
+            "delay_seconds": data.fault_responsibility_data.delay_seconds,
+            "checklist_results": data.fault_responsibility_data.checklist_results.model_dump(),
+            "time_t0": data.fault_responsibility_data.time_t0,
+            "time_t1": data.fault_responsibility_data.time_t1,
+            "time_t2": data.fault_responsibility_data.time_t2,
+            "time_t3": data.fault_responsibility_data.time_t3,
+            "time_t4": data.fault_responsibility_data.time_t4,
+            "notes": data.fault_responsibility_data.notes
+        }
+
+    try:
+        profile, assessment_record = service.create_with_assessment(
+            employee_id=data.employee_id,
+            event_date=data.event_date,
+            department=department,
+            assessment_code=data.assessment_code,
+            event_location=data.event_location,
+            train_number=data.train_number,
+            event_title=data.event_title,
+            event_description=data.event_description,
+            event_time=data.event_time,
+            data_source=data.data_source,
+            fault_responsibility_data=fault_data,
+        )
+
+        # 準備回應
+        profile_response = _profile_to_response(profile)
+
+        assessment_response = {
+            "id": assessment_record.id,
+            "standard_code": assessment_record.standard_code,
+            "base_points": assessment_record.base_points,
+            "responsibility_coefficient": assessment_record.responsibility_coefficient,
+            "actual_points": assessment_record.actual_points,
+            "cumulative_count": assessment_record.cumulative_count,
+            "cumulative_multiplier": assessment_record.cumulative_multiplier,
+            "final_points": assessment_record.final_points,
+        }
+
+        responsibility_response = None
+        if assessment_record.fault_responsibility:
+            fr = assessment_record.fault_responsibility
+            responsibility_response = {
+                "id": fr.id,
+                "fault_count": fr.fault_count,
+                "responsibility_level": fr.responsibility_level,
+                "responsibility_coefficient": fr.responsibility_coefficient,
+                "checked_items": fr.checked_items_labels,
+            }
+
+        return ProfileWithAssessmentResponse(
+            profile=profile_response,
+            assessment_record=assessment_response,
+            responsibility_assessment=responsibility_response
+        )
+
+    except EmployeeNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/{profile_id}/update-date")
+async def update_profile_date(
+    profile_id: int,
+    data: ProfileUpdateDate,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    更新履歷日期（Phase 12 T184）
+
+    此 API 會：
+    1. 更新 Profile.event_date
+    2. 若有關聯的 AssessmentRecord，同步更新 record_date
+    3. 若日期變更會影響累計次數，觸發重算
+    4. 跨年變更時會重算兩個年度的累計次數
+
+    注意：使用 Transaction + FOR UPDATE 確保並發安全
+    """
+    profile_service = ProfileService(db)
+    date_updater = ProfileDateUpdaterService(db)
+
+    # 檢查履歷是否存在
+    profile = profile_service.get_by_id(profile_id, load_relations=False)
+    if not profile:
+        raise HTTPException(status_code=404, detail="履歷不存在")
+
+    # 使用 Policy 檢查權限
+    if not ProfilePolicy.can_edit(
+        current_user.role, current_user.department, profile
+    ):
+        raise HTTPException(status_code=403, detail="無權限編輯此履歷")
+
+    try:
+        result = date_updater.update_profile_date(profile_id, data.new_date)
+        db.commit()
+
+        return {
+            "success": True,
+            "message": "履歷日期已更新",
+            "result": result
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"日期更新失敗：{str(e)}")
+
+
+@router.get("/{profile_id}/date-change-preview")
+async def preview_date_change(
+    profile_id: int,
+    new_date: date = Query(..., description="新的事件日期"),
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    預覽履歷日期變更的影響（Phase 12 T184）
+
+    返回：
+    - 是否為跨年變更
+    - 是否會觸發累計次數重算
+    - 受影響的年度列表
+    - 關聯的考核記錄資訊
+    """
+    profile_service = ProfileService(db)
+    date_updater = ProfileDateUpdaterService(db)
+
+    # 檢查履歷是否存在
+    profile = profile_service.get_by_id(profile_id, load_relations=False)
+    if not profile:
+        raise HTTPException(status_code=404, detail="履歷不存在")
+
+    # 使用 Policy 檢查權限
+    if not ProfilePolicy.can_view(
+        current_user.role, current_user.department, profile
+    ):
+        raise HTTPException(status_code=403, detail="無權限查看此履歷")
+
+    try:
+        preview = date_updater.preview_date_change(profile_id, new_date)
+        return preview
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/assessment-codes/responsibility-required")
+async def get_responsibility_required_codes(
+    db: Session = Depends(get_db),
+    _: TokenData = Depends(get_current_user),
+):
+    """
+    取得需要責任判定的考核代碼列表
+
+    返回 R02-R05 代碼列表，供前端判斷是否需要顯示責任判定表單
+    """
+    service = ProfileService(db)
+    return {
+        "codes": service.get_assessment_codes_requiring_responsibility(),
+        "description": "R02-R05 人為疏失項目需要填寫 9 項疏失查核表"
+    }
 
 
 # ============================================================

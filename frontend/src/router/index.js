@@ -105,6 +105,26 @@ const routes = [
     }
   },
 
+  // 考核系統
+  {
+    path: '/assessment-records',
+    name: 'assessment-records',
+    component: () => import('@/views/AssessmentRecords.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '考核記錄'
+    }
+  },
+  {
+    path: '/monthly-rewards',
+    name: 'monthly-rewards',
+    component: () => import('@/views/MonthlyRewards.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '月度獎勵'
+    }
+  },
+
   // PDF 處理
   {
     path: '/pdf-upload',
@@ -166,6 +186,16 @@ const routes = [
       requiresAuth: true,
       requiresAdmin: true,
       title: '勤務標準時間'
+    }
+  },
+  {
+    path: '/assessment-standards',
+    name: 'assessment-standards',
+    component: () => import('@/views/AssessmentStandards.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: '考核標準管理'
     }
   },
 

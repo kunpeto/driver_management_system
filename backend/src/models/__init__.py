@@ -22,6 +22,28 @@ from .personnel_interview import PersonnelInterview
 from .corrective_measures import CompletionStatus, CorrectiveMeasures
 from .assessment_notice import AssessmentNotice, AssessmentType
 
+# Phase 12: 考核系統模型
+from .assessment_standard import (
+    AssessmentCategory,
+    AssessmentStandard,
+    BonusCategory,
+    CalculationCycle,
+)
+from .assessment_record import AssessmentRecord
+from .fault_responsibility import (
+    CHECKLIST_KEYS,
+    CHECKLIST_LABELS,
+    FaultResponsibilityAssessment,
+    ResponsibilityLevel,
+    determine_responsibility,
+)
+from .cumulative_counter import (
+    CumulativeCounter,
+    R_CUMULATIVE_GROUP,
+    get_cumulative_category,
+)
+from .monthly_reward import MonthlyReward
+
 __all__ = [
     # Base
     "Base",
@@ -55,4 +77,19 @@ __all__ = [
     "CompletionStatus",
     "AssessmentNotice",
     "AssessmentType",
+    # Phase 12: 考核系統
+    "AssessmentStandard",
+    "AssessmentCategory",
+    "BonusCategory",
+    "CalculationCycle",
+    "AssessmentRecord",
+    "FaultResponsibilityAssessment",
+    "ResponsibilityLevel",
+    "CHECKLIST_KEYS",
+    "CHECKLIST_LABELS",
+    "determine_responsibility",
+    "CumulativeCounter",
+    "R_CUMULATIVE_GROUP",
+    "get_cumulative_category",
+    "MonthlyReward",
 ]

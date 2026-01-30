@@ -1,16 +1,23 @@
 """
 Employee 員工資料模型
 對應 tasks.md T043: 建立 Employee 模型
+對應 tasks.md T164: 擴充 Employee 模型（Phase 12 考核系統）
 對應 spec.md: Employee (員工資料)
+對應 data-model-phase12.md: Employee 擴充欄位
 """
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, Enum, String
+from sqlalchemy import Boolean, Enum, Float, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
 from .google_oauth_token import Department
+
+if TYPE_CHECKING:
+    from .assessment_record import AssessmentRecord
+    from .cumulative_counter import CumulativeCounter
+    from .monthly_reward import MonthlyReward
 
 
 class Employee(Base, TimestampMixin):
@@ -101,6 +108,14 @@ class Employee(Base, TimestampMixin):
         comment="是否離職"
     )
 
+    # Phase 12: 考核分數
+    current_score: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=80.0,
+        comment="當前考核分數（起始分數 80 分）"
+    )
+
     # Relationships
     transfers = relationship(
         "EmployeeTransfer",
@@ -115,6 +130,27 @@ class Employee(Base, TimestampMixin):
         back_populates="employee",
         cascade="all, delete-orphan",
         order_by="desc(Profile.event_date)"
+    )
+
+    # Phase 12: 考核系統關聯
+    assessment_records: Mapped[list["AssessmentRecord"]] = relationship(
+        "AssessmentRecord",
+        back_populates="employee",
+        cascade="all, delete-orphan",
+        order_by="desc(AssessmentRecord.record_date)"
+    )
+
+    cumulative_counters: Mapped[list["CumulativeCounter"]] = relationship(
+        "CumulativeCounter",
+        back_populates="employee",
+        cascade="all, delete-orphan"
+    )
+
+    monthly_rewards: Mapped[list["MonthlyReward"]] = relationship(
+        "MonthlyReward",
+        back_populates="employee",
+        cascade="all, delete-orphan",
+        order_by="desc(MonthlyReward.year_month)"
     )
 
     __table_args__ = (

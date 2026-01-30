@@ -29,6 +29,7 @@ from .google_oauth_token import Department
 
 if TYPE_CHECKING:
     from .assessment_notice import AssessmentNotice
+    from .assessment_record import AssessmentRecord
     from .corrective_measures import CorrectiveMeasures
     from .employee import Employee
     from .event_investigation import EventInvestigation
@@ -237,6 +238,13 @@ class Profile(Base, TimestampMixin):
         back_populates="profile",
         uselist=False,
         cascade="all, delete-orphan"
+    )
+
+    # Phase 12: 考核記錄關聯（一對一）
+    assessment_record: Mapped[Optional["AssessmentRecord"]] = relationship(
+        "AssessmentRecord",
+        back_populates="profile",
+        uselist=False
     )
 
     __table_args__ = (

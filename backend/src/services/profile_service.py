@@ -27,6 +27,9 @@ from src.models import (
     ProfileType,
 )
 
+# R02-R05 需要責任判定的項目
+R_TYPE_ASSESSMENT_CODES = frozenset({'R02', 'R03', 'R04', 'R05'})
+
 
 class ProfileServiceError(Exception):
     """履歷服務錯誤"""
@@ -660,3 +663,135 @@ class ProfileService:
         results = query.group_by(Profile.profile_type).all()
 
         return {r.profile_type: r.count for r in results}
+
+    # ============================================================
+    # Phase 12 整合：考核系統（T183）
+    # ============================================================
+
+    def create_with_assessment(
+        self,
+        employee_id: int,
+        event_date: date,
+        department: str,
+        assessment_code: str,
+        event_location: Optional[str] = None,
+        train_number: Optional[str] = None,
+        event_title: Optional[str] = None,
+        event_description: Optional[str] = None,
+        event_time: Optional[str] = None,
+        data_source: Optional[str] = None,
+        fault_responsibility_data: Optional[dict] = None,
+        auto_commit: bool = True
+    ) -> tuple["Profile", "AssessmentRecord"]:
+        """
+        建立履歷並同時建立考核記錄（Phase 12 整合）
+
+        當考核代碼為 R02-R05 時，同時建立：
+        - Profile（基本履歷）
+        - AssessmentRecord（考核記錄）
+        - FaultResponsibilityAssessment（責任判定，R02-R05 專用）
+
+        Args:
+            employee_id: 員工 ID
+            event_date: 事件日期
+            department: 部門
+            assessment_code: 考核代碼（如 D01, R03, +M01）
+            event_location: 事件地點
+            train_number: 列車車號
+            event_title: 事件標題
+            event_description: 事件描述
+            event_time: 事件時間
+            data_source: 資料來源
+            fault_responsibility_data: R02-R05 責任判定資料（包含 checklist_results, delay_seconds 等）
+            auto_commit: 是否自動提交
+
+        Returns:
+            (Profile, AssessmentRecord) 元組
+
+        Raises:
+            EmployeeNotFoundError: 員工不存在
+            ValueError: 考核標準不存在或責任判定資料缺失
+        """
+        from src.services.assessment_record_service import AssessmentRecordService
+        from src.services.assessment_standard_service import AssessmentStandardService
+
+        # 1. 驗證員工存在
+        employee = self.db.query(Employee).filter(
+            Employee.id == employee_id
+        ).first()
+        if not employee:
+            raise EmployeeNotFoundError(f"員工 ID {employee_id} 不存在")
+
+        # 2. 驗證考核標準存在
+        standard_service = AssessmentStandardService(self.db)
+        standard = standard_service.get_by_code(assessment_code)
+        if not standard or not standard.is_active:
+            raise ValueError(f"考核標準 '{assessment_code}' 不存在或未啟用")
+
+        # 3. R02-R05 需要責任判定資料
+        is_r_type = assessment_code in R_TYPE_ASSESSMENT_CODES
+        if is_r_type and not fault_responsibility_data:
+            raise ValueError(f"考核代碼 {assessment_code} 需要提供責任判定資料")
+
+        # 4. 建立履歷
+        profile = Profile(
+            employee_id=employee_id,
+            profile_type=ProfileType.BASIC.value,
+            event_date=event_date,
+            event_time=event_time,
+            event_location=event_location,
+            train_number=train_number,
+            event_title=event_title,
+            event_description=event_description,
+            data_source=data_source,
+            assessment_item=f"{assessment_code} {standard.name}",
+            assessment_score=int(standard.base_points) if standard.base_points else None,
+            conversion_status=ConversionStatus.PENDING.value,
+            department=department,
+            document_version=1,
+        )
+
+        self.db.add(profile)
+        self.db.flush()  # 取得 profile.id
+
+        # 5. 建立考核記錄
+        assessment_service = AssessmentRecordService(self.db)
+        assessment_record = assessment_service.create(
+            employee_id=employee_id,
+            standard_code=assessment_code,
+            record_date=event_date,
+            description=event_description,
+            profile_id=profile.id,
+            fault_responsibility_data=fault_responsibility_data
+        )
+
+        # 6. 更新履歷的考核分數為最終計算結果
+        profile.assessment_score = int(assessment_record.final_points)
+
+        if auto_commit:
+            self.db.commit()
+            self.db.refresh(profile)
+            self.db.refresh(assessment_record)
+
+        return (profile, assessment_record)
+
+    def get_assessment_codes_requiring_responsibility(self) -> list[str]:
+        """
+        取得需要責任判定的考核代碼列表
+
+        Returns:
+            R02-R05 代碼列表
+        """
+        return list(R_TYPE_ASSESSMENT_CODES)
+
+    def is_responsibility_required(self, assessment_code: str) -> bool:
+        """
+        判斷考核代碼是否需要責任判定
+
+        Args:
+            assessment_code: 考核代碼
+
+        Returns:
+            是否需要責任判定
+        """
+        return assessment_code in R_TYPE_ASSESSMENT_CODES

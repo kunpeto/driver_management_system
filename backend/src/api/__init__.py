@@ -21,6 +21,9 @@ from .driving_stats import router as driving_stats_router
 from .driving_competition import router as driving_competition_router
 # Phase 11: 履歷管理
 from .profiles import router as profiles_router
+# Phase 12: 考核系統
+from .assessment_standards import router as assessment_standards_router
+from .assessment_records import router as assessment_records_router
 
 __all__ = [
     "system_settings_router",
@@ -40,4 +43,7 @@ __all__ = [
     "driving_competition_router",
     # Phase 11
     "profiles_router",
+    # Phase 12
+    "assessment_standards_router",
+    "assessment_records_router",
 ]

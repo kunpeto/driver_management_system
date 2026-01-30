@@ -162,6 +162,9 @@ from src.api import (
     driving_competition_router,
     # Phase 11: 履歷管理
     profiles_router,
+    # Phase 12: 考核系統
+    assessment_standards_router,
+    assessment_records_router,
 )
 
 # 系統設定 API
@@ -261,6 +264,18 @@ app.include_router(
     profiles_router,
     prefix="/api/profiles",
     tags=["Profiles"]
+)
+
+# 考核標準 API (Phase 12)
+app.include_router(
+    assessment_standards_router,
+    tags=["Assessment Standards"]
+)
+
+# 考核記錄 API (Phase 12)
+app.include_router(
+    assessment_records_router,
+    tags=["Assessment Records"]
 )
 
 

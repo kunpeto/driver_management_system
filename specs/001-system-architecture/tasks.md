@@ -476,43 +476,81 @@
 
 ---
 
-## Phase 12: User Story 9 - 考核系統 V2 升級（累計加重機制） (Priority: P2) ⭐ **(新增)**
+## Phase 12: User Story 9 - 考核系統（累計加重與雙因子評分） (Priority: P2) ⭐ **(更新：已整合 Gemini Review P1 修正）**
 
-**Goal**: 系統支援 2026 年度起的新考核規則，包含累計加重機制、考核標準表管理、雙版本並存（V1/V2）
+**Goal**: 系統支援 2026 年度的新考核規則，包含考核標準表管理（61 項）、依類別累計加重機制、R02-R05 雙因子評分（延誤時間 × 責任程度）、月度獎勵自動計算、年度自動重置，以及與履歷系統的深度整合
 
-**Independent Test**: 員工「張三」在 2026 年 1 月發生第 1 次遲到扣 1 分，2 月發生第 2 次遲到扣 1.5 分（累計加重 1.5 倍），3 月發生第 3 次遲到扣 2 分（累計加重 2.0 倍）。系統自動計算累計次數並套用加重公式。
+**Independent Test**:
+1. 員工「張三」在 2026 年 1 月發生第 1 次 D 類違規（D01 遲到）扣 1 分，2 月發生第 2 次 D 類違規扣 1.5 分（累計加重 1.5 倍）
+2. 員工「李四」發生延誤 7 分鐘事件（R04），經責任判定查核表判定有 4 項疏失（主要責任，係數 0.7），系統自動計算：實際扣分 = -3 × 0.7 = -2.1 分，若為年度第 3 次 R 類違規，最終扣分 = -2.1 × 2.0 = -4.2 分
+3. 月底時，系統自動檢查員工當月零違規情況，發放月度獎勵（+M02/+M03 可疊加）
 
-### 資料模型
+**重要變更** ⭐:
+- ❌ **移除**: V1/V2 雙版本系統（實際不需要）
+- ✅ **新增**: R02-R05 雙因子評分機制（9 項疏失查核表）
+- ✅ **新增**: 月度獎勵自動計算（+M02/+M03）
+- ✅ **新增**: 履歷系統整合（R02-R05 自動觸發責任判定）
+- ✅ **P1 修正**: 明確定義 R02-R05 合併群組（避免誤判）
+- ✅ **P1 修正**: 履歷日期變更的連動重算機制
 
-- [ ] T159 [P] [US9] 建立 AssessmentStandard 模型在 backend/src/models/assessment_standard.py（item_code, item_name, category ENUM('D','W','O','S','R','+M','+A','+B','+C','+R'), base_score, scoring_unit, apply_accumulation, custom_notes, is_active）
-- [ ] T160 [P] [US9] 建立 AssessmentRecord 模型在 backend/src/models/assessment_record.py（employee_id FK, assessment_standard_id FK, event_date, base_score, accumulation_multiplier, weighted_score, occurrence_count, assessment_year, notes）
+### 資料模型（5 個表）
 
-### 後端服務
+- [x] T159 [P] [US9] 建立 AssessmentStandard 模型在 backend/src/models/assessment_standard.py（code, category ENUM('D','W','O','S','R','+M','+A','+B','+C','+R'), name, base_points, has_cumulative BOOLEAN, calculation_cycle ENUM('yearly','monthly'), description, is_active）✅ 2026-01-30
+- [x] T160 [P] [US9] 建立 AssessmentRecord 模型在 backend/src/models/assessment_record.py（employee_id FK, standard_code FK, profile_id FK (nullable), record_date, base_points, responsibility_coefficient (nullable), actual_points, cumulative_count, cumulative_multiplier, final_points, is_deleted BOOLEAN）✅ 2026-01-30
+- [x] T161 [P] [US9] 建立 FaultResponsibilityAssessment 模型在 backend/src/models/fault_responsibility.py（record_id FK (unique, one-to-one), time_t0~t4 (nullable), delay_seconds, checklist_results JSON (9 項), fault_count, responsibility_level ENUM('完全責任','主要責任','次要責任'), responsibility_coefficient, notes）⭐ **核心新增** ✅ 2026-01-30
+- [x] T162 [P] [US9] 建立 CumulativeCounter 模型在 backend/src/models/cumulative_counter.py（employee_id FK, year, category VARCHAR(10), count, last_updated, UNIQUE(employee_id, year, category)）⭐ **核心新增** ✅ 2026-01-30
+- [x] T163 [P] [US9] 建立 MonthlyReward 模型在 backend/src/models/monthly_reward.py（employee_id FK, year_month VARCHAR(7), full_attendance, driving_zero_violation, all_zero_violation, total_points, calculated_at, UNIQUE(employee_id, year_month)）⭐ **核心新增** ✅ 2026-01-30
+- [x] T164 [US9] 擴充 Employee 模型在 backend/src/models/employee.py（新增 current_score FLOAT default 80.0, 新增關聯 assessment_records, cumulative_counters, monthly_rewards）✅ 2026-01-30
+- [x] T165 [US9] 擴充 Profile 模型在 backend/src/models/profile.py（新增關聯 assessment_record (one-to-one, nullable)）✅ 2026-01-30
 
-- [ ] T161 [US9] 實作 AssessmentStandardService 在 backend/src/services/assessment_standard_service.py（CRUD、Excel 匯入、關鍵字搜尋）
-- [ ] T162 [US9] 實作累計次數計算服務在 backend/src/services/accumulation_calculator.py（查詢員工年度同類別累計次數）
-- [ ] T163 [US9] 實作加重分數計算服務在 backend/src/services/weighted_score_calculator.py（套用公式：實際扣分 = 基本分 × [1 + 係數 × (第N次 - 1)]）
-- [ ] T164 [US9] 實作 AssessmentRecordService 在 backend/src/services/assessment_record_service.py（建立記錄、自動計算加重、年度摘要、重算機制）
-- [ ] T165 [US9] 實作版本選擇服務在 backend/src/services/assessment_version_selector.py（根據事件日期選擇 V1/V2 規則）
-- [ ] T166 [US9] 實作考核記錄重算服務在 backend/src/services/assessment_recalculator.py（刪除或修改記錄後重算所有累計次數）
+### 後端服務（核心邏輯）
+
+- [x] T166 [US9] 實作 AssessmentStandardService 在 backend/src/services/assessment_standard_service.py（CRUD、Excel 匯入、關鍵字搜尋、預設 61 項標準初始化）✅ 2026-01-30
+- [x] T167 [US9] 實作累計類別判定邏輯在 backend/src/services/cumulative_category.py（定義 R_CUMULATIVE_GROUP = {'R02','R03','R04','R05'}, 實作 get_cumulative_category() 函數）⭐ **P1 修正** ✅ 2026-01-30
+- [x] T168 [US9] 實作累計次數計算服務在 backend/src/services/cumulative_calculator.py（查詢員工年度累計次數、更新 CumulativeCounter 表、支援 R 類合併計算）✅ 2026-01-30
+- [x] T169 [US9] 實作 FaultResponsibilityService 在 backend/src/services/fault_responsibility_service.py（接收 9 項查核表、計算疏失項數、判定責任程度、計算責任係數）⭐ **核心新增** ✅ 2026-01-30
+- [x] T170 [US9] 實作 AssessmentRecordService 在 backend/src/services/assessment_record_service.py（建立記錄、整合責任判定、自動計算累計倍率與最終分數、年度摘要、⭐ **P1 修正：create/soft_delete/restore 時觸發月度獎勵重算**）✅ 2026-01-30
+- [x] T171 [US9] 實作考核記錄重算服務在 backend/src/services/assessment_recalculator.py（刪除/修改後重算、使用 Transaction + FOR UPDATE 鎖定、依 record_date 排序、批次更新所有記錄、更新員工總分）✅ 2026-01-30
+- [x] T172 [US9] 實作履歷日期變更重算服務在 backend/src/services/profile_date_updater.py（更新 Profile.event_date、同步 AssessmentRecord.record_date、觸發重算（同年/跨年）、重新計算員工總分）⭐ **P1 新增** ✅ 2026-01-30
+- [x] T173 [US9] 實作月度獎勵計算服務在 backend/src/services/monthly_reward_calculator.py（掃描員工當月考核記錄、判定 +M02 (R+S 零違規)、判定 +M03 (全類別零違規)、自動建立 MonthlyReward 記錄與 AssessmentRecord 記錄、⭐ **P1 修正：支援回溯建檔後的獎勵撤銷/補發**）⭐ **核心新增** ✅ 2026-01-30
+- [x] T174 [US9] 實作年度重置服務在 backend/src/services/annual_reset_service.py（每年 1/1 執行、重置 Employee.current_score = 80、重置 CumulativeCounter.count = 0、保留歷史記錄）⭐ **核心新增** ✅ 2026-01-30
 
 ### 後端 API 端點
 
-- [ ] T167 [US9] 實作考核標準 CRUD API 在 backend/src/api/assessment_standards.py（GET/POST/PUT/DELETE /api/assessment-standards, 僅 Admin 可編輯）
-- [ ] T168 [US9] 實作考核標準 Excel 匯入 API 在 backend/src/api/assessment_standards.py（POST /api/assessment-standards/import-excel, 驗證格式）
-- [ ] T169 [US9] 實作考核標準搜尋 API 在 backend/src/api/assessment_standards.py（GET /api/assessment-standards/search?keyword={keyword}）
-- [ ] T170 [US9] 實作考核記錄 CRUD API 在 backend/src/api/assessment_records.py（GET/POST/PUT/DELETE /api/assessment-records）
-- [ ] T171 [US9] 實作員工年度考核摘要 API 在 backend/src/api/assessment_records.py（GET /api/assessment-records/summary?employee_id={id}&year={year}）
+- [x] T175 [US9] 實作考核標準 CRUD API 在 backend/src/api/assessment_standards.py（GET/POST/PUT/DELETE /api/assessment-standards, 僅 Admin 可編輯）✅ 2026-01-30
+- [x] T176 [US9] 實作考核標準 Excel 匯入 API 在 backend/src/api/assessment_standards.py（POST /api/assessment-standards/import-excel, 驗證格式）✅ 2026-01-30
+- [x] T177 [US9] 實作考核標準搜尋 API 在 backend/src/api/assessment_standards.py（GET /api/assessment-standards/search?keyword={keyword}）✅ 2026-01-30
+- [x] T178 [US9] 實作考核記錄 CRUD API 在 backend/src/api/assessment_records.py（GET/POST/PUT/DELETE /api/assessment-records, POST 時整合責任判定）✅ 2026-01-30
+- [x] T179 [US9] 實作 R02-R05 責任判定 API 在 backend/src/api/assessment_records.py（POST /api/assessment-records/{id}/fault-responsibility, 接收 9 項查核表、更新責任判定、觸發重算）⭐ **核心新增** ✅ 2026-01-30
+- [x] T180 [US9] 實作員工年度考核摘要 API 在 backend/src/api/assessment_records.py（GET /api/assessment-records/summary?employee_id={id}&year={year}, 顯示當前總分、各類別累計次數、所有記錄）✅ 2026-01-30
+- [x] T181 [US9] 實作月度獎勵計算 API 在 backend/src/api/assessment_records.py（POST /api/assessment-records/monthly-rewards/calculate, 參數：year_month, 觸發批次計算）⭐ **核心新增** ✅ 2026-01-30
+- [x] T182 [US9] 實作年度重置 API 在 backend/src/api/assessment_records.py（POST /api/assessment-records/annual-reset, 僅 Admin 可執行、提供確認機制）⭐ **核心新增** ✅ 2026-01-30
+
+### 履歷系統整合 ⭐ **特別新增**
+
+- [x] T183 [US9] 擴充 ProfileService 在 backend/src/services/profile_service.py（新增 create_with_assessment() 方法、當考核代碼為 R02-R05 時同時建立 Profile + AssessmentRecord + FaultResponsibilityAssessment）✅ 2026-01-30
+- [x] T184 [US9] 擴充 Profile API 在 backend/src/api/profiles.py（新增履歷日期變更邏輯、觸發 profile_date_updater 服務、新增 /with-assessment 端點、新增日期變更預覽端點）✅ 2026-01-30
 
 ### 前端實作
 
-- [ ] T172 [P] [US9] 建立考核標準管理頁面在 frontend/src/views/AssessmentStandards.vue（僅管理員可見、CRUD 表單、Excel 匯入功能）
-- [ ] T173 [P] [US9] 建立考核記錄列表頁面在 frontend/src/views/AssessmentRecords.vue（表格、篩選、累計次數顯示）
-- [ ] T174 [P] [US9] 建立考核記錄表單元件在 frontend/src/components/assessments/AssessmentRecordForm.vue（選擇項目、自動計算加重分數、顯示公式）
-- [ ] T175 [P] [US9] 建立員工年度考核摘要元件在 frontend/src/components/assessments/AssessmentSummary.vue（圖表、分類統計）
-- [ ] T176 [US9] 建立考核 Store 在 frontend/src/stores/assessments.js（Pinia state、actions）
+- [x] T185 [P] [US9] 建立考核標準管理頁面在 frontend/src/views/AssessmentStandards.vue（僅管理員可見、CRUD 表單、Excel 匯入功能、顯示 61 項標準）✅ 2026-01-30
+- [x] T186 [P] [US9] 建立考核記錄列表頁面在 frontend/src/views/AssessmentRecords.vue（表格、篩選、累計次數顯示、責任判定詳情）✅ 2026-01-30
+- [x] T187 [P] [US9] 建立考核記錄表單元件在 frontend/src/components/assessments/AssessmentRecordForm.vue（選擇項目、**自動偵測 R02-R05**、顯示累計倍率與計算公式）✅ 2026-01-30
+- [x] T188 [P] [US9] 建立 R02-R05 責任判定查核表元件在 frontend/src/components/assessments/FaultResponsibilityChecklist.vue（時間節點輸入、延誤秒數、9 項疏失查核項 checkbox、自動計算責任程度、顯示計算過程）⭐ **核心新增** ✅ 2026-01-30
+- [x] T189 [P] [US9] 建立員工年度考核摘要元件在 frontend/src/components/assessments/AssessmentSummary.vue（當前總分、各類別累計次數圖表、分類統計、月度獎勵統計）✅ 2026-01-30
+- [x] T190 [P] [US9] 建立月度獎勵管理頁面在 frontend/src/views/MonthlyRewards.vue（選擇年月、執行計算按鈕、顯示計算結果統計）⭐ **核心新增** ✅ 2026-01-30
+- [x] T191 [US9] 建立考核 Store 在 frontend/src/stores/assessments.js（Pinia state、actions、支援責任判定資料、R02-R05 查核表支援、月度獎勵計算、年度重置）✅ 2026-01-30
+- [x] T192 [US9] 整合履歷表單與責任判定在 frontend/src/components/profiles/ProfileWithAssessmentForm.vue（當選擇 R02-R05 考核項目時，自動顯示責任判定查核表區塊）⭐ **核心整合** ✅ 2026-01-30
 
-**Checkpoint**: 考核系統 V2 功能完成，支援累計加重機制與雙版本並存
+**Checkpoint**: ✅ 考核系統功能完成，支援累計加重、R02-R05 雙因子評分、月度獎勵、年度重置、履歷整合，符合 Gemini Review 標準
+
+**完成日期**: 2026-01-30
+
+**前端實作亮點**:
+- FaultResponsibilityChecklist.vue：設計為正式表單樣式，包含時間軸記錄、9 項疏失查核表、責任判定結果，並有即時分數計算預覽
+- AssessmentRecordForm.vue：整合責任判定，自動偵測 R02-R05 代碼並顯示查核表
+- AssessmentSummary.vue：員工年度考核摘要，包含總分卡片、累計次數、月度獎勵統計
+- ProfileWithAssessmentForm.vue：履歷與考核整合表單，一次完成履歷建立與考核記錄
 
 ---
 
@@ -627,9 +665,9 @@
 
 **新增功能** ⭐:
 - **US8**: T130-T134 可並行（5 個資料模型）；T146, T147, T148 可並行；T150-T156 可並行（7 個前端表單）
-- **US9**: T159, T160 可並行（2 個資料模型）；T172-T175 可並行（4 個前端元件）
+- **US9**: T159-T165 可並行（7 個資料模型）；T185-T190 可並行（6 個前端元件）⭐ **已更新（含 P1 修正）**
 - **US10**: T177, T178, T179 可並行（3 個判定服務）；T184, T185 可並行（2 個前端元件）
-- **US11**: T195, T196, T197 可並行（3 個前端元件）
+- **US11**: T193, T194, T195 可並行（3 個前端元件）
 
 ---
 
@@ -686,11 +724,14 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
    - 勤務表同步與時數計算
    - **Milestone**: 駕駛競賽排名完整功能
 
-3. **Week 4**: Phase 12（US9）考核系統 V2
-   - 考核標準表管理
-   - 累計加重機制實作
-   - 雙版本並存（V1/V2）
-   - **Milestone**: 2026 年起考核規則完整運作
+3. **Week 4**: Phase 12（US9）考核系統（含 Gemini Review P1 修正）
+   - 考核標準表管理（61 項標準）
+   - 依類別累計加重機制（明確 R02-R05 合併）
+   - R02-R05 雙因子評分（9 項疏失查核表）
+   - 月度獎勵自動計算（+M02/+M03）
+   - 履歷系統整合（R02-R05 自動觸發責任判定）
+   - 履歷日期變更連動重算（P1 新增）
+   - **Milestone**: 2026 年考核規則完整運作，符合 Gemini Review 標準
 
 4. **Week 5**: Phase 13（US10）差勤加分自動處理
    - 全勤/R班/延長工時判定服務
@@ -730,10 +771,10 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
    - **開發者 A**: 資料模型 + 後端服務（T130-T140）
    - **開發者 B**: 後端 API + 本機 API（T141-T149）
    - **開發者 C**: 前端實作（T150-T158）
-6. Phase 12（US9）考核系統 V2：
-   - **開發者 A**: 資料模型 + 累計加重邏輯（T159-T166）
-   - **開發者 B**: 後端 API（T167-T171）
-   - **開發者 C**: 前端實作（T172-T176）
+6. Phase 12（US9）考核系統（含 P1 修正）：
+   - **開發者 A**: 資料模型 + 核心服務（T159-T174）⭐ 包含責任判定、月度獎勵、重算邏輯
+   - **開發者 B**: 後端 API + 履歷整合（T175-T184）
+   - **開發者 C**: 前端實作（T185-T192）⭐ 包含責任判定查核表介面
 7. 並行開發：
    - **開發者 A**: Phase 13（US10）差勤加分自動處理
    - **開發者 B**: Phase 14（US11）未結案管理
@@ -766,7 +807,7 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 - **駕駛競賽模組**: PC-001 已釐清，Phase 9 任務可立即執行
 - **測試覆蓋**: 新增憑證驗證測試（G1: T037a, T037b）與 OAuth 回調測試（U1: T098a）
 - **履歷管理模組** ⭐: Phase 11（US8）包含 22 個任務（Gemini Review 優化後），**完全雲端化**（Office 文件生成與條碼生成皆在後端）
-- **考核系統 V2** ⭐: Phase 12（US9）包含 18 個任務，實作累計加重機制
+- **考核系統（含 P1 修正）** ⭐: Phase 12（US9）包含 **34 個任務**（原 18 → 更新為 34），實作累計加重機制、R02-R05 雙因子評分、月度獎勵、履歷整合、日期變更重算，**已整合 Gemini Review P1 修正**（明確 R 類合併邏輯、新增日期變更重算）
 - **差勤加分自動化** ⭐: Phase 13（US10）包含 9 個任務，自動判定全勤、R班、延長工時
 - **未結案管理** ⭐: Phase 14（US11）包含 6 個任務（Gemini Review 優化後，複用 Phase 8 Google Drive 服務），透過 Profile.conversion_status 追蹤文件處理進度
 - **完整功能交付**: 全部 14 個階段（包含所有用戶故事與優化）
@@ -802,6 +843,39 @@ Task: "建立員工編輯表單元件在 frontend/src/components/employees/Emplo
 - 單份文件生成：5-15 MB 記憶體，0.3-1 秒 CPU 時間
 - 使用情境：每天 < 10 份文件，無批次需求
 - 結論：✅ Render 免費版完全足夠
+
+### Phase 12 (US9) Gemini Review P1 修正 ✅ (2026-01-30)
+
+**審驗結果**: Gemini 深度審驗後，發現 2 個 P1 問題（重要，必須修改）
+
+**P1-1: R 類別累計範圍的模糊性** ✅ 已修正
+- **問題**: 原設計 `if category == 'R': category = 'R'` 會將所有 R 類項目合併，未來新增 R01、R06 會誤判
+- **修正**: 使用白名單機制 `R_CUMULATIVE_GROUP = {'R02', 'R03', 'R04', 'R05'}`
+- **實作**: 新增 `get_cumulative_category()` 函數，明確判定累計類別
+- **影響任務**: T167（新增累計類別判定邏輯）
+
+**P1-2: 履歷日期變更的連動重算** ✅ 已修正
+- **問題**: 規格遺漏「履歷日期變更」場景，累計次數基於年度與發生順序，日期變更會影響所有後續記錄
+- **修正**: 新增完整的日期變更重算機制（同年/跨年自動重算）
+- **新增 FR**: FR-121 到 FR-125（5 個功能需求）
+- **新增場景**: Acceptance Scenarios 28-33（6 個測試場景）
+- **新增函數**: `update_profile_date()`, `recalculate_employee_total_score()`
+- **影響任務**: T172（新增履歷日期變更重算服務）、T184（擴充 Profile API）
+
+**規格更新**:
+- ✅ spec.md: 更新 User Story 9、新增 FR-121~125、新增場景 28-33
+- ✅ data-model-phase12.md: 新增 P1 修正的業務邏輯與實作範例
+- ✅ PHASE12_P1_FIXES.md: 完整的修正記錄文件
+
+**任務數量變化**: 18 個任務 → **34 個任務**（新增雙因子評分、月度獎勵、履歷整合、日期重算）
+
+**設計優點**（Gemini 肯定）:
+- ✅ Transaction + FOR UPDATE 鎖定機制，防止 Race Condition
+- ✅ 冗餘欄位設計（actual_points, cumulative_count 快照），保證歷史可追溯
+- ✅ Profile → AssessmentRecord → FaultResponsibilityAssessment 關聯鏈設計清晰
+- ✅ 9 項查核表使用 JSON 格式，保留未來擴展彈性
+
+---
 
 ### Gemini 模板欄位驗證修正 ✅ (2026-01-30)
 
