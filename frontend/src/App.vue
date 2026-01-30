@@ -2,10 +2,12 @@
 /**
  * 應用程式主組件
  * 包含頂部導航、側邊欄和主內容區
+ * 優化：加入未結案履歷徽章提醒
  */
-import { computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useProfilesStore } from '@/stores/profiles'
 import {
   House,
   User,
@@ -26,6 +28,10 @@ import {
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const profilesStore = useProfilesStore()
+
+// 未結案數量
+const pendingCount = computed(() => profilesStore.pendingStats?.total || 0)
 
 // 是否顯示側邊欄（登入頁不顯示）
 const showLayout = computed(() => {
@@ -93,6 +99,36 @@ async function handleLogout() {
   await authStore.logout()
   router.push('/login')
 }
+
+// 載入未結案統計
+async function loadPendingStats() {
+  if (authStore.isLoggedIn) {
+    try {
+      await profilesStore.fetchPendingStats()
+    } catch (err) {
+      console.error('載入未結案統計失敗:', err)
+    }
+  }
+}
+
+// 監聽登入狀態，載入統計
+watch(() => authStore.isLoggedIn, (isLoggedIn) => {
+  if (isLoggedIn) {
+    loadPendingStats()
+  }
+}, { immediate: true })
+
+// 定時刷新未結案統計（每 5 分鐘）
+onMounted(() => {
+  const refreshInterval = setInterval(() => {
+    if (authStore.isLoggedIn) {
+      loadPendingStats()
+    }
+  }, 5 * 60 * 1000)
+
+  // 清理定時器
+  return () => clearInterval(refreshInterval)
+})
 </script>
 
 <template>
@@ -136,6 +172,13 @@ async function handleLogout() {
           <el-menu-item v-else :index="item.index">
             <el-icon><component :is="item.icon" /></el-icon>
             <span>{{ item.title }}</span>
+            <!-- 事件履歷的未結案徽章 -->
+            <el-badge
+              v-if="item.index === '/profiles' && pendingCount > 0"
+              :value="pendingCount"
+              :max="99"
+              class="pending-badge"
+            />
           </el-menu-item>
         </template>
       </el-menu>
@@ -260,5 +303,15 @@ html, body, #app {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* 未結案徽章 */
+.pending-badge {
+  margin-left: auto;
+}
+
+.pending-badge :deep(.el-badge__content) {
+  background-color: #f56c6c;
+  border: none;
 }
 </style>

@@ -449,21 +449,48 @@ function viewRecord(record) {
   dialogVisible.value = true
 }
 
-// 刪除記錄
+// 刪除記錄 - 強化二次確認
 async function deleteRecord(record) {
+  // 第一階段：顯示警告
   try {
     await ElMessageBox.confirm(
-      '刪除後將觸發累計次數重算，確定刪除此記錄？',
+      `即將刪除 ${record.employee_name || '員工'} 的考核記錄 (${record.standard_code})。\n\n⚠️ 刪除後將觸發累計次數重算，此操作可能影響其他記錄的最終分數！`,
       '刪除確認',
-      { type: 'warning' }
+      {
+        type: 'warning',
+        confirmButtonText: '繼續刪除',
+        cancelButtonText: '取消'
+      }
     )
+  } catch {
+    return
+  }
+
+  // 第二階段：要求輸入確認文字
+  try {
+    const { value } = await ElMessageBox.prompt(
+      '請輸入「DELETE」以確認刪除（此操作不可復原）：',
+      '二次確認',
+      {
+        confirmButtonText: '確認刪除',
+        cancelButtonText: '取消',
+        inputPattern: /^DELETE$/,
+        inputErrorMessage: '請輸入正確的確認文字「DELETE」',
+        type: 'warning'
+      }
+    )
+
+    if (value !== 'DELETE') {
+      ElMessage.info('刪除已取消')
+      return
+    }
   } catch {
     return
   }
 
   try {
     await assessmentsStore.deleteRecord(record.id)
-    ElMessage.success('刪除成功')
+    ElMessage.success('刪除成功，累計次數已重新計算')
     loadRecords()
     refreshSummary()
   } catch (err) {

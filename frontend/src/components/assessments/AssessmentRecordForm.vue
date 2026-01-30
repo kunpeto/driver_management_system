@@ -1,5 +1,7 @@
 <template>
   <div class="assessment-record-form">
+    <!-- 主表單區域（可捲動） -->
+    <div class="form-scroll-area">
     <el-form
       ref="formRef"
       :model="formData"
@@ -135,48 +137,51 @@
         />
       </div>
 
-      <!-- 分數計算預覽 -->
-      <div v-if="selectedStandard" class="score-calculation">
-        <el-divider content-position="left">分數計算</el-divider>
-
-        <div class="calculation-steps">
-          <div class="step">
-            <span class="step-label">基本分數</span>
-            <span class="step-value">{{ selectedStandard.base_points }} 分</span>
-          </div>
-
-          <template v-if="isRTypeCode && responsibilityData">
-            <div class="step">
-              <span class="step-label">責任係數</span>
-              <span class="step-value">× {{ responsibilityData.coefficient || 0 }}</span>
-            </div>
-            <div class="step">
-              <span class="step-label">實際分數</span>
-              <span class="step-value">= {{ actualPoints.toFixed(1) }} 分</span>
-            </div>
-          </template>
-
-          <template v-if="selectedStandard.has_cumulative && cumulativeInfo">
-            <div class="step">
-              <span class="step-label">累計倍率</span>
-              <span class="step-value">× {{ cumulativeMultiplier.toFixed(1) }}（第 {{ (cumulativeInfo.count || 0) + 1 }} 次）</span>
-            </div>
-          </template>
-
-          <div class="step final">
-            <span class="step-label">最終分數</span>
-            <span class="step-value" :class="finalPoints > 0 ? 'text-success' : 'text-danger'">
-              {{ finalPoints > 0 ? '+' : '' }}{{ finalPoints.toFixed(1) }} 分
-            </span>
-          </div>
-        </div>
-      </div>
-
       <!-- 關聯履歷 -->
       <el-form-item v-if="profileId" label="關聯履歷">
         <el-tag type="info">履歷 ID: {{ profileId }}</el-tag>
       </el-form-item>
     </el-form>
+    </div>
+
+    <!-- 分數計算預覽 - 吸附底部 -->
+    <div v-if="selectedStandard" class="score-calculation-sticky">
+      <div class="calculation-header">
+        <el-icon><Coin /></el-icon>
+        <span>分數計算預覽</span>
+      </div>
+
+      <div class="calculation-body">
+        <div class="calc-item">
+          <span class="calc-label">基本分</span>
+          <span class="calc-value">{{ selectedStandard.base_points }}</span>
+        </div>
+
+        <template v-if="isRTypeCode && responsibilityData">
+          <div class="calc-operator">×</div>
+          <div class="calc-item">
+            <span class="calc-label">責任係數</span>
+            <span class="calc-value">{{ responsibilityData.coefficient || 0 }}</span>
+          </div>
+        </template>
+
+        <template v-if="selectedStandard.has_cumulative && cumulativeInfo">
+          <div class="calc-operator">×</div>
+          <div class="calc-item">
+            <span class="calc-label">累計倍率</span>
+            <span class="calc-value">{{ cumulativeMultiplier.toFixed(1) }}</span>
+          </div>
+        </template>
+
+        <div class="calc-operator">=</div>
+        <div class="calc-item final">
+          <span class="calc-label">最終分數</span>
+          <span class="calc-value" :class="finalPoints > 0 ? 'positive' : 'negative'">
+            {{ finalPoints > 0 ? '+' : '' }}{{ finalPoints.toFixed(1) }} 分
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -186,7 +191,7 @@
  * 對應 tasks.md T187: 建立考核記錄表單元件
  */
 import { ref, computed, watch, onMounted } from 'vue'
-import { Warning } from '@element-plus/icons-vue'
+import { Warning, Coin } from '@element-plus/icons-vue'
 import { useAssessmentsStore, ASSESSMENT_CATEGORIES, R_TYPE_CODES } from '@/stores/assessments'
 import FaultResponsibilityChecklist from './FaultResponsibilityChecklist.vue'
 import { cloudApi } from '@/services/api'
@@ -438,7 +443,17 @@ defineExpose({ validate, getData, submit })
 
 <style scoped>
 .assessment-record-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 70vh;
+}
+
+.form-scroll-area {
+  flex: 1;
+  overflow-y: auto;
   padding: 20px;
+  padding-bottom: 10px;
 }
 
 .selected-standard-info {
@@ -483,41 +498,83 @@ defineExpose({ validate, getData, submit })
   color: #f56c6c;
 }
 
-.score-calculation {
-  margin-top: 20px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 8px;
+/* 吸附底部的分數計算預覽 */
+.score-calculation-sticky {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, #f0f9ff 0%, #e8f4fd 100%);
+  border-top: 2px solid #409eff;
+  padding: 12px 20px;
+  margin-top: auto;
+  box-shadow: 0 -4px 12px rgba(64, 158, 255, 0.15);
 }
 
-.calculation-steps {
+.calculation-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #409eff;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.calculation-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calc-item {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.step {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 8px 16px;
   background: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
+  min-width: 80px;
 }
 
-.step.final {
-  margin-top: 8px;
-  background: #f0f9ff;
-  border: 1px solid #409eff;
+.calc-item.final {
+  background: #409eff;
+  color: #fff;
+  min-width: 120px;
+}
+
+.calc-item.final .calc-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.calc-item.final .calc-value {
+  color: #fff;
+}
+
+.calc-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+}
+
+.calc-value {
+  font-size: 18px;
   font-weight: bold;
+  color: #303133;
 }
 
-.step-label {
-  color: #666;
+.calc-value.positive {
+  color: #67c23a;
 }
 
-.step-value {
-  font-weight: 500;
+.calc-value.negative {
+  color: #f56c6c;
+}
+
+.calc-operator {
+  font-size: 18px;
+  font-weight: bold;
+  color: #909399;
 }
 
 .text-success {
