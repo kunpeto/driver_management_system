@@ -118,9 +118,7 @@ def init_database():
     from src.models.base import Base
 
     # 導入所有模型以註冊到 Base.metadata
-    # 這些導入會在模型建立後補充
-    # from backend.src.models.user import User
-    # from backend.src.models.employee import Employee
-    # ...
+    from src.models.system_setting import SystemSetting  # noqa: F401
+    from src.models.google_oauth_token import GoogleOAuthToken  # noqa: F401
 
     Base.metadata.create_all(bind=sync_engine)
