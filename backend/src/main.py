@@ -94,22 +94,30 @@ app = FastAPI(
 )
 
 # CORS 設定
-# 允許 GitHub Pages 和本機開發存取
-allowed_origins = [
-    "http://localhost:3000",  # 本機 Vue 開發
-    "http://localhost:5173",  # Vite 開發伺服器
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    # GitHub Pages（部署後補充）
-    # "https://your-username.github.io",
-]
+# 根據環境設定允許的來源
+if settings.is_production:
+    # 生產環境：僅允許特定域名
+    allowed_origins = [
+        f"https://{settings.github_pages_domain}" if hasattr(settings, 'github_pages_domain') else "",
+        settings.frontend_url if hasattr(settings, 'frontend_url') else "",
+    ]
+    # 過濾空字串
+    allowed_origins = [origin for origin in allowed_origins if origin]
+else:
+    # 開發環境：允許本機開發
+    allowed_origins = [
+        "http://localhost:3000",  # 本機 Vue 開發
+        "http://localhost:5173",  # Vite 開發伺服器
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
 # Rate Limiting 設置（Gemini Review P0: 防止 OOM）

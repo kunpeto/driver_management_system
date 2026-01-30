@@ -392,17 +392,17 @@
 
 **目的**: 跨用戶故事的改進與最終優化
 
-- [ ] T118 [P] 撰寫 API 文件在 docs/api.md（所有端點、請求/回應格式、錯誤碼）
-- [ ] T119 [P] 撰寫部署指南在 docs/deployment.md（Render 部署步驟、環境變數設定、UptimeRobot 配置）
-- [ ] T120 [P] 撰寫使用者手冊在 docs/user_manual.md（各功能操作說明、常見問題）
-- [ ] T121 [P] 建立開發者快速入門在 docs/quickstart.md（本機開發環境設定、測試指令）
-- [ ] T122 後端效能優化（資料庫查詢最佳化、快取策略、索引檢查）
-- [ ] T123 前端效能優化（Code Splitting、Lazy Loading、圖片壓縮）
-- [ ] T124 安全性審查（OWASP Top 10 檢查、SQL 注入防護、XSS 防護）
+- [x] T118 [P] 撰寫 API 文件在 docs/api.md（所有端點、請求/回應格式、錯誤碼）✅ 2026-01-30
+- [x] T119 [P] 撰寫部署指南在 docs/deployment.md（Render 部署步驟、環境變數設定、UptimeRobot 配置）✅ 2026-01-30
+- [x] T120 [P] 撰寫使用者手冊在 docs/user_manual.md（各功能操作說明、常見問題）✅ 2026-01-30
+- [x] T121 [P] 建立開發者快速入門在 docs/quickstart.md（本機開發環境設定、測試指令）✅ 2026-01-30
+- [x] T122 後端效能優化（資料庫查詢最佳化、快取策略、索引檢查）✅ 2026-01-30 - 完成審查並記錄優化建議於 docs/performance_optimization.md
+- [x] T123 前端效能優化（Code Splitting、Lazy Loading、圖片壓縮）✅ 2026-01-30 - 已配置 vite.config.js code splitting
+- [x] T124 安全性審查（OWASP Top 10 檢查、SQL 注入防護、XSS 防護）✅ 2026-01-30 - CORS 設定強化，安全報告於 docs/performance_optimization.md
 - [ ] T125 [P] 前端單元測試在 frontend/tests/unit/（關鍵元件測試）
 - [ ] T126 [P] 後端單元測試在 backend/tests/unit/（服務層測試）
 - [ ] T127 [P] 後端整合測試在 backend/tests/integration/（API 端點測試）
-- [ ] T128 建立 GitHub Actions CI/CD 在 .github/workflows/ci.yml（自動測試、部署）
+- [x] T128 建立 GitHub Actions CI/CD 在 .github/workflows/ci.yml（自動測試、部署）✅ 2026-01-30
 - [ ] T129 執行完整系統測試（所有用戶故事驗收標準）
 
 ---
