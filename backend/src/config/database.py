@@ -111,7 +111,7 @@ def check_database_connection() -> dict:
 
 def init_database():
     """
-    初始化資料庫（建立所有資料表）
+    初始化資料庫（建立所有資料表並建立預設管理員帳號）
 
     應在應用程式啟動時呼叫
     """
@@ -122,3 +122,50 @@ def init_database():
     from src.models.google_oauth_token import GoogleOAuthToken  # noqa: F401
 
     Base.metadata.create_all(bind=sync_engine)
+
+    # 建立預設管理員帳號（如果不存在）
+    _create_default_admin()
+
+
+def _create_default_admin():
+    """
+    建立預設管理員帳號（如果不存在）
+
+    預設帳號：admin / admin123
+    """
+    from src.models.user import User
+    from src.utils.password import hash_password
+
+    db = SyncSessionLocal()
+    try:
+        # 檢查是否已有 admin 帳號
+        existing_admin = db.query(User).filter(User.username == "admin").first()
+        if existing_admin:
+            print("[INFO] 預設管理員帳號已存在，跳過建立")
+            return
+
+        # 檢查是否有任何使用者（避免重複建立）
+        user_count = db.query(User).count()
+        if user_count > 0:
+            print(f"[INFO] 系統中已有 {user_count} 個使用者，跳過建立預設管理員")
+            return
+
+        # 建立預設管理員帳號
+        admin_user = User(
+            username="admin",
+            hashed_password=hash_password("admin123"),
+            display_name="系統管理員",
+            role="admin",
+            department=None,
+            is_active=True
+        )
+        db.add(admin_user)
+        db.commit()
+        print("[OK] 預設管理員帳號建立成功 (admin / admin123)")
+        print("[WARN] 請登入後立即修改預設密碼！")
+
+    except Exception as e:
+        print(f"[ERROR] 建立預設管理員帳號失敗: {e}")
+        db.rollback()
+    finally:
+        db.close()
