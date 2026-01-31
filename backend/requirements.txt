@@ -23,6 +23,7 @@ bcrypt==5.0.0
 
 # 定時任務
 APScheduler==3.11.2
+pytz==2024.2
 
 # Rate Limiting（防止文件生成 OOM）
 slowapi==0.1.9
