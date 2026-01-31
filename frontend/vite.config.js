@@ -16,6 +16,8 @@ export default defineConfig({
     host: true
   },
   build: {
+    // 禁用 sourcemap 避免 CI 環境問題
+    sourcemap: false,
     // Code Splitting 配置
     rollupOptions: {
       output: {

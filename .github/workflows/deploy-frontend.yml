@@ -61,8 +61,14 @@ jobs:
         working-directory: frontend
         run: |
           echo "Starting build..."
-          npm run build
+          npm run build 2>&1 | tee build.log || {
+            echo "Build failed! Error log:"
+            cat build.log
+            exit 1
+          }
           echo "Build completed!"
+          echo "=== Build output ==="
+          ls -la dist/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
