@@ -376,11 +376,18 @@ def init_admin(db: Session = Depends(get_db)):
     """
     初始化預設管理員帳號
 
-    安全性：只有在系統中完全沒有使用者時才能執行。
-    如果已有任何使用者存在，將返回錯誤。
+    安全性：
+    1. 只有在系統中完全沒有使用者時才能執行
+    2. 密碼從環境變數 INIT_ADMIN_PASSWORD 讀取
+    3. 如果未設定環境變數，將生成隨機密碼
 
-    預設帳號：admin / admin123
+    使用方式：
+    - 在 Render 環境變數中設定 INIT_ADMIN_PASSWORD
+    - 或者使用自動生成的隨機密碼（會在回應中顯示一次）
     """
+    import os
+    import secrets
+    import string
     from src.models.user import User
     from src.utils.password import hash_password
 
@@ -392,10 +399,20 @@ def init_admin(db: Session = Depends(get_db)):
             detail=f"系統中已有 {user_count} 個使用者，無法初始化管理員帳號。如需重設，請聯繫系統管理員。"
         )
 
+    # 從環境變數讀取密碼，若無則生成隨機密碼
+    init_password = os.environ.get("INIT_ADMIN_PASSWORD")
+    password_source = "環境變數"
+
+    if not init_password:
+        # 生成 16 位隨機密碼（包含大小寫字母和數字）
+        alphabet = string.ascii_letters + string.digits
+        init_password = ''.join(secrets.choice(alphabet) for _ in range(16))
+        password_source = "隨機生成"
+
     # 建立預設管理員
     admin_user = User(
         username="admin",
-        hashed_password=hash_password("admin123"),
+        hashed_password=hash_password(init_password),
         display_name="系統管理員",
         role="admin",
         department=None,
@@ -406,8 +423,9 @@ def init_admin(db: Session = Depends(get_db)):
     db.refresh(admin_user)
 
     return {
-        "message": "預設管理員帳號建立成功",
+        "message": "管理員帳號建立成功",
         "username": "admin",
-        "password": "admin123",
-        "warning": "請登入後立即修改預設密碼！"
+        "password": init_password,
+        "password_source": password_source,
+        "warning": "請立即記下此密碼並登入後修改！此密碼只會顯示這一次。"
     }
