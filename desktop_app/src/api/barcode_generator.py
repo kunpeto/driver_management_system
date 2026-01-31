@@ -89,6 +89,21 @@ async def generate_barcode(request: BarcodeGenerateRequest):
     """
     生成條碼圖片
 
+    API CONTRACT: CRITICAL
+    CONSUMERS: 前端 Web 應用
+    SINCE: 1.0.0
+
+    警告：此端點被前端直接依賴
+    任何破壞性變更都會導致前端功能失效
+
+    禁止的變更：
+    - 移除回應欄位（success, data, format, image_format, base64_image, data_uri, error_message）
+    - 變更欄位類型
+    - 變更 URL 路徑
+    - 移除支援的條碼格式
+
+    詳見 docs/API_CONTRACT.md
+
     支援多種條碼格式，返回 Base64 編碼的圖片。
     """
     try:

@@ -204,6 +204,28 @@ def get_setting_value(
     """
     取得設定值
 
+    API CONTRACT: CRITICAL
+    CONSUMERS: desktop_app/src/utils/backend_api_client.py
+    SINCE: 1.0.0
+
+    ============================================================
+    警告：此端點被桌面應用直接依賴
+    桌面應用打包為 .exe 後無法輕易更新
+    任何破壞性變更都會導致已部署的桌面應用失效
+    ============================================================
+
+    禁止的變更：
+    - 移除回應欄位（key, department, value）
+    - 變更欄位類型
+    - 變更 URL 路徑 /value/{key}
+
+    允許的變更：
+    - 新增可選回應欄位
+    - 新增可選請求參數（需有預設值）
+
+    詳見 docs/API_CONTRACT.md
+    ============================================================
+
     優先順序：
     1. 指定部門的設定
     2. global 設定
@@ -212,6 +234,7 @@ def get_setting_value(
     service = SystemSettingService(db)
     value = service.get_value(key, department, default)
 
+    # 回應格式為 CRITICAL CONTRACT，不可修改
     return {"key": key, "department": department, "value": value}
 
 

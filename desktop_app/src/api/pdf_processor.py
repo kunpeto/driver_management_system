@@ -82,6 +82,21 @@ async def scan_pdf(
     """
     掃描 PDF 中的條碼
 
+    API CONTRACT: CRITICAL
+    CONSUMERS: 前端 Web 應用
+    SINCE: 1.0.0
+
+    警告：此端點被前端直接依賴
+    任何破壞性變更都會導致前端功能失效
+
+    禁止的變更：
+    - 移除回應欄位（success, file_name, total_pages, barcodes, error_message）
+    - 變更 barcodes 陣列元素的欄位（page_number, barcode_type, barcode_data, department）
+    - 變更欄位類型
+    - 變更 URL 路徑
+
+    詳見 docs/API_CONTRACT.md
+
     僅識別條碼，不進行切分或上傳。
     """
     from desktop_app.src.services.barcode_reader import get_barcode_reader
@@ -140,6 +155,20 @@ async def split_pdf(
 ):
     """
     依條碼切分 PDF
+
+    API CONTRACT: CRITICAL
+    CONSUMERS: 前端 Web 應用
+    SINCE: 1.0.0
+
+    警告：此端點被前端直接依賴
+    任何破壞性變更都會導致前端功能失效
+
+    禁止的變更：
+    - 移除 ProcessResult 回應欄位
+    - 變更欄位類型
+    - 變更 URL 路徑
+
+    詳見 docs/API_CONTRACT.md
 
     根據識別到的條碼，將 PDF 切分為多個檔案。
     """
@@ -251,6 +280,22 @@ async def process_pdf(
     """
     完整處理 PDF
 
+    API CONTRACT: CRITICAL
+    CONSUMERS: 前端 Web 應用
+    SINCE: 1.0.0
+
+    警告：此端點被前端直接依賴
+    任何破壞性變更都會導致前端功能失效
+
+    禁止的變更：
+    - 移除 ProcessResult 回應欄位
+    - 變更 split_files 陣列元素的欄位
+    - 變更欄位類型
+    - 變更 URL 路徑
+
+    詳見 docs/API_CONTRACT.md
+
+    處理流程：
     1. 識別條碼
     2. 判斷部門
     3. 依條碼切分

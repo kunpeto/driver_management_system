@@ -181,6 +181,8 @@ npm run build
 | [tasks.md](./specs/001-system-architecture/tasks.md) | 任務分解（131 個任務） |
 | [constitution.md](./.specify/memory/constitution.md) | 專案憲章 |
 | [data_migration_plan.md](./docs/data_migration_plan.md) | 歷史資料遷移計畫 |
+| [API_CONTRACT.md](./docs/API_CONTRACT.md) | API 契約與穩定性規範 |
+| [CHANGELOG_API.md](./docs/CHANGELOG_API.md) | API 變更日誌 |
 | [PROGRESS.md](./PROGRESS.md) | 開發進度追蹤 |
 | [TODO.md](./TODO.md) | 待辦事項 |
 
