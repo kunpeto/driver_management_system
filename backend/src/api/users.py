@@ -412,7 +412,7 @@ def init_admin(db: Session = Depends(get_db)):
     # 建立預設管理員
     admin_user = User(
         username="admin",
-        hashed_password=hash_password(init_password),
+        password_hash=hash_password(init_password),
         display_name="系統管理員",
         role="admin",
         department=None,
