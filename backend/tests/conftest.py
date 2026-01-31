@@ -9,8 +9,8 @@ import sys
 import pytest
 from unittest.mock import MagicMock, patch
 
-# 確保 src 目錄在 Python 路徑中
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+# 確保 backend 目錄在 Python 路徑中（使 from src.xxx import 能正確運作）
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 @pytest.fixture(autouse=True)
