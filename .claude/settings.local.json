@@ -10,7 +10,17 @@
       "Bash(test -f:*)",
       "Bash(./venv/Scripts/pip:*)",
       "Bash(./venv/Scripts/python:*)",
-      "Bash(../venv/Scripts/python:*)"
+      "Bash(../venv/Scripts/python:*)",
+      "Bash(git remote:*)",
+      "Bash(xargs:*)",
+      "Skill(gemini-review)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(if [ -d \"specs/001-system-architecture/checklists\" ])",
+      "Bash(then ls -la \"specs/001-system-architecture/checklists/\")",
+      "Bash(else echo \"NO_CHECKLISTS_DIR\")",
+      "Bash(fi)"
     ]
   }
 }

@@ -1,12 +1,18 @@
 """
 FastAPI 主程式
 對應 tasks.md T023: 建立 FastAPI 主程式
+
+Gemini Review 優化:
+- 加入 Rate Limiting 異常處理（防止 OOM）
 """
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from src.config.database import check_database_connection, init_database
 from src.config.settings import get_settings
@@ -48,6 +54,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[ERROR] 資料庫初始化失敗: {e}")
 
+    # 啟動定時任務排程器 (Phase 7)
+    try:
+        from src.tasks.scheduler import start_scheduler
+        start_scheduler()
+        print("[OK] 定時任務排程器已啟動")
+    except Exception as e:
+        print(f"[WARNING] 定時任務排程器啟動失敗: {e}")
+
     print("=" * 60)
     print(f"環境: {settings.api_environment}")
     print("=" * 60)
@@ -57,6 +71,15 @@ async def lifespan(app: FastAPI):
     # 關閉時執行
     print("=" * 60)
     print("司機員管理系統 - 雲端 API 關閉中...")
+
+    # 停止定時任務排程器
+    try:
+        from src.tasks.scheduler import stop_scheduler
+        stop_scheduler()
+        print("[OK] 定時任務排程器已停止")
+    except Exception as e:
+        print(f"[WARNING] 定時任務排程器停止失敗: {e}")
+
     print("=" * 60)
 
 
@@ -71,23 +94,36 @@ app = FastAPI(
 )
 
 # CORS 設定
-# 允許 GitHub Pages 和本機開發存取
-allowed_origins = [
-    "http://localhost:3000",  # 本機 Vue 開發
-    "http://localhost:5173",  # Vite 開發伺服器
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    # GitHub Pages（部署後補充）
-    # "https://your-username.github.io",
-]
+# 根據環境設定允許的來源
+if settings.is_production:
+    # 生產環境：僅允許特定域名
+    allowed_origins = [
+        f"https://{settings.github_pages_domain}" if hasattr(settings, 'github_pages_domain') else "",
+        settings.frontend_url if hasattr(settings, 'frontend_url') else "",
+    ]
+    # 過濾空字串
+    allowed_origins = [origin for origin in allowed_origins if origin]
+else:
+    # 開發環境：允許本機開發
+    allowed_origins = [
+        "http://localhost:3000",  # 本機 Vue 開發
+        "http://localhost:5173",  # Vite 開發伺服器
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
+
+# Rate Limiting 設置（Gemini Review P0: 防止 OOM）
+from src.api.profiles import limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # ============================================================
@@ -116,11 +152,147 @@ async def database_health_check():
 # ============================================================
 # API 路由註冊
 # ============================================================
-# 這些路由會在建立後補充
-# from backend.src.api import auth, employees, profiles, system_settings, ...
-# app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
-# app.include_router(employees.router, prefix="/api/employees", tags=["Employees"])
-# ...
+from src.api import (
+    google_credentials_router,
+    system_settings_router,
+    employees_router,
+    employee_transfers_router,
+    employee_batch_router,
+    auth_router,
+    users_router,
+    connection_status_router,
+    schedules_router,
+    sync_tasks_router,
+    google_oauth_router,
+    # Phase 9: 駕駛時數與競賽
+    route_standard_time_router,
+    driving_stats_router,
+    driving_competition_router,
+    # Phase 11: 履歷管理
+    profiles_router,
+    # Phase 12: 考核系統
+    assessment_standards_router,
+    assessment_records_router,
+    # Phase 13: 差勤加分
+    attendance_bonus_router,
+)
+
+# 系統設定 API
+app.include_router(
+    system_settings_router,
+    prefix="/api/settings",
+    tags=["System Settings"]
+)
+
+# Google 憑證驗證 API
+app.include_router(
+    google_credentials_router,
+    prefix="/api/google",
+    tags=["Google Credentials"]
+)
+
+# 員工管理 API
+app.include_router(
+    employees_router,
+    prefix="/api/employees",
+    tags=["Employees"]
+)
+
+# 員工調動 API（部分路由需要與員工路由整合）
+app.include_router(
+    employee_transfers_router,
+    prefix="/api/employees",
+    tags=["Employee Transfers"]
+)
+
+# 員工批次匯入/匯出 API
+app.include_router(
+    employee_batch_router,
+    prefix="/api/employees",
+    tags=["Employee Batch Operations"]
+)
+
+# 認證 API
+app.include_router(
+    auth_router,
+    tags=["Authentication"]
+)
+
+# 使用者管理 API
+app.include_router(
+    users_router,
+    tags=["Users"]
+)
+
+# 連線狀態 API
+app.include_router(
+    connection_status_router,
+    tags=["Connection Status"]
+)
+
+# 班表管理 API (Phase 7)
+app.include_router(
+    schedules_router,
+    tags=["Schedules"]
+)
+
+# 同步任務 API (Phase 7)
+app.include_router(
+    sync_tasks_router,
+    tags=["Sync Tasks"]
+)
+
+# Google OAuth API (Phase 8)
+app.include_router(
+    google_oauth_router,
+    tags=["Google OAuth"]
+)
+
+# 勤務標準時間 API (Phase 9)
+app.include_router(
+    route_standard_time_router,
+    prefix="/api",
+    tags=["Route Standard Times"]
+)
+
+# 駕駛時數統計 API (Phase 9)
+app.include_router(
+    driving_stats_router,
+    prefix="/api",
+    tags=["Driving Stats"]
+)
+
+# 駕駛競賽排名 API (Phase 9)
+app.include_router(
+    driving_competition_router,
+    prefix="/api",
+    tags=["Driving Competition"]
+)
+
+# 履歷管理 API (Phase 11)
+app.include_router(
+    profiles_router,
+    prefix="/api/profiles",
+    tags=["Profiles"]
+)
+
+# 考核標準 API (Phase 12)
+app.include_router(
+    assessment_standards_router,
+    tags=["Assessment Standards"]
+)
+
+# 考核記錄 API (Phase 12)
+app.include_router(
+    assessment_records_router,
+    tags=["Assessment Records"]
+)
+
+# 差勤加分 API (Phase 13)
+app.include_router(
+    attendance_bonus_router,
+    tags=["Attendance Bonus"]
+)
 
 
 # ============================================================

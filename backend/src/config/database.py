@@ -1,13 +1,16 @@
 """
 資料庫連線配置
 對應 tasks.md T012: 建立 TiDB 連線配置工具
+
+重要說明（Gemini Review 2026-01-28）：
+- 使用同步 Session 配合 FastAPI 的 ThreadPool 機制
+- 所有使用 get_db 的路由應宣告為 def（非 async def）
+- FastAPI 會自動將同步路由放入 ThreadPool 執行，避免阻塞 Event Loop
 """
 
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import Generator
 
 from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.config.settings import get_settings
@@ -16,8 +19,10 @@ settings = get_settings()
 
 
 # ============================================================
-# 同步引擎（用於資料遷移、初始化等）
+# 同步引擎
 # ============================================================
+# 說明：TiDB SSL 需要使用 pymysql，而 aiomysql 不完整支援 TiDB SSL
+# 因此使用同步引擎，透過 FastAPI ThreadPool 機制處理併發
 sync_engine = create_engine(
     settings.database_url,
     pool_size=5,
@@ -34,8 +39,30 @@ SyncSessionLocal = sessionmaker(
 )
 
 
-def get_sync_db() -> Session:
-    """取得同步資料庫 Session（Generator）"""
+# ============================================================
+# FastAPI 依賴注入
+# ============================================================
+def get_db() -> Generator[Session, None, None]:
+    """
+    取得資料庫 Session（FastAPI 依賴注入）
+
+    重要：使用此依賴的路由函數應宣告為 def（非 async def）
+    這樣 FastAPI 會自動將整個路由放入 ThreadPool 執行，
+    避免同步資料庫操作阻塞主執行緒的 Event Loop。
+
+    正確用法：
+        @app.get("/users")
+        def get_users(db: Session = Depends(get_db)):  # 注意是 def 不是 async def
+            return db.query(User).all()
+
+    錯誤用法（會阻塞 Event Loop）：
+        @app.get("/users")
+        async def get_users(db: Session = Depends(get_db)):  # 不要使用 async def
+            return db.query(User).all()
+
+    Yields:
+        Session: SQLAlchemy 資料庫 Session
+    """
     db = SyncSessionLocal()
     try:
         yield db
@@ -43,20 +70,8 @@ def get_sync_db() -> Session:
         db.close()
 
 
-# ============================================================
-# 非同步引擎（用於 FastAPI 請求處理）
-# ============================================================
-# 注意：aiomysql 不支援 TiDB SSL，因此使用同步引擎的 run_sync
-# 若需要非同步，可考慮使用 asyncmy 或其他方案
-
-# 暫時使用同步方式，後續可優化為非同步
-async def get_db() -> AsyncGenerator[Session, None]:
-    """取得資料庫 Session（FastAPI 依賴注入）"""
-    db = SyncSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# 別名，保持向後相容
+get_sync_db = get_db
 
 
 # ============================================================
@@ -103,9 +118,7 @@ def init_database():
     from src.models.base import Base
 
     # 導入所有模型以註冊到 Base.metadata
-    # 這些導入會在模型建立後補充
-    # from backend.src.models.user import User
-    # from backend.src.models.employee import Employee
-    # ...
+    from src.models.system_setting import SystemSetting  # noqa: F401
+    from src.models.google_oauth_token import GoogleOAuthToken  # noqa: F401
 
     Base.metadata.create_all(bind=sync_engine)

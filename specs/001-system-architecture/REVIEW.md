@@ -413,3 +413,309 @@ router.beforeEach((to, from, next) => {
 ---
 
 **審查完成** | **建議下次審查時機**: Phase 1 完成後
+
+---
+
+## 9. Gemini Code Review - Phase 2 完成後審查
+
+**審查日期**: 2026-01-28
+**審查者**: Gemini 3 Pro
+**審查範圍**: Phase 0, 1, 2 已完成的程式碼
+
+### 總體評價
+
+**專案基礎建設相當紮實**，程式碼結構清晰且高度模組化。安全性方面實作了多層防護（JWT、Fernet 加密、敏感資料遮蔽）。
+
+特別值得肯定的項目：
+- ✅ **設定管理 (Pydantic-settings)** - 型別安全、支援 .env
+- ✅ **錯誤處理 (Error Handling)** - 例外捕捉層次分明
+- ✅ **日誌系統 (Loguru)** - 敏感資料遮蔽實作優秀
+
+### 已修正的問題（2026-01-28）
+
+#### 9.1 資料庫同步/非同步矛盾 ✅ 已修正
+
+**問題描述**：
+`database.py` 的 `get_db` 原定義為 `async def`，但內部使用同步 `SyncSessionLocal`。
+在 `async def` 路由中使用會阻塞整個 Event Loop，導致高併發效能極差。
+
+**修正方案**：
+- 將 `get_db` 改為同步 `def`（Generator）
+- 所有使用 `get_db` 的路由應宣告為 `def`（非 `async def`）
+- FastAPI 會自動將同步路由放入 ThreadPool 執行
+
+**修正檔案**: `backend/src/config/database.py`
+
+---
+
+#### 9.2 開發環境加密金鑰隨機生成 ✅ 已修正
+
+**問題描述**：
+`TokenEncryption` 在開發環境若未設定 Key 會自動生成。
+這會導致每次重啟伺服器後，之前加密的資料無法解密。
+
+**修正方案**：
+- 開發環境也必須設定固定的 `ENCRYPTION_KEY`
+- 未設定時拋出錯誤並提供明確的解決指引
+
+**修正檔案**: `backend/src/utils/encryption.py`
+
+---
+
+#### 9.3 前端 API 檔案重複 ✅ 已修正
+
+**問題描述**：
+`frontend/src/services/api.js` 與 `frontend/src/utils/api.js` 功能重複。
+
+**修正方案**：
+- 保留 `utils/api.js`（功能較完整，包含健康檢查等）
+- `services/api.js` 改為重新導出，保持向後相容
+
+**修正檔案**: `frontend/src/services/api.js`
+
+---
+
+### 長期優化項目（Technical Debt）
+
+以下為 Gemini 建議的長期優化項目，應在 Phase 3-4 期間處理：
+
+#### 10.1 強化前端 Token 儲存 🟡 Phase 3-4
+
+**優先級**: 中
+**風險等級**: 🟡 中
+**問題描述**：
+前端將 JWT 存放在 localStorage，易受 XSS 攻擊。
+
+**建議方案**：
+1. 實作 Silent Refresh（Access Token 過期前自動刷新）
+2. 考慮將 Token 存放於記憶體 + 定期 Refresh
+3. 或改用 HttpOnly Cookie（需後端配合）
+
+**實作建議**：
+- 在 `frontend/src/utils/api.js` 加入 Token 自動刷新邏輯
+- 當 Access Token 即將過期（例如剩餘 5 分鐘）時，自動呼叫 `/api/auth/refresh`
+
+**預計實作時機**: Phase 3（權限控制 US3 實作時）
+
+---
+
+#### 10.2 升級 JWT 套件 🔵 Phase 4+
+
+**優先級**: 低
+**風險等級**: 🔵 低
+**問題描述**：
+`python-jose` 維護活躍度較低。
+
+**建議方案**：
+- 遷移至 `PyJWT`（更活躍的社群維護）
+- API 相容性高，遷移成本低
+
+**實作建議**：
+1. 修改 `backend/src/utils/jwt.py`
+2. 將 `from jose import jwt` 改為 `import jwt`
+3. 調整部分 API 呼叫（差異不大）
+
+**預計實作時機**: Phase 4 或 Phase 10 (Polish)
+
+---
+
+#### 10.3 實作 Content Security Policy (CSP) 🟡 Phase 3-4
+
+**優先級**: 中
+**風險等級**: 🟡 中
+**問題描述**：
+目前缺少 CSP Header，增加 XSS 攻擊風險。
+
+**建議方案**：
+在 `frontend/index.html` 加入 CSP meta tag：
+```html
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+```
+
+或透過 GitHub Pages 自訂 Header（需使用 Jekyll 或其他方式）。
+
+**預計實作時機**: Phase 3（權限控制完成後）
+
+---
+
+#### 10.4 資料庫備份策略 🟡 Phase 4
+
+**優先級**: 中
+**風險等級**: 🟡 中
+**問題描述**：
+TiDB Serverless 免費版不提供自動備份。
+
+**建議方案**：
+1. 實作定期資料匯出功能（每週自動匯出 SQL）
+2. 儲存至 Google Drive 或本機
+3. 監控 TiDB 儲存用量，設定警告閾值
+
+**預計實作時機**: Phase 4 或 Phase 10 (Polish)
+
+---
+
+### 風險總覽
+
+| 風險等級 | 類別 | 描述 | 狀態 |
+|:---:|:---|:---|:---:|
+| 🔴 高 | 效能 | 同步 DB + async 路由阻塞 Event Loop | ✅ 已修正 |
+| 🟡 中 | 安全 | JWT 存放於 localStorage | ⏳ Phase 3-4 |
+| 🟡 中 | 穩定性 | 開發環境隨機加密金鑰 | ✅ 已修正 |
+| 🔵 低 | 相依性 | python-jose 維護狀態不明 | ⏳ Phase 4+ |
+
+---
+
+### 結論
+
+**Phase 0-2 完成度極高，程式碼品質優良。**
+
+高優先級問題已於 2026-01-28 修正完畢。
+長期優化項目已記錄於本文件，將於 Phase 3-4 期間處理。
+
+專案已準備好進入 Phase 3（核心功能開發）。
+
+---
+
+**審查完成** | **下次審查時機**: Phase 3 完成後（US1-US3 實作完成）
+
+---
+
+## 10. Gemini Code Review - Phase 12 完成後審查
+
+**審查日期**: 2026-01-30
+**審查者**: Gemini 3 Pro
+**審查範圍**: Phase 0-12 完整專案（205 個檔案，60,196 行代碼）
+
+### 總體評價
+
+**專案基礎非常穩固，架構清晰。** Gemini 對專案進行了全面的深度審查，以下為審查結果：
+
+### 10.1 優點（做得好的地方）
+
+1. **架構設計清晰且符合 Spec**
+   - ✅ 成功實作混合式三層架構（雲端後端 Port 8000、本機桌面 API Port 8001、前端 Vue 3）
+   - ✅ 職責劃分明確：業務邏輯封裝在 `services/` 層，API 層僅負責路由與驗證
+
+2. **代碼品質高**
+   - ✅ 廣泛使用 Python Type Hints，提升可讀性與 IDE 支援
+   - ✅ 關鍵模組有詳細 Docstring（如 AssessmentRecord 的累計倍率計算公式）
+
+3. **資料庫設計嚴謹**
+   - ✅ 針對高頻查詢建立複合索引（如 `ix_assessment_records_employee_year`）
+   - ✅ 正確使用 ForeignKey 維護參照完整性
+   - ✅ 核心資料實作軟刪除機制
+
+4. **並發處理**
+   - ✅ 在 `recalculate_counts` 中使用 `.with_for_update()` 防止 Race Condition
+
+5. **安全性**
+   - ✅ 引入 `slowapi` 防止暴力破解
+   - ✅ JWT 實作包含 Access/Refresh Token 機制
+
+---
+
+### 10.2 已修正的問題（2026-01-30）
+
+#### 🔴 高優先級：Phase 9 與 Phase 12 整合斷點 ✅ 已修正
+
+**問題描述**：
+`driving_stats_calculator.py` 中的 `count_incidents_for_date` 和 `count_incidents_for_quarter` 方法返回 `0` 並標註 `TODO: 待 User Story 8 整合`。
+
+這意味著「駕駛競賽排名」**無法**正確反映 Phase 12（考核系統）中的扣分事件，導致排名計算不準確。
+
+**修正內容**：
+```python
+# 修改前
+def count_incidents_for_quarter(self, employee_id: int, year: int, quarter: int) -> int:
+    # TODO: 待 User Story 8（履歷系統）整合後實作
+    return 0
+
+# 修改後
+def count_incidents_for_quarter(self, employee_id: int, year: int, quarter: int) -> int:
+    start_date, end_date = self.get_quarter_dates(year, quarter)
+    count = self.db.query(func.count(AssessmentRecord.id)).join(
+        AssessmentStandard,
+        AssessmentRecord.standard_code == AssessmentStandard.code
+    ).filter(
+        and_(
+            AssessmentRecord.employee_id == employee_id,
+            AssessmentRecord.record_date >= start_date,
+            AssessmentRecord.record_date <= end_date,
+            AssessmentRecord.is_deleted == False,
+            AssessmentRecord.final_points < 0,  # 負分才算責任事件
+            AssessmentStandard.category.in_(['S', 'R'])  # S類或R類
+        )
+    ).scalar()
+    return count or 0
+```
+
+**修正檔案**: `backend/src/services/driving_stats_calculator.py`
+
+**變更摘要**：
+- 新增 `AssessmentRecord` 和 `AssessmentStandard` 模型導入
+- 實作 `count_incidents_for_date()` - 統計指定日期的責任事件次數
+- 實作 `count_incidents_for_quarter()` - 統計指定季度的責任事件次數
+- 責任事件定義：S類別（行車運轉）+ R類別（故障排除）且 final_points < 0
+
+---
+
+### 10.3 待改進項目
+
+#### ⚠️ 前後端邏輯重複 (DRY Violation) 🟡 待處理
+
+**問題描述**：
+前端 `stores/assessments.js` 硬編碼了與後端 `fault_responsibility_service.py` 相同的業務規則（如「完全責任」的定義、9項疏失清單）。
+
+**建議方案**：
+設計 `/api/config/constants` 端點，讓前端動態獲取業務常數：
+```python
+@router.get("/config/rules")
+def get_business_rules():
+    return {
+        "responsibility_levels": RESPONSIBILITY_LEVELS,
+        "checklist_items": CHECKLIST_KEYS
+    }
+```
+
+**預計實作時機**: Phase 10 (Polish)
+
+---
+
+#### ⚠️ 環境變數預設值風險 🟡 待處理
+
+**問題描述**：
+Settings 類別包含預設的 `api_secret_key`。若在生產環境未正確注入環境變數，可能導致使用不安全的預設密鑰。
+
+**建議方案**：
+在 `is_production` 為 True 時，若檢測到預設密鑰應強制報錯並停止啟動。
+
+**預計實作時機**: Phase 10 (Polish)
+
+---
+
+### 10.4 長期優化項目
+
+| 項目 | 優先級 | 描述 | 預計時機 |
+|------|--------|------|----------|
+| 快取策略 | 🟡 中 | 駕駛競賽排名引入 Redis 快取（TTL 1-5 分鐘） | Phase 10+ |
+| 批次處理 | 🔵 低 | 新增考核記錄 `bulk_create` 接口 | Phase 10+ |
+| 審計日誌 | 🟡 中 | 新增 `AuditLog` 表記錄 AssessmentRecord 修改歷史 | Phase 10+ |
+
+---
+
+### 結論
+
+**Phase 9 與 Phase 12 的最後一哩路整合已完成。**
+
+駕駛競賽排名系統現在可以正確統計司機員的責任事件次數，計算公式完整：
+
+```
+最終積分 = (Σ 每日實際駕駛時數 × R班係數) / (1 + 責任事件次數)
+```
+
+專案已準備好進入 Phase 10 (Polish) 階段。
+
+---
+
+**審查完成** | **下次審查時機**: Phase 10 完成後（系統上線前）
