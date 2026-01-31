@@ -23,7 +23,8 @@ from sqlalchemy.orm import Session
 
 from src.config.database import get_db
 from src.config.settings import get_settings
-from src.middleware.auth import get_current_user, require_roles
+from src.middleware.auth import get_current_user
+from src.middleware.permission import require_role
 from src.models.google_oauth_token import GoogleOAuthToken
 from src.models.oauth_state import OAuthState
 from src.models.user import User
@@ -177,7 +178,7 @@ def _validate_state_token(state: str, db: Session) -> Optional[str]:
 @router.get("/api/google/auth-url", response_model=AuthUrlResponse)
 async def get_auth_url(
     department: str = Query(..., description="部門名稱（淡海 或 安坑）"),
-    current_user: User = Depends(require_roles(["admin"])),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db)
 ):
     """
@@ -535,7 +536,7 @@ async def get_oauth_status(
 @router.delete("/api/google/revoke", response_model=RevokeResponse)
 async def revoke_oauth(
     department: str = Query(..., description="部門名稱"),
-    current_user: User = Depends(require_roles(["admin"])),
+    current_user: User = Depends(require_role("admin")),
     db: Session = Depends(get_db)
 ):
     """

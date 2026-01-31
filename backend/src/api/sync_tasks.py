@@ -21,7 +21,8 @@ from sqlalchemy.orm import Session
 from src.config.database import get_db
 from src.services.schedule_sync_service import get_schedule_sync_service
 from src.tasks.scheduler import get_task_scheduler
-from src.middleware.auth import get_current_user, require_roles
+from src.middleware.auth import get_current_user
+from src.middleware.permission import require_role
 from src.utils.logger import logger
 
 
@@ -232,7 +233,7 @@ async def get_sync_history(
 
 @router.get("/scheduler", response_model=SchedulerStatusResponse)
 async def get_scheduler_status(
-    current_user: dict = Depends(require_roles(["admin", "manager"]))
+    current_user: dict = Depends(require_role("admin", "manager"))
 ):
     """
     取得排程器狀態
@@ -258,7 +259,7 @@ async def get_scheduler_status(
 
 @router.post("/scheduler/start")
 async def start_scheduler(
-    current_user: dict = Depends(require_roles(["admin"]))
+    current_user: dict = Depends(require_role("admin"))
 ):
     """
     啟動排程器
@@ -278,7 +279,7 @@ async def start_scheduler(
 
 @router.post("/scheduler/stop")
 async def stop_scheduler(
-    current_user: dict = Depends(require_roles(["admin"]))
+    current_user: dict = Depends(require_role("admin"))
 ):
     """
     停止排程器
@@ -299,7 +300,7 @@ async def stop_scheduler(
 @router.post("/scheduler/trigger/{job_id}")
 async def trigger_job(
     job_id: str,
-    current_user: dict = Depends(require_roles(["admin", "manager"]))
+    current_user: dict = Depends(require_role("admin", "manager"))
 ):
     """
     立即觸發指定任務
@@ -326,7 +327,7 @@ async def trigger_job(
 @router.post("/scheduler/pause/{job_id}")
 async def pause_job(
     job_id: str,
-    current_user: dict = Depends(require_roles(["admin"]))
+    current_user: dict = Depends(require_role("admin"))
 ):
     """
     暫停指定任務
@@ -353,7 +354,7 @@ async def pause_job(
 @router.post("/scheduler/resume/{job_id}")
 async def resume_job(
     job_id: str,
-    current_user: dict = Depends(require_roles(["admin"]))
+    current_user: dict = Depends(require_role("admin"))
 ):
     """
     恢復指定任務
