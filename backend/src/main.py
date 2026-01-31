@@ -113,6 +113,29 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # ============================================================
+# 顯式處理 CORS 預檢請求（解決 Render 冷啟動問題）
+# ============================================================
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(rest_of_path: str):
+    """
+    顯式處理所有 OPTIONS 請求
+
+    解決 Render 免費服務冷啟動時 CORS 預檢失敗的問題
+    """
+    from fastapi.responses import Response
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "https://kunpeto.github.io",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "600",
+        }
+    )
+
+
+# ============================================================
 # 健康檢查端點
 # ============================================================
 @app.get("/health", tags=["Health"])
