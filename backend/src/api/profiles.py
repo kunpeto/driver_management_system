@@ -256,13 +256,6 @@ class ProfileUpdateDate(BaseModel):
     new_date: date = Field(..., description="新的事件日期")
 
 
-class ProfileWithAssessmentResponse(BaseModel):
-    """建立履歷並考核記錄的回應"""
-    profile: ProfileResponse
-    assessment_record: dict
-    responsibility_assessment: Optional[dict] = None
-
-
 class ProfileResponse(BaseModel):
     """履歷回應"""
     id: int
@@ -277,6 +270,13 @@ class ProfileResponse(BaseModel):
     event_description: Optional[str] = None
     data_source: Optional[str] = None
     assessment_item: Optional[str] = None
+
+
+class ProfileWithAssessmentResponse(BaseModel):
+    """建立履歷並考核記錄的回應"""
+    profile: ProfileResponse
+    assessment_record: dict
+    responsibility_assessment: Optional[dict] = None
     assessment_score: Optional[int] = None
     conversion_status: str
     file_path: Optional[str] = None
