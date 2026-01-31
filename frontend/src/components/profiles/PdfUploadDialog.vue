@@ -124,7 +124,7 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { UploadFilled, Document } from '@element-plus/icons-vue'
 import { useProfilesStore } from '@/stores/profiles'
-import { desktopApi } from '@/utils/api'
+import { localApi } from '@/utils/api'
 
 const props = defineProps({
   modelValue: {
@@ -262,7 +262,7 @@ async function handleUpload() {
     uploadProgress.value = 20
     progressText.value = '上傳到 Google Drive...'
 
-    const response = await desktopApi.post('/api/pdf/upload-profile', formData, {
+    const response = await localApi.post('/api/pdf/upload-profile', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: (progressEvent) => {
         const progress = Math.round((progressEvent.loaded / progressEvent.total) * 60)
