@@ -146,17 +146,43 @@ driver_management_system/
 
 ### 雲端後端（Render）
 
+✅ **已自動部署**
+
+後端透過 Render Blueprint 自動部署：
 1. 連接 GitHub Repository 到 Render
 2. 選擇 Blueprint 部署（自動讀取 `render.yaml`）
 3. 在 Render Dashboard 設定環境變數
+4. 每次推送到 `main` 分支自動重新部署
+
+**部署 URL**: https://driver-management-system.onrender.com
+
+---
 
 ### 前端（GitHub Pages）
 
-```bash
-cd frontend
-npm run build
-# 部署 dist/ 到 GitHub Pages
-```
+✅ **已配置自動部署**
+
+前端透過 GitHub Actions 自動部署到 GitHub Pages。
+
+#### 一次性設定（必須）
+
+1. 前往 GitHub Repository **Settings** → **Pages**
+2. 在 **Source** 選擇：`GitHub Actions`
+3. 儲存設定
+
+#### 自動部署
+
+設定完成後，每次推送到 `main` 分支且包含 `frontend/` 目錄變更時，會自動：
+- ✅ 建置前端專案
+- ✅ 部署到 GitHub Pages
+
+**部署 URL**: https://kunpeto.github.io/driver_management_system/
+
+#### 手動觸發
+
+在 GitHub Repository 的 **Actions** 頁面可手動觸發部署。
+
+詳細設定步驟請參考：[GitHub Pages 部署指南](./docs/github_pages_setup.md)
 
 ---
 
@@ -200,6 +226,7 @@ npm run build
 | [data_migration_plan.md](./docs/data_migration_plan.md) | 歷史資料遷移計畫 |
 | [API_CONTRACT.md](./docs/API_CONTRACT.md) | API 契約與穩定性規範 |
 | [CHANGELOG_API.md](./docs/CHANGELOG_API.md) | API 變更日誌 |
+| [github_pages_setup.md](./docs/github_pages_setup.md) | GitHub Pages 自動部署設定 |
 | [PROGRESS.md](./PROGRESS.md) | 開發進度追蹤 |
 | [TODO.md](./TODO.md) | 待辦事項 |
 
