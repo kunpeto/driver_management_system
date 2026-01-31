@@ -41,13 +41,28 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm install --frozen-lockfile
+        run: npm ci
+
+      - name: Verify build script
+        working-directory: frontend
+        run: |
+          echo "=== package.json scripts ==="
+          cat package.json | grep -A 5 '"scripts"'
+          echo "=== Node version ==="
+          node --version
+          echo "=== npm version ==="
+          npm --version
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Directory contents ==="
+          ls -la
 
       - name: Build
         working-directory: frontend
-        run: npm run build
-        env:
-          NODE_ENV: production
+        run: |
+          echo "Starting build..."
+          npm run build
+          echo "Build completed!"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
