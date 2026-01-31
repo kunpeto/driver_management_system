@@ -167,36 +167,48 @@ class PendingProfileService:
         Returns:
             PendingStatistics: 完整統計資料
         """
-        by_type = self.get_pending_by_type(department)
-        total = sum(by_type.values())
-        oldest_date = self.get_oldest_pending_date(department)
+        try:
+            by_type = self.get_pending_by_type(department)
+            total = sum(by_type.values())
+            oldest_date = self.get_oldest_pending_date(department)
 
-        # Gemini Review P3：使用合併查詢優化
-        this_month_completed, this_month_total = self.get_this_month_stats(department)
+            # Gemini Review P3：使用合併查詢優化
+            this_month_completed, this_month_total = self.get_this_month_stats(department)
 
-        # 計算完成率（避免除以零）
-        completion_rate = 0.0
-        if this_month_total > 0:
-            completion_rate = this_month_completed / this_month_total
+            # 計算完成率（避免除以零）
+            completion_rate = 0.0
+            if this_month_total > 0:
+                completion_rate = this_month_completed / this_month_total
 
-        logger.debug(
-            "未結案統計",
-            department=department,
-            total=total,
-            oldest_pending_date=oldest_date,
-            this_month_completed=this_month_completed,
-            this_month_total=this_month_total,
-            completion_rate=completion_rate
-        )
+            logger.debug(
+                "未結案統計",
+                department=department,
+                total=total,
+                oldest_pending_date=oldest_date,
+                this_month_completed=this_month_completed,
+                this_month_total=this_month_total,
+                completion_rate=completion_rate
+            )
 
-        return PendingStatistics(
-            total=total,
-            by_type=by_type,
-            oldest_pending_date=oldest_date,
-            this_month_completed=this_month_completed,
-            this_month_total=this_month_total,
-            completion_rate=round(completion_rate, 4)
-        )
+            return PendingStatistics(
+                total=total,
+                by_type=by_type,
+                oldest_pending_date=oldest_date,
+                this_month_completed=this_month_completed,
+                this_month_total=this_month_total,
+                completion_rate=round(completion_rate, 4)
+            )
+        except Exception as e:
+            # 資料庫欄位不匹配或其他錯誤時，返回空統計
+            logger.warning(f"取得未結案統計失敗: {e}")
+            return PendingStatistics(
+                total=0,
+                by_type={},
+                oldest_pending_date=None,
+                this_month_completed=0,
+                this_month_total=0,
+                completion_rate=0.0
+            )
 
 
 # 單例

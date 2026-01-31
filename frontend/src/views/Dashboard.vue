@@ -9,7 +9,7 @@
     <!-- 統計卡片區 -->
     <el-row :gutter="20" class="stats-row">
       <el-col :xs="24" :sm="12" :md="12" :lg="6">
-        <el-card class="stat-card" shadow="hover" @click="$router.push('/employees')" tabindex="0" role="button" @keydown.enter="$router.push('/employees')">
+        <el-card class="stat-card" shadow="hover" tabindex="0" role="button" @click="$router.push('/employees')" @keydown.enter="$router.push('/employees')">
           <div class="stat-content">
             <div class="stat-icon employees">
               <el-icon :size="32"><User /></el-icon>
@@ -27,7 +27,7 @@
       </el-col>
 
       <el-col :xs="24" :sm="12" :md="12" :lg="6">
-        <el-card class="stat-card warning" shadow="hover" @click="$router.push('/profiles/pending')" tabindex="0" role="button" @keydown.enter="$router.push('/profiles/pending')">
+        <el-card class="stat-card warning" shadow="hover" tabindex="0" role="button" @click="$router.push('/profiles/pending')" @keydown.enter="$router.push('/profiles/pending')">
           <div class="stat-content">
             <div class="stat-icon pending">
               <el-icon :size="32"><Document /></el-icon>
@@ -45,7 +45,7 @@
       </el-col>
 
       <el-col :xs="24" :sm="12" :md="12" :lg="6">
-        <el-card class="stat-card" shadow="hover" @click="$router.push('/assessment-records')" tabindex="0" role="button" @keydown.enter="$router.push('/assessment-records')">
+        <el-card class="stat-card" shadow="hover" tabindex="0" role="button" @click="$router.push('/assessment-records')" @keydown.enter="$router.push('/assessment-records')">
           <div class="stat-content">
             <div class="stat-icon assessments">
               <el-icon :size="32"><Histogram /></el-icon>
@@ -63,7 +63,7 @@
       </el-col>
 
       <el-col :xs="24" :sm="12" :md="12" :lg="6">
-        <el-card class="stat-card" shadow="hover" @click="$router.push('/driving-competition')" tabindex="0" role="button" @keydown.enter="$router.push('/driving-competition')">
+        <el-card class="stat-card" shadow="hover" tabindex="0" role="button" @click="$router.push('/driving-competition')" @keydown.enter="$router.push('/driving-competition')">
           <div class="stat-content">
             <div class="stat-icon competition">
               <el-icon :size="32"><Trophy /></el-icon>
@@ -332,18 +332,24 @@ function formatDate(dateStr) {
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
-// 載入統計資料
+// 載入統計資料（分開調用，互不影響）
 async function loadStats() {
+  // 員工統計
   try {
-    // 員工統計
     const empResponse = await cloudApi.get('/api/employees/statistics')
     employeeStats.value = empResponse.data
+  } catch (err) {
+    console.error('載入員工統計失敗:', err)
+  }
 
-    // 未結案統計
+  // 未結案統計（獨立調用，失敗不影響其他）
+  try {
     const pendingResponse = await cloudApi.get('/api/profiles/pending/statistics')
     pendingStats.value = pendingResponse.data
   } catch (err) {
-    console.error('載入統計失敗:', err)
+    console.error('載入未結案統計失敗:', err)
+    // 設置默認值，讓 UI 正常顯示
+    pendingStats.value = { total: 0, by_type: {} }
   }
 }
 
