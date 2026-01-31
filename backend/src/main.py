@@ -103,7 +103,7 @@ app.add_middleware(
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-Request-ID"],
 )
 
 # Rate Limiting 設置（Gemini Review P0: 防止 OOM）
@@ -128,7 +128,7 @@ async def preflight_handler(rest_of_path: str):
         headers={
             "Access-Control-Allow-Origin": "https://kunpeto.github.io",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Request-ID",
             "Access-Control-Allow-Credentials": "true",
             "Access-Control-Max-Age": "600",
         }
