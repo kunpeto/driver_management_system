@@ -17,11 +17,12 @@ import router from '@/router'
 // ============================================================
 
 // 雲端 API URL（Render 部署）
-// 生產環境直接使用 Render URL，開發環境使用 localhost
+// 優先使用環境變數，提高部署靈活性
 const CLOUD_API_URL =
-  import.meta.env.MODE === 'production'
+  import.meta.env.VITE_CLOUD_API_URL ||
+  (import.meta.env.MODE === 'production'
     ? 'https://driver-management-system-jff0.onrender.com'
-    : (import.meta.env.VITE_CLOUD_API_URL || 'http://localhost:8000')
+    : 'http://localhost:8000')
 
 // 本機 API URL（桌面應用）
 const LOCAL_API_URL = import.meta.env.VITE_LOCAL_API_URL || 'http://127.0.0.1:8001'

@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     # 加密金鑰（Fernet）
     encryption_key: str = Field(default="")
 
+    # CORS 允許來源（生產環境可透過環境變數擴充，以逗號分隔）
+    cors_allowed_origins: str = Field(default="")
+
     @property
     def database_url(self) -> str:
         """取得資料庫連線 URL（SQLAlchemy 格式）"""
@@ -81,6 +84,28 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """是否為生產環境"""
         return self.api_environment == "production"
+
+    def get_cors_origins(self) -> list[str]:
+        """
+        取得 CORS 允許來源清單
+
+        Returns:
+            CORS 允許的來源清單
+        """
+        if self.cors_allowed_origins:
+            # 從環境變數讀取（以逗號分隔）
+            return [origin.strip() for origin in self.cors_allowed_origins.split(",")]
+
+        # 預設值
+        if self.is_production:
+            return ["https://kunpeto.github.io"]
+        else:
+            return [
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:5173",
+            ]
 
 
 @lru_cache

@@ -94,20 +94,9 @@ app = FastAPI(
 )
 
 # CORS 設定
-# 根據環境設定允許的來源
-if settings.is_production:
-    # 生產環境：允許 GitHub Pages 前端
-    allowed_origins = [
-        "https://kunpeto.github.io",  # GitHub Pages 主網域
-    ]
-else:
-    # 開發環境：允許本機開發
-    allowed_origins = [
-        "http://localhost:3000",  # 本機 Vue 開發
-        "http://localhost:5173",  # Vite 開發伺服器
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-    ]
+# 允許的來源可透過環境變數 CORS_ALLOWED_ORIGINS 配置（以逗號分隔）
+# 例如：CORS_ALLOWED_ORIGINS="https://kunpeto.github.io,https://custom-domain.com"
+allowed_origins = settings.get_cors_origins()
 
 app.add_middleware(
     CORSMiddleware,
