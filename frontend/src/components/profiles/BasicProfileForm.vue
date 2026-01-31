@@ -155,7 +155,7 @@ async function searchEmployees(query) {
     return
   }
   try {
-    const response = await cloudApi.get('/employees', {
+    const response = await cloudApi.get('/api/employees', {
       params: { search: query, limit: 20 }
     })
     employees.value = response.data
@@ -177,7 +177,7 @@ async function handleSubmit() {
 onMounted(() => {
   // 如果是編輯模式，載入員工資訊
   if (props.profile && props.profile.employee_id) {
-    cloudApi.get('/employees', {
+    cloudApi.get('/api/employees', {
       params: { id: props.profile.employee_id }
     }).then(res => {
       if (res.data.length > 0) {

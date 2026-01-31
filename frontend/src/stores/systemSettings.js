@@ -13,8 +13,8 @@ import { ref, computed } from 'vue'
 import { cloudApi } from '@/services/api'
 
 // API 路徑
-const API_BASE = '/settings'
-const GOOGLE_API_BASE = '/google'
+const API_BASE = '/api/settings'
+const GOOGLE_API_BASE = '/api/google'
 
 export const useSystemSettingsStore = defineStore('systemSettings', () => {
   // ============================================================

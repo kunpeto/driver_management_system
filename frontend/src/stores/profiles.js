@@ -14,7 +14,7 @@ import { ref, computed } from 'vue'
 import { cloudApi } from '@/services/api'
 
 // API 路徑
-const API_BASE = '/profiles'
+const API_BASE = '/api/profiles'
 
 // 履歷類型定義
 export const PROFILE_TYPES = {

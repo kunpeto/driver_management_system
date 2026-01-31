@@ -14,7 +14,7 @@ import { ref } from 'vue'
 import { cloudApi } from '@/services/api'
 
 // API 路徑
-const API_BASE = '/attendance-bonus'
+const API_BASE = '/api/attendance-bonus'
 
 export const useAttendanceBonusStore = defineStore('attendanceBonus', () => {
   // ============================================================

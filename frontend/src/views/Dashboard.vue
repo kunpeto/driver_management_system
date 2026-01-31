@@ -336,11 +336,11 @@ function formatDate(dateStr) {
 async function loadStats() {
   try {
     // 員工統計
-    const empResponse = await cloudApi.get('/employees/statistics')
+    const empResponse = await cloudApi.get('/api/employees/statistics')
     employeeStats.value = empResponse.data
 
     // 未結案統計
-    const pendingResponse = await cloudApi.get('/profiles/pending/statistics')
+    const pendingResponse = await cloudApi.get('/api/profiles/pending/statistics')
     pendingStats.value = pendingResponse.data
   } catch (err) {
     console.error('載入統計失敗:', err)
@@ -351,7 +351,7 @@ async function loadStats() {
 async function loadPendingProfiles() {
   loadingPending.value = true
   try {
-    const response = await cloudApi.get('/profiles/pending', {
+    const response = await cloudApi.get('/api/profiles/pending', {
       params: { limit: 10 }
     })
     pendingProfiles.value = response.data
@@ -370,7 +370,7 @@ async function loadMonthlyAssessments() {
     const year = now.getFullYear()
     const month = now.getMonth() + 1
 
-    const response = await cloudApi.get('/assessment-records/monthly-summary', {
+    const response = await cloudApi.get('/api/assessment-records/monthly-summary', {
       params: { year, month }
     })
 

@@ -71,7 +71,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
     error.value = null
 
     try {
-      const response = await cloudApi.get('/routes', {
+      const response = await cloudApi.get('/api/routes', {
         params: {
           department: params.department || filters.value.department,
           search: params.search,
@@ -101,7 +101,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
     error.value = null
 
     try {
-      const response = await cloudApi.post('/routes', data)
+      const response = await cloudApi.post('/api/routes', data)
       routeStandardTimes.value.unshift(response.data)
       routeStandardTimesTotal.value++
       return response.data
@@ -168,7 +168,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await cloudApi.post('/routes/import-excel', formData, {
+      const response = await cloudApi.post('/api/routes/import-excel', formData, {
         params: { department, update_existing: updateExisting },
         headers: { 'Content-Type': 'multipart/form-data' }
       })
@@ -197,7 +197,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
     error.value = null
 
     try {
-      const response = await cloudApi.get('/driving/stats', {
+      const response = await cloudApi.get('/api/driving/stats', {
         params: {
           employee_id: params.employeeId || filters.value.employeeId,
           department: params.department || filters.value.department,
@@ -228,7 +228,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
     error.value = null
 
     try {
-      const response = await cloudApi.get('/driving/stats/quarter', {
+      const response = await cloudApi.get('/api/driving/stats/quarter', {
         params: { employee_id: employeeId, year, quarter }
       })
 
@@ -250,7 +250,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
     error.value = null
 
     try {
-      const response = await cloudApi.get('/driving/stats/quarter/department', {
+      const response = await cloudApi.get('/api/driving/stats/quarter/department', {
         params: { department, year, quarter, include_resigned: includeResigned }
       })
 
@@ -276,7 +276,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
     error.value = null
 
     try {
-      const response = await cloudApi.get('/driving/competition', {
+      const response = await cloudApi.get('/api/driving/competition', {
         params: { year, quarter, department }
       })
 
@@ -320,7 +320,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
     error.value = null
 
     try {
-      const response = await cloudApi.post('/driving/competition/calculate', null, {
+      const response = await cloudApi.post('/api/driving/competition/calculate', null, {
         params: { year, quarter }
       })
 
@@ -341,7 +341,7 @@ export const useDrivingStatsStore = defineStore('drivingStats', () => {
    */
   async function loadBonusTiers() {
     try {
-      const response = await cloudApi.get('/driving/competition/bonus-tiers')
+      const response = await cloudApi.get('/api/driving/competition/bonus-tiers')
       bonusTiers.value = response.data
       return response.data
     } catch (err) {

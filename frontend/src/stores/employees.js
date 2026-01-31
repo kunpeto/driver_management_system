@@ -14,7 +14,7 @@ import { ref, computed } from 'vue'
 import { cloudApi } from '@/services/api'
 
 // API 路徑
-const API_BASE = '/employees'
+const API_BASE = '/api/employees'
 
 export const useEmployeesStore = defineStore('employees', () => {
   // ============================================================

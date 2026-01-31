@@ -16,8 +16,8 @@ import { ref, computed } from 'vue'
 import { cloudApi } from '@/services/api'
 
 // API 路徑
-const STANDARDS_API = '/assessment-standards'
-const RECORDS_API = '/assessment-records'
+const STANDARDS_API = '/api/assessment-standards'
+const RECORDS_API = '/api/assessment-records'
 
 // 考核類別定義
 export const ASSESSMENT_CATEGORIES = {
