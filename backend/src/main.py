@@ -96,13 +96,10 @@ app = FastAPI(
 # CORS 設定
 # 根據環境設定允許的來源
 if settings.is_production:
-    # 生產環境：僅允許特定域名
+    # 生產環境：允許 GitHub Pages 前端
     allowed_origins = [
-        f"https://{settings.github_pages_domain}" if hasattr(settings, 'github_pages_domain') else "",
-        settings.frontend_url if hasattr(settings, 'frontend_url') else "",
+        "https://kunpeto.github.io",  # GitHub Pages 主網域
     ]
-    # 過濾空字串
-    allowed_origins = [origin for origin in allowed_origins if origin]
 else:
     # 開發環境：允許本機開發
     allowed_origins = [
