@@ -44,8 +44,8 @@ cloudApi.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore()
 
-    if (authStore.token) {
-      config.headers.Authorization = `Bearer ${authStore.token}`
+    if (authStore.accessToken) {
+      config.headers.Authorization = `Bearer ${authStore.accessToken}`
     }
 
     // 添加請求 ID 用於追蹤
