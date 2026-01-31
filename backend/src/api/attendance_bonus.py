@@ -13,7 +13,8 @@ from sqlalchemy import and_, extract, func, select
 from sqlalchemy.orm import Session
 
 from ..config.database import get_db
-from ..middleware.permission import require_admin, require_auth
+from ..middleware.auth import get_current_user
+from ..middleware.permission import require_admin
 from ..models.assessment_record import AssessmentRecord
 from ..models.employee import Employee
 from ..services.attendance_bonus_processor import (
@@ -220,7 +221,7 @@ async def process_attendance_bonus(
 async def preview_attendance_bonus(
     request: AttendanceBonusPreviewRequest,
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     預覽差勤加分處理
@@ -275,7 +276,7 @@ async def get_monthly_bonus_stats(
     month: int,
     department: Optional[str] = Query(None, description="部門篩選"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     查詢月度加分統計
@@ -368,7 +369,7 @@ async def get_process_history(
     department: Optional[str] = Query(None, description="部門篩選"),
     limit: int = Query(12, ge=1, le=100, description="回傳筆數上限"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     查詢處理歷史

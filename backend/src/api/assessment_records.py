@@ -12,7 +12,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..config.database import get_db
-from ..middleware.permission import require_admin, require_auth
+from ..middleware.auth import get_current_user
+from ..middleware.permission import require_admin
 from ..models.fault_responsibility import CHECKLIST_KEYS, CHECKLIST_LABELS
 from ..services.assessment_record_service import AssessmentRecordService
 from ..services.annual_reset_service import AnnualResetService
@@ -113,7 +114,7 @@ async def list_records(
     category: Optional[str] = Query(None, description="類別"),
     include_deleted: bool = Query(False, description="是否包含已刪除記錄"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得考核記錄列表
@@ -141,7 +142,7 @@ async def get_employee_summary(
     employee_id: int = Query(..., description="員工 ID"),
     year: int = Query(..., description="年度"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得員工年度考核摘要
@@ -161,7 +162,7 @@ async def get_employee_summary(
 
 @router.get("/checklist-template")
 async def get_checklist_template(
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得責任判定查核表模板
@@ -183,7 +184,7 @@ async def get_record(
     record_id: int,
     include_deleted: bool = Query(False, description="是否包含已刪除記錄"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得單一考核記錄
@@ -204,7 +205,7 @@ async def get_record(
 async def create_record(
     data: AssessmentRecordCreate,
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     建立考核記錄
@@ -250,7 +251,7 @@ async def update_record(
     record_id: int,
     data: AssessmentRecordUpdate,
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     更新考核記錄
@@ -292,7 +293,7 @@ async def update_record(
 async def delete_record(
     record_id: int,
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     軟刪除考核記錄
@@ -318,7 +319,7 @@ async def delete_record(
 async def restore_record(
     record_id: int,
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     還原軟刪除的考核記錄
@@ -343,7 +344,7 @@ async def update_fault_responsibility(
     record_id: int,
     data: FaultResponsibilityData,
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     更新 R02-R05 責任判定
@@ -390,7 +391,7 @@ async def preview_calculation(
     cumulative_count: int = Query(1, ge=1, description="累計次數"),
     checklist_results: Optional[str] = Query(None, description="查核結果 JSON"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     預覽考核分數計算結果
@@ -462,7 +463,7 @@ async def list_monthly_rewards(
     year: int = Query(..., description="年度"),
     month: int = Query(..., ge=1, le=12, description="月份"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得月度獎勵列表

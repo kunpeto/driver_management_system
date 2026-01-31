@@ -11,7 +11,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..config.database import get_db
-from ..middleware.permission import require_admin, require_auth
+from ..middleware.auth import get_current_user
+from ..middleware.permission import require_admin
 from ..services.assessment_standard_service import AssessmentStandardService
 
 router = APIRouter(prefix="/api/assessment-standards", tags=["考核標準"])
@@ -71,7 +72,7 @@ async def list_standards(
     is_active: Optional[bool] = Query(True, description="是否僅查詢啟用的標準"),
     category: Optional[str] = Query(None, description="類別篩選"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得所有考核標準
@@ -105,7 +106,7 @@ async def search_standards(
     keyword: str = Query(..., min_length=1, description="搜尋關鍵字"),
     is_active: Optional[bool] = Query(True, description="是否僅查詢啟用的標準"),
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     搜尋考核標準
@@ -136,7 +137,7 @@ async def search_standards(
 @router.get("/categories")
 async def get_by_categories(
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得按類別分組的考核標準
@@ -161,7 +162,7 @@ async def get_by_categories(
 @router.get("/r-type")
 async def get_r_type_standards(
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得 R02-R05 人為疏失項目（需責任判定）
@@ -185,7 +186,7 @@ async def get_r_type_standards(
 async def get_standard(
     standard_id: int,
     db: Session = Depends(get_db),
-    _: dict = Depends(require_auth)
+    _: dict = Depends(get_current_user)
 ):
     """
     取得單一考核標準
