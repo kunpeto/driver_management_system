@@ -7,7 +7,7 @@ EmployeeTransfer 員工調動歷史模型
 from datetime import date
 from typing import Optional
 
-from sqlalchemy import Date, Enum, ForeignKey, String, Text
+from sqlalchemy import Date, Enum, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -80,7 +80,7 @@ class EmployeeTransfer(Base):
     created_at: Mapped[date] = mapped_column(
         Date,
         nullable=False,
-        server_default="CURRENT_DATE",
+        default=date.today,
         comment="建立日期"
     )
 
