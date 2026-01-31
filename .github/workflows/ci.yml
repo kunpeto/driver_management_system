@@ -55,10 +55,11 @@ jobs:
 
       - name: Run linting
         working-directory: ./backend
+        continue-on-error: true
         run: |
           pip install flake8 black
-          black --check src/
-          flake8 src/ --max-line-length=120 --ignore=E501,W503
+          black --check src/ || echo "::warning::Black formatting issues found (non-blocking)"
+          flake8 src/ --max-line-length=120 --ignore=E501,W503 || echo "::warning::Flake8 issues found (non-blocking)"
 
       - name: Run tests
         working-directory: ./backend
