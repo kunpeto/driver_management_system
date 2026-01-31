@@ -367,3 +367,47 @@ async def delete_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
+
+
+# ==================== 系統初始化端點 ====================
+
+@router.post("/init-admin", summary="初始化管理員帳號")
+def init_admin(db: Session = Depends(get_db)):
+    """
+    初始化預設管理員帳號
+
+    安全性：只有在系統中完全沒有使用者時才能執行。
+    如果已有任何使用者存在，將返回錯誤。
+
+    預設帳號：admin / admin123
+    """
+    from src.models.user import User
+    from src.utils.password import hash_password
+
+    # 檢查是否已有使用者
+    user_count = db.query(User).count()
+    if user_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"系統中已有 {user_count} 個使用者，無法初始化管理員帳號。如需重設，請聯繫系統管理員。"
+        )
+
+    # 建立預設管理員
+    admin_user = User(
+        username="admin",
+        hashed_password=hash_password("admin123"),
+        display_name="系統管理員",
+        role="admin",
+        department=None,
+        is_active=True
+    )
+    db.add(admin_user)
+    db.commit()
+    db.refresh(admin_user)
+
+    return {
+        "message": "預設管理員帳號建立成功",
+        "username": "admin",
+        "password": "admin123",
+        "warning": "請登入後立即修改預設密碼！"
+    }
