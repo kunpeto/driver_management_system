@@ -28,7 +28,7 @@
             {{ config.label }}
           </el-radio-button>
         </el-radio-group>
-        <p class="type-hint" v-if="targetType">
+        <p v-if="targetType" class="type-hint">
           {{ typeDescriptions[targetType] }}
         </p>
       </div>

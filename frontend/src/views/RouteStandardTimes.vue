@@ -48,8 +48,8 @@
 
     <!-- 資料表格 -->
     <el-table
-      :data="store.routeStandardTimes"
       v-loading="store.loading"
+      :data="store.routeStandardTimes"
       stripe
       border
     >
@@ -106,14 +106,14 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="部門" prop="department" v-if="!isEdit">
+        <el-form-item v-if="!isEdit" label="部門" prop="department">
           <el-select v-model="formData.department" placeholder="選擇部門">
             <el-option label="淡海" value="淡海" />
             <el-option label="安坑" value="安坑" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="勤務代碼" prop="route_code" v-if="!isEdit">
+        <el-form-item v-if="!isEdit" label="勤務代碼" prop="route_code">
           <el-input v-model="formData.route_code" placeholder="如 0905G" />
         </el-form-item>
 

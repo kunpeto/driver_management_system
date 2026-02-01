@@ -16,7 +16,7 @@
           <span class="score-number">{{ summary.current_score?.toFixed(1) || '80.0' }}</span>
           <span class="score-unit">分</span>
         </div>
-        <div class="score-change" v-if="summary.score_change !== 0">
+        <div v-if="summary.score_change !== 0" class="score-change">
           <span :class="summary.score_change > 0 ? 'positive' : 'negative'">
             {{ summary.score_change > 0 ? '+' : '' }}{{ summary.score_change?.toFixed(1) }} 分
           </span>

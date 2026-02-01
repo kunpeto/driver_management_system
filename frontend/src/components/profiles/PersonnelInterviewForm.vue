@@ -74,7 +74,7 @@
       </el-checkbox-group>
     </el-form-item>
 
-    <el-form-item label="其他說明" v-if="interviewResults.includes('ir_7')">
+    <el-form-item v-if="interviewResults.includes('ir_7')" label="其他說明">
       <el-input v-model="formData.interview_result_data.ir_other_text" />
     </el-form-item>
 
@@ -92,7 +92,7 @@
       </el-checkbox-group>
     </el-form-item>
 
-    <el-form-item label="其他說明" v-if="followUpActions.includes('fa_7')">
+    <el-form-item v-if="followUpActions.includes('fa_7')" label="其他說明">
       <el-input v-model="formData.follow_up_action_data.fa_other_text" />
     </el-form-item>
 

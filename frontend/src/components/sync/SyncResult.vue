@@ -19,7 +19,7 @@
           <span class="stat-value">{{ result.success_count || 0 }}</span>
           <span class="stat-label">新增/更新</span>
         </div>
-        <div class="stat-item" v-if="result.error_count">
+        <div v-if="result.error_count" class="stat-item">
           <span class="stat-value error">{{ result.error_count }}</span>
           <span class="stat-label">錯誤</span>
         </div>
@@ -43,7 +43,7 @@
             <span class="dept-status">
               {{ deptResult.success ? '成功' : '失敗' }}
             </span>
-            <span class="dept-count" v-if="deptResult.success">
+            <span v-if="deptResult.success" class="dept-count">
               {{ deptResult.success_count || 0 }} 筆
             </span>
           </div>
@@ -78,10 +78,10 @@
     </div>
 
     <div class="result-footer">
-      <span class="batch-id" v-if="result.batch_id">
+      <span v-if="result.batch_id" class="batch-id">
         批次 ID: {{ result.batch_id.slice(0, 8) }}...
       </span>
-      <span class="sync-time" v-if="result.department">
+      <span v-if="result.department" class="sync-time">
         {{ result.department }} {{ result.year }}/{{ result.month }}
       </span>
     </div>

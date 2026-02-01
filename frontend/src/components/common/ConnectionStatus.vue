@@ -3,8 +3,8 @@
     <!-- 折疊顯示模式 -->
     <div
       class="status-summary"
-      @click="expanded = !expanded"
       :title="statusTooltip"
+      @click="expanded = !expanded"
     >
       <span class="status-indicator" :class="overallStatusClass"></span>
       <span class="status-text">{{ summaryText }}</span>
@@ -31,7 +31,7 @@
       </div>
 
       <!-- Google API 狀態（可選展開） -->
-      <div class="google-section" v-if="showGoogleStatus">
+      <div v-if="showGoogleStatus" class="google-section">
         <div class="section-header" @click="googleExpanded = !googleExpanded">
           <span class="item-icon" :class="googleOverallClass">●</span>
           <span class="item-label">Google API</span>
@@ -69,10 +69,10 @@
 
       <!-- 操作按鈕 -->
       <div class="status-actions">
-        <button class="refresh-btn" @click.stop="refresh" :disabled="loading">
+        <button class="refresh-btn" :disabled="loading" @click.stop="refresh">
           {{ loading ? '檢查中...' : '重新檢查' }}
         </button>
-        <span class="last-check" v-if="lastCheck">
+        <span v-if="lastCheck" class="last-check">
           上次檢查: {{ formatTime(lastCheck) }}
         </span>
       </div>

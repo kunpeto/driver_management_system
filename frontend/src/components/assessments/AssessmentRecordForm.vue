@@ -2,146 +2,146 @@
   <div class="assessment-record-form">
     <!-- 主表單區域（可捲動） -->
     <div class="form-scroll-area">
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="rules"
-      label-width="120px"
-      :disabled="loading"
-    >
-      <!-- 員工選擇 -->
-      <el-form-item label="員工" prop="employee_id">
-        <el-select
-          v-model="formData.employee_id"
-          filterable
-          remote
-          :remote-method="searchEmployees"
-          :loading="searchLoading"
-          placeholder="搜尋員工（編號或姓名）"
-          style="width: 100%"
-          @change="onEmployeeChange"
-        >
-          <el-option
-            v-for="emp in employeeOptions"
-            :key="emp.id"
-            :label="`${emp.employee_id} - ${emp.employee_name}`"
-            :value="emp.id"
-          />
-        </el-select>
-      </el-form-item>
-
-      <!-- 事件日期 -->
-      <el-form-item label="事件日期" prop="record_date">
-        <el-date-picker
-          v-model="formData.record_date"
-          type="date"
-          value-format="YYYY-MM-DD"
-          placeholder="選擇日期"
-          style="width: 100%"
-        />
-      </el-form-item>
-
-      <!-- 考核項目選擇 -->
-      <el-form-item label="考核項目" prop="standard_code">
-        <el-select
-          v-model="formData.standard_code"
-          filterable
-          placeholder="搜尋考核項目"
-          style="width: 100%"
-          @change="onStandardChange"
-        >
-          <el-option-group
-            v-for="(standards, category) in groupedStandards"
-            :key="category"
-            :label="getCategoryLabel(category)"
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="rules"
+        label-width="120px"
+        :disabled="loading"
+      >
+        <!-- 員工選擇 -->
+        <el-form-item label="員工" prop="employee_id">
+          <el-select
+            v-model="formData.employee_id"
+            filterable
+            remote
+            :remote-method="searchEmployees"
+            :loading="searchLoading"
+            placeholder="搜尋員工（編號或姓名）"
+            style="width: 100%"
+            @change="onEmployeeChange"
           >
             <el-option
-              v-for="std in standards"
-              :key="std.code"
-              :label="`${std.code} - ${std.name}（${std.base_points > 0 ? '+' : ''}${std.base_points} 分）`"
-              :value="std.code"
+              v-for="emp in employeeOptions"
+              :key="emp.id"
+              :label="`${emp.employee_id} - ${emp.employee_name}`"
+              :value="emp.id"
+            />
+          </el-select>
+        </el-form-item>
+
+        <!-- 事件日期 -->
+        <el-form-item label="事件日期" prop="record_date">
+          <el-date-picker
+            v-model="formData.record_date"
+            type="date"
+            value-format="YYYY-MM-DD"
+            placeholder="選擇日期"
+            style="width: 100%"
+          />
+        </el-form-item>
+
+        <!-- 考核項目選擇 -->
+        <el-form-item label="考核項目" prop="standard_code">
+          <el-select
+            v-model="formData.standard_code"
+            filterable
+            placeholder="搜尋考核項目"
+            style="width: 100%"
+            @change="onStandardChange"
+          >
+            <el-option-group
+              v-for="(standards, category) in groupedStandards"
+              :key="category"
+              :label="getCategoryLabel(category)"
             >
-              <div class="standard-option">
-                <span class="code">{{ std.code }}</span>
-                <span class="name">{{ std.name }}</span>
-                <span class="points" :class="std.base_points > 0 ? 'bonus' : 'deduction'">
-                  {{ std.base_points > 0 ? '+' : '' }}{{ std.base_points }}
-                </span>
-              </div>
-            </el-option>
-          </el-option-group>
-        </el-select>
-      </el-form-item>
+              <el-option
+                v-for="std in standards"
+                :key="std.code"
+                :label="`${std.code} - ${std.name}（${std.base_points > 0 ? '+' : ''}${std.base_points} 分）`"
+                :value="std.code"
+              >
+                <div class="standard-option">
+                  <span class="code">{{ std.code }}</span>
+                  <span class="name">{{ std.name }}</span>
+                  <span class="points" :class="std.base_points > 0 ? 'bonus' : 'deduction'">
+                    {{ std.base_points > 0 ? '+' : '' }}{{ std.base_points }}
+                  </span>
+                </div>
+              </el-option>
+            </el-option-group>
+          </el-select>
+        </el-form-item>
 
-      <!-- 選中項目資訊 -->
-      <div v-if="selectedStandard" class="selected-standard-info">
-        <el-descriptions :column="3" border size="small">
-          <el-descriptions-item label="代碼">
-            <el-tag :type="selectedStandard.base_points > 0 ? 'success' : 'danger'" size="small">
-              {{ selectedStandard.code }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="類別">
-            {{ getCategoryLabel(selectedStandard.category) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="基本分數">
-            <span :class="selectedStandard.base_points > 0 ? 'text-success' : 'text-danger'">
-              {{ selectedStandard.base_points > 0 ? '+' : '' }}{{ selectedStandard.base_points }} 分
-            </span>
-          </el-descriptions-item>
-          <el-descriptions-item label="項目名稱" :span="3">
-            {{ selectedStandard.name }}
-          </el-descriptions-item>
-          <el-descriptions-item v-if="selectedStandard.has_cumulative" label="累計加重" :span="3">
-            <el-tag type="warning" size="small">此項目適用累計加重機制</el-tag>
-            <span v-if="cumulativeInfo" style="margin-left: 10px">
-              本年度第 {{ cumulativeInfo.count + 1 }} 次，累計倍率 ×{{ cumulativeMultiplier.toFixed(1) }}
-            </span>
-          </el-descriptions-item>
-        </el-descriptions>
-      </div>
+        <!-- 選中項目資訊 -->
+        <div v-if="selectedStandard" class="selected-standard-info">
+          <el-descriptions :column="3" border size="small">
+            <el-descriptions-item label="代碼">
+              <el-tag :type="selectedStandard.base_points > 0 ? 'success' : 'danger'" size="small">
+                {{ selectedStandard.code }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="類別">
+              {{ getCategoryLabel(selectedStandard.category) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="基本分數">
+              <span :class="selectedStandard.base_points > 0 ? 'text-success' : 'text-danger'">
+                {{ selectedStandard.base_points > 0 ? '+' : '' }}{{ selectedStandard.base_points }} 分
+              </span>
+            </el-descriptions-item>
+            <el-descriptions-item label="項目名稱" :span="3">
+              {{ selectedStandard.name }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="selectedStandard.has_cumulative" label="累計加重" :span="3">
+              <el-tag type="warning" size="small">此項目適用累計加重機制</el-tag>
+              <span v-if="cumulativeInfo" style="margin-left: 10px">
+                本年度第 {{ cumulativeInfo.count + 1 }} 次，累計倍率 ×{{ cumulativeMultiplier.toFixed(1) }}
+              </span>
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
 
-      <!-- R02-R05 責任判定提示 -->
-      <div v-if="isRTypeCode" class="r-type-notice">
-        <el-alert
-          title="此為責任類項目（R02-R05），需填寫責任判定查核表"
-          type="warning"
-          :closable="false"
-          show-icon
-        />
-      </div>
+        <!-- R02-R05 責任判定提示 -->
+        <div v-if="isRTypeCode" class="r-type-notice">
+          <el-alert
+            title="此為責任類項目（R02-R05），需填寫責任判定查核表"
+            type="warning"
+            :closable="false"
+            show-icon
+          />
+        </div>
 
-      <!-- 事件描述 -->
-      <el-form-item label="事件描述">
-        <el-input
-          v-model="formData.description"
-          type="textarea"
-          :rows="3"
-          placeholder="描述事件經過"
-        />
-      </el-form-item>
+        <!-- 事件描述 -->
+        <el-form-item label="事件描述">
+          <el-input
+            v-model="formData.description"
+            type="textarea"
+            :rows="3"
+            placeholder="描述事件經過"
+          />
+        </el-form-item>
 
-      <!-- R02-R05 責任判定查核表 -->
-      <div v-if="isRTypeCode" class="responsibility-section">
-        <el-divider content-position="left">
-          <el-icon><Warning /></el-icon>
-          責任判定查核表
-        </el-divider>
+        <!-- R02-R05 責任判定查核表 -->
+        <div v-if="isRTypeCode" class="responsibility-section">
+          <el-divider content-position="left">
+            <el-icon><Warning /></el-icon>
+            責任判定查核表
+          </el-divider>
 
-        <FaultResponsibilityChecklist
-          ref="checklistRef"
-          v-model="formData.fault_responsibility_data"
-          :base-points="selectedStandard?.base_points || 0"
-          :cumulative-count="(cumulativeInfo?.count || 0) + 1"
-          @responsibility-change="onResponsibilityChange"
-        />
-      </div>
+          <FaultResponsibilityChecklist
+            ref="checklistRef"
+            v-model="formData.fault_responsibility_data"
+            :base-points="selectedStandard?.base_points || 0"
+            :cumulative-count="(cumulativeInfo?.count || 0) + 1"
+            @responsibility-change="onResponsibilityChange"
+          />
+        </div>
 
-      <!-- 關聯履歷 -->
-      <el-form-item v-if="profileId" label="關聯履歷">
-        <el-tag type="info">履歷 ID: {{ profileId }}</el-tag>
-      </el-form-item>
-    </el-form>
+        <!-- 關聯履歷 -->
+        <el-form-item v-if="profileId" label="關聯履歷">
+          <el-tag type="info">履歷 ID: {{ profileId }}</el-tag>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 分數計算預覽 - 吸附底部 -->

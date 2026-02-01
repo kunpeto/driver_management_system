@@ -11,7 +11,7 @@
           <el-icon><Upload /></el-icon>
           Excel 匯入
         </el-button>
-        <el-button @click="initializeDefaults" :loading="initializing">
+        <el-button :loading="initializing" @click="initializeDefaults">
           <el-icon><Refresh /></el-icon>
           初始化預設 61 項
         </el-button>

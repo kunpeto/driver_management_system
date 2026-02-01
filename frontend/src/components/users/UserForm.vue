@@ -9,13 +9,13 @@
         placeholder="3-50 個字元"
         :error="errors.username"
       />
-      <p class="form-hint" v-if="!isEditMode">
+      <p v-if="!isEditMode" class="form-hint">
         登入時使用的帳號名稱，建立後不可變更
       </p>
     </div>
 
     <!-- 密碼（僅新增時） -->
-    <div class="form-group" v-if="!isEditMode">
+    <div v-if="!isEditMode" class="form-group">
       <label class="form-label required">密碼</label>
       <AppInput
         v-model="form.password"
@@ -60,8 +60,8 @@
         <option value="manager">主管</option>
         <option value="staff">值班台人員</option>
       </select>
-      <p class="form-error" v-if="errors.role">{{ errors.role }}</p>
-      <div class="role-description" v-if="form.role">
+      <p v-if="errors.role" class="form-error">{{ errors.role }}</p>
+      <div v-if="form.role" class="role-description">
         <p v-if="form.role === 'admin'">管理員：可存取所有功能，管理使用者帳號</p>
         <p v-else-if="form.role === 'manager'">主管：可查看和編輯所有部門的資料</p>
         <p v-else-if="form.role === 'staff'">值班台人員：僅能編輯自己部門的資料</p>
@@ -69,7 +69,7 @@
     </div>
 
     <!-- 部門（非 admin 必填） -->
-    <div class="form-group" v-if="form.role !== 'admin'">
+    <div v-if="form.role !== 'admin'" class="form-group">
       <label class="form-label required">部門</label>
       <select
         v-model="form.department"
@@ -80,13 +80,13 @@
         <option value="淡海">淡海</option>
         <option value="安坑">安坑</option>
       </select>
-      <p class="form-error" v-if="errors.department">{{ errors.department }}</p>
+      <p v-if="errors.department" class="form-error">{{ errors.department }}</p>
     </div>
 
     <!-- 是否啟用 -->
     <div class="form-group">
       <label class="checkbox-label">
-        <input type="checkbox" v-model="form.is_active" />
+        <input v-model="form.is_active" type="checkbox" />
         <span>啟用帳號</span>
       </label>
     </div>

@@ -3,7 +3,7 @@
     <!-- 頁面標題 -->
     <div class="page-header">
       <h1>未結案專區</h1>
-      <el-button @click="handleRefresh" :loading="loading">
+      <el-button :loading="loading" @click="handleRefresh">
         <el-icon><Refresh /></el-icon>
         重新載入
       </el-button>
@@ -26,7 +26,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="部門" v-if="isAdmin">
+        <el-form-item v-if="isAdmin" label="部門">
           <el-select v-model="filters.department" clearable placeholder="全部部門">
             <el-option label="淡海" value="淡海" />
             <el-option label="安坑" value="安坑" />
@@ -45,8 +45,8 @@
       <el-table
         :data="profiles"
         stripe
-        @row-click="handleRowClick"
         empty-text="目前沒有未結案的履歷"
+        @row-click="handleRowClick"
       >
         <el-table-column prop="event_date" label="事件日期" width="120" sortable />
         <el-table-column label="員工" width="150">
@@ -86,7 +86,7 @@
       </el-table>
 
       <!-- 分頁 -->
-      <div class="pagination" v-if="profiles.length > 0">
+      <div v-if="profiles.length > 0" class="pagination">
         <el-pagination
           v-model:current-page="pagination.page"
           :page-size="pagination.pageSize"

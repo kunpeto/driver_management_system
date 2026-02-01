@@ -64,7 +64,7 @@
           </div>
           <div class="transfer-info">
             <span class="transfer-date">{{ formatDate(transfer.transfer_date) }}</span>
-            <span class="transfer-reason" v-if="transfer.reason">
+            <span v-if="transfer.reason" class="transfer-reason">
               {{ transfer.reason }}
             </span>
           </div>
@@ -82,24 +82,24 @@
       </AppButton>
       <AppButton
         v-if="!employee.is_resigned"
-        @click="$emit('transfer', employee)"
         variant="primary"
+        @click="$emit('transfer', employee)"
       >
         調動
       </AppButton>
       <AppButton
         v-if="employee.is_resigned"
-        @click="handleActivate"
         :loading="activating"
         variant="success"
+        @click="handleActivate"
       >
         復職
       </AppButton>
       <AppButton
         v-else
-        @click="handleResign"
         :loading="resigning"
         variant="danger"
+        @click="handleResign"
       >
         離職
       </AppButton>

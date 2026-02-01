@@ -18,30 +18,30 @@
         <span class="label">進度:</span>
         <span class="value">{{ progress.toFixed(1) }}%</span>
       </div>
-      <div class="detail-item" v-if="taskData">
+      <div v-if="taskData" class="detail-item">
         <span class="label">處理:</span>
         <span class="value">
           {{ (taskData.success_count || 0) + (taskData.error_count || 0) }}
           / {{ taskData.total_rows || 0 }}
         </span>
       </div>
-      <div class="detail-item" v-if="taskData?.success_count">
+      <div v-if="taskData?.success_count" class="detail-item">
         <span class="label">成功:</span>
         <span class="value success">{{ taskData.success_count }}</span>
       </div>
-      <div class="detail-item" v-if="taskData?.error_count">
+      <div v-if="taskData?.error_count" class="detail-item">
         <span class="label">錯誤:</span>
         <span class="value error">{{ taskData.error_count }}</span>
       </div>
     </div>
 
-    <div class="progress-actions" v-if="status === 'running'">
-      <button class="btn btn-secondary" @click="cancel" :disabled="cancelling">
+    <div v-if="status === 'running'" class="progress-actions">
+      <button class="btn btn-secondary" :disabled="cancelling" @click="cancel">
         {{ cancelling ? '取消中...' : '取消' }}
       </button>
     </div>
 
-    <div class="error-list" v-if="taskData?.error_details?.length > 0">
+    <div v-if="taskData?.error_details?.length > 0" class="error-list">
       <h4>錯誤詳情</h4>
       <ul>
         <li v-for="(error, idx) in taskData.error_details.slice(0, 5)" :key="idx">

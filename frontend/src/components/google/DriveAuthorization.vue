@@ -44,15 +44,15 @@
         <el-button
           v-if="!isAuthorized"
           type="primary"
-          @click="startAuth"
           :loading="authorizing"
+          @click="startAuth"
         >
           <el-icon><Connection /></el-icon>
           開始授權
         </el-button>
 
         <template v-else>
-          <el-button @click="refreshToken" :loading="refreshing">
+          <el-button :loading="refreshing" @click="refreshToken">
             <el-icon><Refresh /></el-icon>
             刷新 Token
           </el-button>
@@ -99,7 +99,7 @@
 
       <template #footer>
         <el-button @click="showAuthDialog = false">取消</el-button>
-        <el-button type="primary" @click="openAuthWindow" :loading="authorizing">
+        <el-button type="primary" :loading="authorizing" @click="openAuthWindow">
           開啟授權頁面
         </el-button>
       </template>

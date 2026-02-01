@@ -18,7 +18,7 @@
     />
 
     <!-- 上傳區域 -->
-    <el-card class="upload-card" v-if="localApiConnected">
+    <el-card v-if="localApiConnected" class="upload-card">
       <template #header>
         <div class="card-header">
           <span>選擇 PDF 檔案</span>
@@ -179,7 +179,7 @@
     </el-card>
 
     <!-- 操作按鈕 -->
-    <div class="action-buttons" v-if="localApiConnected">
+    <div v-if="localApiConnected" class="action-buttons">
       <el-button @click="scanOnly">
         僅掃描條碼
       </el-button>

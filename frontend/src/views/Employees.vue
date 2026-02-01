@@ -45,8 +45,8 @@
         <div class="filter-item">
           <label class="checkbox-label">
             <input
-              type="checkbox"
               v-model="includeResigned"
+              type="checkbox"
               @change="handleIncludeResignedChange"
             />
             包含離職員工
@@ -63,7 +63,7 @@
     </div>
 
     <!-- 統計摘要 -->
-    <div class="stats-section" v-if="statistics.total > 0">
+    <div v-if="statistics.total > 0" class="stats-section">
       <div class="stat-card">
         <div class="stat-value">{{ statistics.total }}</div>
         <div class="stat-label">總人數</div>
@@ -133,18 +133,18 @@
               </AppButton>
               <AppButton
                 size="small"
-                @click="editEmployee(employee)"
                 :disabled="!canEditEmployee(employee)"
                 :title="canEditEmployee(employee) ? '' : '無權限編輯此部門員工'"
+                @click="editEmployee(employee)"
               >
                 編輯
               </AppButton>
               <AppButton
                 v-if="!employee.is_resigned"
                 size="small"
-                @click="openTransferDialog(employee)"
                 :disabled="!canEditEmployee(employee)"
                 :title="canEditEmployee(employee) ? '' : '無權限調動此部門員工'"
+                @click="openTransferDialog(employee)"
               >
                 調動
               </AppButton>
@@ -154,7 +154,7 @@
       </table>
 
       <!-- 載入更多 -->
-      <div class="load-more" v-if="hasMore">
+      <div v-if="hasMore" class="load-more">
         <AppButton :loading="loading" @click="loadMore">
           載入更多
         </AppButton>

@@ -66,10 +66,10 @@
         </div>
 
         <div class="info-content">
-          <p class="project-id" v-if="credentialDetails?.project_id">
+          <p v-if="credentialDetails?.project_id" class="project-id">
             專案: {{ credentialDetails.project_id }}
           </p>
-          <p class="client-email" v-if="credentialDetails?.client_email">
+          <p v-if="credentialDetails?.client_email" class="client-email">
             {{ credentialDetails.client_email }}
           </p>
           <p class="validation-message" :class="validationStatus">
@@ -77,7 +77,7 @@
           </p>
         </div>
 
-        <button class="clear-btn" @click.stop="clearCredential" title="清除憑證">
+        <button class="clear-btn" title="清除憑證" @click.stop="clearCredential">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />

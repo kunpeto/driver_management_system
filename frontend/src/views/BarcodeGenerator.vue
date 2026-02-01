@@ -17,7 +17,7 @@
       class="connection-alert"
     />
 
-    <el-row :gutter="20" v-if="localApiConnected">
+    <el-row v-if="localApiConnected" :gutter="20">
       <!-- 左側：生成表單 -->
       <el-col :span="12">
         <el-card class="generator-card">
@@ -117,7 +117,7 @@
             </el-form-item>
 
             <el-form-item>
-              <el-button type="primary" @click="generateBarcode" :loading="generating">
+              <el-button type="primary" :loading="generating" @click="generateBarcode">
                 生成條碼
               </el-button>
               <el-button @click="resetForm">重置</el-button>
@@ -161,8 +161,8 @@
             type="error"
             show-icon
             closable
-            @close="errorMessage = ''"
             class="error-alert"
+            @close="errorMessage = ''"
           />
         </el-card>
 
@@ -186,7 +186,7 @@
     </el-row>
 
     <!-- 批次生成 -->
-    <el-card class="batch-card" v-if="localApiConnected">
+    <el-card v-if="localApiConnected" class="batch-card">
       <template #header>
         <span>批次生成</span>
       </template>
@@ -205,7 +205,7 @@
           <el-input-number v-model="batchCount" :min="1" :max="100" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="generateBatch" :loading="batchGenerating">
+          <el-button type="primary" :loading="batchGenerating" @click="generateBatch">
             批次生成
           </el-button>
         </el-form-item>

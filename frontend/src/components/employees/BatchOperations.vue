@@ -33,8 +33,8 @@
             ref="fileInput"
             type="file"
             accept=".xlsx,.xls"
-            @change="handleFileSelect"
             style="display: none"
+            @change="handleFileSelect"
           />
 
           <div
@@ -61,15 +61,15 @@
         </div>
 
         <!-- 匯入選項 -->
-        <div class="import-options" v-if="selectedFile">
+        <div v-if="selectedFile" class="import-options">
           <label class="checkbox-label">
-            <input type="checkbox" v-model="skipDuplicates" />
+            <input v-model="skipDuplicates" type="checkbox" />
             跳過重複的員工編號
           </label>
         </div>
 
         <!-- 驗證結果 -->
-        <div class="validation-result" v-if="validationResult">
+        <div v-if="validationResult" class="validation-result">
           <div :class="['result-header', validationResult.success ? 'success' : 'error']">
             <span class="result-icon">{{ validationResult.success ? '✓' : '✗' }}</span>
             <span>{{ validationResult.success ? '驗證通過' : '驗證失敗' }}</span>
@@ -80,7 +80,7 @@
               錯誤：{{ validationResult.error_count }}
             </span>
           </div>
-          <div class="error-list" v-if="validationResult.errors?.length > 0">
+          <div v-if="validationResult.errors?.length > 0" class="error-list">
             <div
               v-for="err in validationResult.errors.slice(0, 5)"
               :key="err.row"
@@ -95,7 +95,7 @@
         </div>
 
         <!-- 匯入結果 -->
-        <div class="import-result" v-if="importResult">
+        <div v-if="importResult" class="import-result">
           <div :class="['result-header', importResult.success ? 'success' : 'warning']">
             <span class="result-icon">{{ importResult.success ? '✓' : '⚠' }}</span>
             <span>匯入完成</span>
@@ -154,7 +154,7 @@
 
           <div class="option-group checkbox">
             <label class="checkbox-label">
-              <input type="checkbox" v-model="exportOptions.includeResigned" />
+              <input v-model="exportOptions.includeResigned" type="checkbox" />
               包含離職員工
             </label>
           </div>

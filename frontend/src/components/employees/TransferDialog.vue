@@ -33,7 +33,7 @@
             {{ dept }}
           </option>
         </select>
-        <p class="form-error" v-if="errors.to_department">
+        <p v-if="errors.to_department" class="form-error">
           {{ errors.to_department }}
         </p>
       </div>
@@ -42,12 +42,12 @@
       <div class="form-group">
         <label class="form-label required">生效日期</label>
         <input
-          type="date"
           v-model="form.transfer_date"
+          type="date"
           class="form-input"
           :class="{ error: errors.transfer_date }"
         />
-        <p class="form-error" v-if="errors.transfer_date">
+        <p v-if="errors.transfer_date" class="form-error">
           {{ errors.transfer_date }}
         </p>
       </div>
@@ -65,7 +65,7 @@
     </div>
 
     <!-- 調動預覽 -->
-    <div class="transfer-preview" v-if="form.to_department">
+    <div v-if="form.to_department" class="transfer-preview">
       <div class="preview-title">調動預覽</div>
       <div class="preview-content">
         <span :class="['dept-badge', getDeptClass(employee.current_department)]">

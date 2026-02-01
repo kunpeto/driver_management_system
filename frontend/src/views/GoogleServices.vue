@@ -45,8 +45,8 @@
             <div class="form-actions">
               <button
                 class="btn btn-primary"
-                @click="triggerSync"
                 :disabled="syncing"
+                @click="triggerSync"
               >
                 {{ syncing ? '同步中...' : '立即同步' }}
               </button>
@@ -79,7 +79,7 @@
           <span :class="['status-indicator', schedulerRunning ? 'running' : 'stopped']"></span>
           <span>排程器狀態：{{ schedulerRunning ? '執行中' : '已停止' }}</span>
 
-          <div class="scheduler-controls" v-if="isAdmin">
+          <div v-if="isAdmin" class="scheduler-controls">
             <button
               v-if="!schedulerRunning"
               class="btn btn-success"
@@ -97,7 +97,7 @@
           </div>
         </div>
 
-        <div class="jobs-list" v-if="schedulerJobs.length > 0">
+        <div v-if="schedulerJobs.length > 0" class="jobs-list">
           <h3>已註冊任務</h3>
           <table class="jobs-table">
             <thead>
@@ -118,8 +118,8 @@
                 <td v-if="isAdmin">
                   <button
                     class="btn btn-sm btn-primary"
-                    @click="triggerJob(job.id)"
                     title="立即執行"
+                    @click="triggerJob(job.id)"
                   >
                     ▶
                   </button>

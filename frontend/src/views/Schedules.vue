@@ -35,8 +35,8 @@
         <div class="filter-item">
           <label>員工編號</label>
           <input
-            type="text"
             v-model="filters.employeeId"
+            type="text"
             placeholder="輸入員工編號"
           />
         </div>
@@ -177,7 +177,7 @@
 
       <div class="calendar-grid">
         <!-- 星期標題 -->
-        <div class="weekday-header" v-for="day in weekdays" :key="day">
+        <div v-for="day in weekdays" :key="day" class="weekday-header">
           {{ day }}
         </div>
 
@@ -188,7 +188,7 @@
           :class="['calendar-cell', { 'other-month': !cell.currentMonth }]"
         >
           <div class="cell-date">{{ cell.day }}</div>
-          <div class="cell-schedules" v-if="cell.currentMonth">
+          <div v-if="cell.currentMonth" class="cell-schedules">
             <div
               v-for="(schedule, idx) in getSchedulesForDate(cell.date)"
               :key="idx"

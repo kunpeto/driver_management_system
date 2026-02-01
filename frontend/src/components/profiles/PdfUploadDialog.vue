@@ -101,12 +101,12 @@
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="handleClose" :disabled="uploading">取消</el-button>
+        <el-button :disabled="uploading" @click="handleClose">取消</el-button>
         <el-button
           type="primary"
-          @click="handleUpload"
           :disabled="!canUpload"
           :loading="uploading"
+          @click="handleUpload"
         >
           {{ uploading ? '上傳中...' : '上傳' }}
         </el-button>

@@ -9,7 +9,7 @@
         placeholder="例如：1011M0095"
         :error="errors.employee_id"
       />
-      <p class="form-hint" v-if="!isEditMode">
+      <p v-if="!isEditMode" class="form-hint">
         格式：YYMM + 類型碼 + 4位序號（如 1011M0095）
       </p>
     </div>
@@ -42,10 +42,10 @@
           {{ dept.label }}
         </option>
       </select>
-      <p class="form-error" v-if="errors.current_department">
+      <p v-if="errors.current_department" class="form-error">
         {{ errors.current_department }}
       </p>
-      <p class="form-hint" v-if="isEditMode">
+      <p v-if="isEditMode" class="form-hint">
         部門變更請使用調動功能
       </p>
     </div>

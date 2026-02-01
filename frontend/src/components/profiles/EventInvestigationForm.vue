@@ -79,7 +79,7 @@
         </el-form-item>
       </el-col>
       <el-col :span="8">
-        <el-form-item label="責任比例" v-if="formData.has_responsibility">
+        <el-form-item v-if="formData.has_responsibility" label="責任比例">
           <el-input-number
             v-model="formData.responsibility_ratio"
             :min="0"

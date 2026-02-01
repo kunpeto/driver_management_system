@@ -48,8 +48,8 @@
           <el-button
             v-if="isAdmin"
             type="warning"
-            @click="handleCalculate"
             :loading="store.saving"
+            @click="handleCalculate"
           >
             重新計算
           </el-button>
@@ -58,7 +58,7 @@
     </el-card>
 
     <!-- 統計摘要 -->
-    <el-row :gutter="16" class="summary-cards" v-if="ranking">
+    <el-row v-if="ranking" :gutter="16" class="summary-cards">
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-card">
@@ -95,10 +95,10 @@
 
     <!-- 獎金說明 -->
     <el-alert
+      v-if="bonusTiers"
       type="info"
       :closable="false"
       class="bonus-info"
-      v-if="bonusTiers"
     >
       <template #title>
         <strong>獎金規則</strong>
@@ -119,7 +119,7 @@
     </el-alert>
 
     <!-- 排名表格 -->
-    <el-card class="data-card" v-loading="store.loading">
+    <el-card v-loading="store.loading" class="data-card">
       <template #header>
         <div class="card-header">
           <span>{{ ranking?.quarter_label || '' }} 競賽排名</span>

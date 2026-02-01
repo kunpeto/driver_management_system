@@ -50,7 +50,7 @@
     </el-card>
 
     <!-- 季度統計摘要 -->
-    <el-row :gutter="16" class="summary-cards" v-if="departmentStats">
+    <el-row v-if="departmentStats" :gutter="16" class="summary-cards">
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-card">
@@ -86,7 +86,7 @@
     </el-row>
 
     <!-- 員工季度統計表格 -->
-    <el-card class="data-card" v-loading="store.loading">
+    <el-card v-loading="store.loading" class="data-card">
       <template #header>
         <div class="card-header">
           <span>季度駕駛時數統計</span>

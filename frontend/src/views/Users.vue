@@ -136,15 +136,15 @@
       title="重設密碼"
       width="400px"
     >
-      <div class="reset-password-form" v-if="resetPasswordUser">
+      <div v-if="resetPasswordUser" class="reset-password-form">
         <p class="reset-info">
           確定要重設 <strong>{{ resetPasswordUser.display_name }}</strong> 的密碼？
         </p>
         <div class="form-group">
           <label class="form-label">新密碼</label>
           <input
-            type="password"
             v-model="newPassword"
+            type="password"
             class="form-input"
             placeholder="請輸入新密碼（至少8位，含大小寫字母和數字）"
           />
@@ -152,8 +152,8 @@
         <div class="form-group">
           <label class="form-label">確認密碼</label>
           <input
-            type="password"
             v-model="confirmPassword"
+            type="password"
             class="form-input"
             placeholder="請再次輸入新密碼"
           />
@@ -161,7 +161,7 @@
         <p v-if="resetPasswordError" class="form-error">{{ resetPasswordError }}</p>
         <div class="form-actions">
           <AppButton @click="closeResetPasswordDialog">取消</AppButton>
-          <AppButton type="primary" @click="handleResetPassword" :loading="resetting">
+          <AppButton type="primary" :loading="resetting" @click="handleResetPassword">
             確認重設
           </AppButton>
         </div>
