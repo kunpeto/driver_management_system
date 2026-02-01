@@ -15,7 +15,7 @@ from src.models.assessment_record import AssessmentRecord
 from src.models.assessment_standard import AssessmentStandard
 from src.models.driving_daily_stats import DrivingDailyStats
 from src.models.employee import Employee
-from src.models.google_oauth_token import Department
+from src.constants import Department
 from src.models.schedule import Schedule
 
 

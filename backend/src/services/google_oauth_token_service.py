@@ -10,7 +10,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from src.models.google_oauth_token import Department, GoogleOAuthToken
+from src.constants import Department
+from src.models.google_oauth_token import GoogleOAuthToken
 from src.utils.encryption import TokenEncryption
 
 

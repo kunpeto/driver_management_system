@@ -11,7 +11,7 @@ from sqlalchemy import Boolean, CheckConstraint, Enum, Float, ForeignKey, Index,
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
-from .google_oauth_token import Department
+from src.constants import Department
 
 
 class DrivingCompetition(Base, TimestampMixin):

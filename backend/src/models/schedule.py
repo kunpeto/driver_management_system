@@ -16,7 +16,7 @@ from sqlalchemy import Date, DateTime, Enum as SQLEnum, ForeignKey, Index, Strin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
-from .google_oauth_token import Department
+from src.constants import Department
 
 
 class ShiftType(str):

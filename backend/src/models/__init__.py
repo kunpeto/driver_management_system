@@ -9,7 +9,8 @@ from .driving_competition import DrivingCompetition
 from .driving_daily_stats import DrivingDailyStats
 from .employee import Employee
 from .employee_transfer import EmployeeTransfer
-from .google_oauth_token import Department, GoogleOAuthToken
+from src.constants import Department
+from .google_oauth_token import GoogleOAuthToken
 from .oauth_state import OAuthState
 from .route_standard_time import RouteStandardTime
 from .system_setting import DepartmentScope, SettingKeys, SystemSetting

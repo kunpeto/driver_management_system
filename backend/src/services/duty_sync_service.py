@@ -12,7 +12,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from src.models.employee import Employee
-from src.models.google_oauth_token import Department
+from src.constants import Department
 from src.models.schedule import Schedule
 from src.services.driving_stats_calculator import DrivingStatsCalculator
 from src.services.route_standard_time_service import RouteStandardTimeService

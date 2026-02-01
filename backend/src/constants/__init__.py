@@ -4,6 +4,7 @@
 提供系統各模組使用的常量定義。
 """
 
+from .enums import Department
 from .attendance import (
     LEAVE_PATTERNS,
     R_SHIFT_PATTERN,
@@ -18,6 +19,7 @@ from .attendance import (
 )
 
 __all__ = [
+    "Department",
     "LEAVE_PATTERNS",
     "R_SHIFT_PATTERN",
     "NATIONAL_HOLIDAY_PATTERN",

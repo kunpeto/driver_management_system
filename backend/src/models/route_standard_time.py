@@ -10,7 +10,7 @@ from sqlalchemy import Boolean, Enum, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, TimestampMixin
-from .google_oauth_token import Department
+from src.constants import Department
 
 
 class RouteStandardTime(Base, TimestampMixin):

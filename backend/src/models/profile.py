@@ -25,7 +25,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
-from .google_oauth_token import Department
+from src.constants import Department
 
 if TYPE_CHECKING:
     from .assessment_notice import AssessmentNotice

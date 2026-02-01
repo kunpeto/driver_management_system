@@ -10,7 +10,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from src.models.google_oauth_token import Department
+from src.constants import Department
 from src.models.system_setting import SettingKeys
 from src.services.credential_validator import (
     CredentialValidator,

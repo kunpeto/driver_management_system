@@ -11,7 +11,7 @@ from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from src.models.google_oauth_token import Department
+from src.constants import Department
 from src.models.route_standard_time import RouteStandardTime
 
 

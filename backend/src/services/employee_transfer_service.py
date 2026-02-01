@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from src.models.employee import Employee
 from src.models.employee_transfer import EmployeeTransfer
-from src.models.google_oauth_token import Department
+from src.constants import Department
 from src.services.employee_service import EmployeeNotFoundError, EmployeeService
 
 

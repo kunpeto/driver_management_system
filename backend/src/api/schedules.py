@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from src.config.database import get_db
 from src.models.schedule import Schedule
-from src.models.google_oauth_token import Department
+from src.constants import Department
 from src.middleware.auth import get_current_user
 from src.utils.logger import logger
 

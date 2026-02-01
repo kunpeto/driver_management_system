@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, joinedload
 from src.models.driving_competition import DrivingCompetition
 from src.models.driving_daily_stats import DrivingDailyStats
 from src.models.employee import Employee
-from src.models.google_oauth_token import Department
+from src.constants import Department
 from src.services.driving_stats_calculator import DrivingStatsCalculator
 
 

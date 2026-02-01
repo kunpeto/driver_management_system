@@ -11,7 +11,7 @@ from sqlalchemy import Date, Enum, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
-from .google_oauth_token import Department
+from src.constants import Department
 
 
 class EmployeeTransfer(Base):

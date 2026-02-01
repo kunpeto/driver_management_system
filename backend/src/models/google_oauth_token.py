@@ -5,19 +5,13 @@ GoogleOAuthToken OAuth 令牌加密儲存模型
 """
 
 from datetime import datetime
-from enum import Enum as PyEnum
 from typing import Optional
 
 from sqlalchemy import DateTime, Enum, LargeBinary, String
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.constants import Department
 from .base import Base, TimestampMixin
-
-
-class Department(str, PyEnum):
-    """部門列舉（僅淡海、安坑，不含 global）"""
-    DANHAI = "淡海"
-    ANKENG = "安坑"
 
 
 class GoogleOAuthToken(Base, TimestampMixin):

@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 
 from src.config.database import get_db
 from src.models.schedule import Schedule, SyncTask
-from src.models.google_oauth_token import Department
+from src.constants import Department
 from src.services.google_sheets_reader import GoogleSheetsReader, get_google_sheets_reader
 from src.services.schedule_parser import ScheduleParser, get_schedule_parser, ParsedShift
 from src.utils.logger import logger
