@@ -12,7 +12,11 @@ import App from './App.vue'
 import router from './router'
 import pinia from './stores'
 import { setupErrorHandler } from './utils/errorHandler'
+
+// 基礎樣式
 import './style.css'
+// 主題樣式（必須在 Element Plus 之後引入以覆蓋預設樣式）
+import './styles/theme.css'
 
 // 建立 Vue 應用
 const app = createApp(App)

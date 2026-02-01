@@ -1,0 +1,352 @@
+/**
+ * 簡約現代風格主題 - Minimalist Modern Theme
+ * 設計原則：少即是多、高對比度、功能性色彩
+ */
+
+:root {
+  /* ========================================
+     1. 色彩系統 (Color Palette)
+     ======================================== */
+
+  /* 主色 - Royal Blue */
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-active: #1E40AF;
+  --color-primary-light: #EFF6FF;
+  --color-primary-rgb: 37, 99, 235;
+
+  /* 文字顏色 - High Contrast Slate */
+  --text-primary: #0F172A;
+  --text-regular: #334155;
+  --text-secondary: #64748B;
+  --text-placeholder: #94A3B8;
+  --text-disabled: #CBD5E1;
+
+  /* 背景色 */
+  --bg-body: #F8FAFC;
+  --bg-white: #FFFFFF;
+  --bg-hover: #F1F5F9;
+  --bg-active: #E2E8F0;
+
+  /* 邊框色 */
+  --border-color: #E2E8F0;
+  --border-color-light: #F1F5F9;
+  --border-color-dark: #CBD5E1;
+
+  /* 狀態色 */
+  --color-success: #10B981;
+  --color-success-light: #D1FAE5;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-danger: #EF4444;
+  --color-danger-light: #FEE2E2;
+  --color-info: #3B82F6;
+  --color-info-light: #DBEAFE;
+
+  /* ========================================
+     2. 佈局尺寸 (Layout)
+     ======================================== */
+  --sidebar-width: 240px;
+  --header-height: 60px;
+
+  /* ========================================
+     3. 圓角 (Border Radius)
+     ======================================== */
+  --radius-sm: 4px;
+  --radius-base: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* ========================================
+     4. 陰影 (Shadows) - 極簡風格
+     ======================================== */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  --shadow-dropdown: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+
+  /* ========================================
+     5. 過渡動畫 (Transitions)
+     ======================================== */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* ========================================
+     6. Element Plus 覆蓋
+     ======================================== */
+
+  /* 主題色覆蓋 */
+  --el-color-primary: var(--color-primary);
+  --el-color-primary-light-3: #60A5FA;
+  --el-color-primary-light-5: #93C5FD;
+  --el-color-primary-light-7: #BFDBFE;
+  --el-color-primary-light-8: #DBEAFE;
+  --el-color-primary-light-9: #EFF6FF;
+  --el-color-primary-dark-2: var(--color-primary-hover);
+
+  --el-color-success: var(--color-success);
+  --el-color-warning: var(--color-warning);
+  --el-color-danger: var(--color-danger);
+  --el-color-info: var(--color-info);
+
+  /* 文字色覆蓋 */
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-regular);
+  --el-text-color-secondary: var(--text-secondary);
+  --el-text-color-placeholder: var(--text-placeholder);
+  --el-text-color-disabled: var(--text-disabled);
+
+  /* 邊框覆蓋 */
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-color-light);
+  --el-border-color-lighter: var(--border-color-light);
+  --el-border-color-extra-light: var(--border-color-light);
+  --el-border-color-dark: var(--border-color-dark);
+
+  /* 背景覆蓋 */
+  --el-bg-color: var(--bg-white);
+  --el-bg-color-page: var(--bg-body);
+  --el-bg-color-overlay: var(--bg-white);
+
+  /* 填充色覆蓋 */
+  --el-fill-color: var(--bg-hover);
+  --el-fill-color-light: var(--bg-body);
+  --el-fill-color-lighter: var(--bg-body);
+  --el-fill-color-extra-light: var(--bg-body);
+  --el-fill-color-blank: var(--bg-white);
+
+  /* 圓角覆蓋 */
+  --el-border-radius-base: var(--radius-base);
+  --el-border-radius-small: var(--radius-sm);
+  --el-border-radius-round: 20px;
+  --el-border-radius-circle: 100%;
+
+  /* 表格覆蓋 */
+  --el-table-header-bg-color: #F1F5F9;
+  --el-table-header-text-color: #475569;
+  --el-table-row-hover-bg-color: var(--bg-body);
+  --el-table-border-color: var(--border-color);
+
+  /* 卡片覆蓋 */
+  --el-card-border-color: var(--border-color);
+
+  /* 對話框覆蓋 */
+  --el-dialog-border-radius: var(--radius-lg);
+
+  /* 按鈕覆蓋 */
+  --el-button-font-weight: 500;
+}
+
+/* ========================================
+   全局基礎樣式
+   ======================================== */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   Element Plus 組件覆蓋
+   ======================================== */
+
+/* 卡片 - 扁平化 */
+.el-card {
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-md);
+}
+
+.el-card__header {
+  border-bottom: 1px solid var(--border-color);
+  padding: 16px 20px;
+}
+
+.el-card__body {
+  padding: 20px;
+}
+
+/* 按鈕優化 */
+.el-button {
+  font-weight: 500;
+  border-radius: var(--radius-base);
+  transition: all var(--transition-fast);
+}
+
+.el-button--primary {
+  box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.15);
+}
+
+.el-button--primary:hover {
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+/* 表格優化 */
+.el-table {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+  background-color: var(--el-table-header-bg-color);
+}
+
+.el-table--border .el-table__cell {
+  border-right: none;
+}
+
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background-color: transparent;
+}
+
+.el-table__row:hover > td.el-table__cell {
+  background-color: var(--bg-body);
+}
+
+/* 輸入框優化 */
+.el-input__wrapper {
+  border-radius: var(--radius-base);
+  box-shadow: 0 0 0 1px var(--border-color-dark) inset;
+  transition: all var(--transition-fast);
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--color-primary-light-5) inset;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--color-primary) inset, 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.el-input__inner {
+  color: var(--text-primary);
+}
+
+.el-input__inner::placeholder {
+  color: var(--text-placeholder);
+}
+
+/* 選擇器優化 */
+.el-select__wrapper {
+  border-radius: var(--radius-base);
+}
+
+/* 對話框優化 */
+.el-dialog {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+}
+
+.el-dialog__header {
+  border-bottom: 1px solid var(--border-color);
+  padding: 16px 20px;
+  margin-right: 0;
+}
+
+.el-dialog__body {
+  padding: 20px;
+}
+
+.el-dialog__footer {
+  border-top: 1px solid var(--border-color);
+  padding: 12px 20px;
+}
+
+/* 下拉選單優化 */
+.el-dropdown-menu {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
+  border: 1px solid var(--border-color);
+  padding: 4px;
+}
+
+.el-dropdown-menu__item {
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.el-dropdown-menu__item:hover {
+  background-color: var(--bg-hover);
+  color: var(--color-primary);
+}
+
+/* 標籤優化 */
+.el-tag {
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+/* 分頁優化 */
+.el-pagination {
+  --el-pagination-button-bg-color: var(--bg-white);
+  --el-pagination-hover-color: var(--color-primary);
+}
+
+.el-pagination .el-pager li {
+  border-radius: var(--radius-sm);
+}
+
+/* 徽章優化 */
+.el-badge__content {
+  border: none;
+  font-weight: 500;
+}
+
+/* 訊息提示優化 */
+.el-message {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
+}
+
+/* 抽屜優化 */
+.el-drawer {
+  box-shadow: var(--shadow-modal);
+}
+
+.el-drawer__header {
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0;
+  padding: 16px 20px;
+}
+
+/* Tabs 優化 */
+.el-tabs__item {
+  font-weight: 500;
+}
+
+.el-tabs__item.is-active {
+  color: var(--color-primary);
+}
+
+/* 表單標籤 */
+.el-form-item__label {
+  color: var(--text-regular);
+  font-weight: 500;
+}
+
+/* 麵包屑 */
+.el-breadcrumb__inner {
+  color: var(--text-secondary);
+}
+
+.el-breadcrumb__inner.is-link:hover {
+  color: var(--color-primary);
+}
+
+/* 空狀態 */
+.el-empty__description {
+  color: var(--text-secondary);
+}
+
+/* Loading 遮罩 */
+.el-loading-mask {
+  background-color: rgba(255, 255, 255, 0.9);
+}

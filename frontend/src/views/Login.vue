@@ -58,8 +58,8 @@
         <div class="form-group remember-group">
           <label class="checkbox-label">
             <input
-              type="checkbox"
               v-model="form.remember"
+              type="checkbox"
               :disabled="loading"
             />
             <span>記住我</span>
@@ -148,41 +148,46 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
+/* ========================================
+   登入頁面 - 簡約現代風格
+   ======================================== */
+
 .login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: var(--bg-body, #F8FAFC);
   padding: 20px;
 }
 
 .login-container {
   width: 100%;
   max-width: 400px;
-  background: var(--color-background);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  background: var(--bg-white, #FFFFFF);
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border-color, #E2E8F0);
+  box-shadow: var(--shadow-card, 0 1px 3px 0 rgba(0, 0, 0, 0.04));
   overflow: hidden;
 }
 
 .login-header {
-  padding: 32px 32px 24px;
+  padding: 40px 32px 32px;
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  border-bottom: 1px solid var(--border-color, #E2E8F0);
 }
 
 .login-title {
   font-size: 24px;
   font-weight: 700;
   margin: 0 0 8px;
+  color: var(--text-primary, #0F172A);
 }
 
 .login-subtitle {
   font-size: 14px;
   margin: 0;
-  opacity: 0.9;
+  color: var(--text-secondary, #64748B);
 }
 
 .login-form {
@@ -201,17 +206,18 @@ async function handleSubmit() {
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: var(--color-text);
+  color: var(--text-regular, #334155);
   margin-bottom: 8px;
 }
 
 .error-alert {
-  background: #ffebee;
-  color: #c62828;
+  background: var(--color-danger-light, #FEE2E2);
+  color: var(--color-danger, #EF4444);
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-base, 6px);
   font-size: 14px;
   margin-bottom: 20px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .input-icon {
@@ -226,7 +232,7 @@ async function handleSubmit() {
   padding: 0;
   font-size: 16px;
   opacity: 0.5;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast, 0.15s ease);
 }
 
 .password-toggle:hover {
@@ -243,23 +249,25 @@ async function handleSubmit() {
   gap: 8px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--color-text-light);
+  color: var(--text-regular, #334155);
 }
 
 .checkbox-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
+  accent-color: var(--color-primary, #2563EB);
 }
 
 .login-footer {
   padding: 16px 32px 24px;
   text-align: center;
+  border-top: 1px solid var(--border-color, #E2E8F0);
 }
 
 .login-footer p {
   font-size: 12px;
-  color: var(--color-text-light);
+  color: var(--text-secondary, #64748B);
   margin: 0;
 }
 </style>

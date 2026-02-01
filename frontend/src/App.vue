@@ -154,9 +154,6 @@ onUnmounted(() => {
         :default-active="route.path"
         router
         class="app-menu"
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409EFF"
       >
         <template v-for="item in menuItems" :key="item.index">
           <!-- 有子選單 -->
@@ -232,7 +229,10 @@ onUnmounted(() => {
 </template>
 
 <style>
-/* 全域樣式 */
+/* ========================================
+   全域佈局樣式 - Minimalist Modern
+   ======================================== */
+
 html, body, #app {
   height: 100%;
   margin: 0;
@@ -243,68 +243,160 @@ html, body, #app {
   height: 100%;
 }
 
-/* 側邊欄 */
+/* ========================================
+   側邊欄 - 淺色風格
+   ======================================== */
 .app-aside {
-  background-color: #304156;
+  background-color: var(--bg-white);
+  border-right: 1px solid var(--border-color);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .logo-container {
-  height: 60px;
+  height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #263445;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-white);
 }
 
 .logo-container h2 {
-  color: #fff;
-  font-size: 18px;
+  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: 600;
   margin: 0;
+  letter-spacing: 0.5px;
 }
 
 .app-menu {
   border-right: none;
+  background-color: var(--bg-white) !important;
+  padding: 8px;
 }
 
-/* 頂部欄 */
+/* 選單項目樣式 */
+.app-menu .el-menu-item {
+  height: 44px;
+  line-height: 44px;
+  margin: 2px 0;
+  border-radius: var(--radius-base);
+  color: var(--text-regular);
+  transition: all var(--transition-fast);
+}
+
+.app-menu .el-menu-item:hover {
+  background-color: var(--bg-hover);
+  color: var(--color-primary);
+}
+
+.app-menu .el-menu-item.is-active {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* 選單圖標 */
+.app-menu .el-menu-item .el-icon,
+.app-menu .el-sub-menu__title .el-icon {
+  color: inherit;
+  margin-right: 8px;
+}
+
+/* 子選單樣式 */
+.app-menu .el-sub-menu__title {
+  height: 44px;
+  line-height: 44px;
+  margin: 2px 0;
+  border-radius: var(--radius-base);
+  color: var(--text-regular);
+}
+
+.app-menu .el-sub-menu__title:hover {
+  background-color: var(--bg-hover);
+  color: var(--color-primary);
+}
+
+.app-menu .el-sub-menu.is-active > .el-sub-menu__title {
+  color: var(--color-primary);
+}
+
+.app-menu .el-sub-menu .el-menu-item {
+  padding-left: 52px !important;
+  height: 40px;
+  line-height: 40px;
+}
+
+/* ========================================
+   頂部欄 - 簡約風格
+   ======================================== */
 .app-header {
-  background-color: #fff;
-  border-bottom: 1px solid #e6e6e6;
+  height: var(--header-height);
+  background-color: var(--bg-white);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
 }
 
 .page-title {
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--radius-base);
+  transition: background-color var(--transition-fast);
+}
+
+.user-info:hover {
+  background-color: var(--bg-hover);
+}
+
+.user-info .el-avatar {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .username {
   font-size: 14px;
-  color: #606266;
+  font-weight: 500;
+  color: var(--text-regular);
 }
 
-/* 主內容區 */
+/* ========================================
+   主內容區
+   ======================================== */
 .app-main {
-  background-color: #f5f7fa;
-  padding: 20px;
+  background-color: var(--bg-body);
+  padding: 24px;
   overflow-y: auto;
 }
 
-/* 頁面過渡動畫 */
+/* ========================================
+   頁面過渡動畫
+   ======================================== */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-base);
 }
 
 .fade-enter-from,
@@ -312,13 +404,16 @@ html, body, #app {
   opacity: 0;
 }
 
-/* 未結案徽章 */
+/* ========================================
+   未結案徽章
+   ======================================== */
 .pending-badge {
   margin-left: auto;
 }
 
 .pending-badge :deep(.el-badge__content) {
-  background-color: #f56c6c;
+  background-color: var(--color-danger);
   border: none;
+  font-weight: 500;
 }
 </style>
