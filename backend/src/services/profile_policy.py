@@ -34,7 +34,7 @@ class ProfilePolicy:
         Returns:
             是否有權限
         """
-        if user_role in [Role.ADMIN.value, Role.MANAGER.value]:
+        if user_role in [Role.ADMIN, Role.MANAGER]:
             return True
 
         return profile.department == user_department
@@ -56,7 +56,7 @@ class ProfilePolicy:
         Returns:
             是否有權限
         """
-        if user_role in [Role.ADMIN.value, Role.MANAGER.value]:
+        if user_role in [Role.ADMIN, Role.MANAGER]:
             return True
 
         return profile.department == user_department
@@ -78,7 +78,7 @@ class ProfilePolicy:
         Returns:
             是否有權限
         """
-        if user_role in [Role.ADMIN.value, Role.MANAGER.value]:
+        if user_role in [Role.ADMIN, Role.MANAGER]:
             return True
 
         return profile.department == user_department
@@ -100,7 +100,7 @@ class ProfilePolicy:
         Returns:
             是否有權限
         """
-        if user_role in [Role.ADMIN.value, Role.MANAGER.value]:
+        if user_role in [Role.ADMIN, Role.MANAGER]:
             return True
 
         return profile.department == user_department
@@ -124,7 +124,7 @@ class ProfilePolicy:
         Returns:
             是否有權限
         """
-        if user_role in [Role.ADMIN.value, Role.MANAGER.value]:
+        if user_role in [Role.ADMIN, Role.MANAGER]:
             return True
 
         return profile.department == user_department
@@ -143,7 +143,7 @@ class ProfilePolicy:
         Returns:
             是否有權限
         """
-        return user_role in [Role.ADMIN.value, Role.MANAGER.value]
+        return user_role in [Role.ADMIN, Role.MANAGER]
 
     @staticmethod
     def can_mark_complete(
@@ -164,7 +164,7 @@ class ProfilePolicy:
         Returns:
             是否有權限
         """
-        if user_role in [Role.ADMIN.value, Role.MANAGER.value]:
+        if user_role in [Role.ADMIN, Role.MANAGER]:
             return True
 
         return profile.department == user_department
@@ -185,7 +185,7 @@ class ProfilePolicy:
         Returns:
             可存取的部門列表
         """
-        if user_role in [Role.ADMIN.value, Role.MANAGER.value]:
+        if user_role in [Role.ADMIN, Role.MANAGER]:
             return ["淡海", "安坑"]  # 所有部門
 
         return [user_department]
@@ -207,7 +207,7 @@ class ProfilePolicy:
         Returns:
             實際使用的部門篩選
         """
-        if user_role == Role.STAFF.value:
+        if user_role == Role.STAFF:
             return user_department
 
         return requested_department
