@@ -37,6 +37,18 @@ async def lifespan(app: FastAPI):
     print("司機員管理系統 - 雲端 API 啟動中...")
     print("=" * 60)
 
+    # 驗證生產環境設定
+    config_warnings = settings.validate_production_settings()
+    if config_warnings:
+        print("\n⚠️  設定驗證警告:")
+        for warning in config_warnings:
+            print(f"   {warning}")
+        print()
+        # 生產環境有嚴重問題時，建議中斷啟動
+        if settings.is_production and any("CRITICAL" in w for w in config_warnings):
+            print("🛑 生產環境存在嚴重設定問題，建議立即修正！")
+            print("=" * 60)
+
     # 檢查資料庫連線
     db_status = check_database_connection()
     if db_status["status"] == "connected":

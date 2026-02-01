@@ -31,7 +31,39 @@ class Settings(BaseSettings):
 
     # FastAPI 設定
     api_secret_key: str = Field(default="development-secret-key-change-in-production")
-    api_environment: Literal["development", "production"] = Field(default="development")
+    api_environment: Literal["development", "production", "test"] = Field(default="development")
+
+    def validate_production_settings(self) -> list[str]:
+        """
+        驗證生產環境必要設定
+
+        Returns:
+            警告訊息列表（空列表表示驗證通過）
+        """
+        warnings = []
+
+        # 生產環境必須更換預設 Secret Key
+        if self.is_production and self.api_secret_key == "development-secret-key-change-in-production":
+            warnings.append(
+                "🔴 CRITICAL: API_SECRET_KEY 使用預設值！"
+                "生產環境必須設定安全的隨機密鑰。"
+            )
+
+        # 生產環境必須設定資料庫帳密
+        if self.is_production:
+            if not self.tidb_user:
+                warnings.append("🔴 CRITICAL: TIDB_USER 未設定！")
+            if not self.tidb_password:
+                warnings.append("🔴 CRITICAL: TIDB_PASSWORD 未設定！")
+
+        # 生產環境建議設定加密金鑰
+        if self.is_production and not self.encryption_key:
+            warnings.append(
+                "🟠 WARNING: ENCRYPTION_KEY 未設定，"
+                "Google OAuth Token 加密功能將無法使用。"
+            )
+
+        return warnings
 
     # JWT 設定
     jwt_algorithm: str = Field(default="HS256")
