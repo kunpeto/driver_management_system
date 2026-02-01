@@ -128,17 +128,31 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # 顯式處理 CORS 預檢請求（解決 Render 冷啟動問題）
 # ============================================================
 @app.options("/{rest_of_path:path}")
-async def preflight_handler(rest_of_path: str):
+async def preflight_handler(rest_of_path: str, request: Request):
     """
     顯式處理所有 OPTIONS 請求
 
     解決 Render 免費服務冷啟動時 CORS 預檢失敗的問題
+    動態讀取 CORS 設定，支援多個來源
     """
     from fastapi.responses import Response
+
+    # 取得請求的 Origin
+    origin = request.headers.get("origin", "")
+
+    # 檢查是否在允許清單中
+    if origin in allowed_origins:
+        allow_origin = origin
+    elif allowed_origins:
+        # 預設使用第一個允許的來源
+        allow_origin = allowed_origins[0]
+    else:
+        allow_origin = "*"
+
     return Response(
         status_code=200,
         headers={
-            "Access-Control-Allow-Origin": "https://kunpeto.github.io",
+            "Access-Control-Allow-Origin": allow_origin,
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Request-ID",
             "Access-Control-Allow-Credentials": "true",

@@ -133,3 +133,8 @@ Gemini 認為 `drive.file` scope 權限不足以讀取現有 Sheets。
 - employee_transfers.py: 9 個端點 ✅
 - employee_batch.py: 6 個端點 ✅
 - 所有前端 Store 呼叫均有對應後端端點
+
+**4. CORS Preflight 動態化**
+- 修復 preflight_handler 硬編碼問題
+- 現在動態讀取 allowed_origins 設定
+- 支援多個來源域名
