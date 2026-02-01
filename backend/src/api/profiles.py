@@ -377,7 +377,7 @@ async def create_profile(
 
     # Staff 只能建立自己部門的履歷
     department = data.department
-    if current_user.role == Role.STAFF.value:
+    if current_user.role == Role.STAFF:
         department = current_user.department
 
     try:
@@ -867,7 +867,7 @@ async def create_profile_with_assessment(
 
     # Staff 只能建立自己部門的履歷
     department = data.department
-    if current_user.role == Role.STAFF.value:
+    if current_user.role == Role.STAFF:
         department = current_user.department
 
     # 準備責任判定資料
