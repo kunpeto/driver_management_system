@@ -62,15 +62,16 @@ export const useAuthStore = defineStore('auth', () => {
   // ==================== Actions ====================
 
   /**
-   * 初始化 Store（從 localStorage 載入）
+   * 初始化 Store（從 localStorage 或 sessionStorage 載入）
    */
   function init() {
     if (initialized.value) return
 
     try {
-      const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY)
-      const storedRefresh = localStorage.getItem(REFRESH_TOKEN_KEY)
-      const storedUser = localStorage.getItem(USER_KEY)
+      // 優先從 localStorage 讀取（記住登入），否則從 sessionStorage 讀取
+      const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(ACCESS_TOKEN_KEY)
+      const storedRefresh = localStorage.getItem(REFRESH_TOKEN_KEY) || sessionStorage.getItem(REFRESH_TOKEN_KEY)
+      const storedUser = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY)
 
       if (storedToken) {
         accessToken.value = storedToken
